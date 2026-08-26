@@ -1,6 +1,3 @@
-apply:
-  - ./common-jvm.module-template.yaml
-
 plugins:
   source-generation:
     enabled: true
