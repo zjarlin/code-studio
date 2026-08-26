@@ -14,6 +14,11 @@ interface LowcodeSourceBuildSettings {
     val generationTargetProfile: Path
 
     /**
+     * 显式提供由当前 contributor 产出实体源码的外部模型快照。
+     */
+    val sourceMetadataSnapshots: List<Path>
+
+    /**
      * Studio 核心控制面迁移目录。
      */
     val platformMigrationDirectory: Path

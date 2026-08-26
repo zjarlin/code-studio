@@ -3,6 +3,7 @@ plugins:
     enabled: true
     contributorIndex: ../../.code-studio/contributors.json
     generationTargetProfile: ../../.code-studio/target-profile.json
+    sourceMetadataSnapshots: []
     platformMigrationDirectory: ../modules/server/src/main/resources/db/studio/core
     developmentDatabaseConfig: ../../.code-studio/local.yaml
 

@@ -22,6 +22,7 @@ import site.addzero.platform.lowcode.generator.LowcodeMetadataDatabaseConfig
 import site.addzero.platform.lowcode.generator.LowcodeMetadataDatabaseReader
 import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshot
 import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshots
+import site.addzero.platform.lowcode.generator.LowcodeModelMeta
 import site.addzero.platform.lowcode.generator.LowcodeModuleCompiler
 import site.addzero.platform.lowcode.generator.entitySourceContributorId
 import site.addzero.platform.lowcode.generator.LowcodeDtoSourceGenerator
@@ -219,12 +220,17 @@ fun compileLowcodeSources(
     @Input contributorManifest: Path,
     @Input generationTargetProfile: Path,
     @Input metadataSnapshot: Path,
+    @Input sourceMetadataSnapshots: List<Path>,
     @Output compiledSourceDirectory: Path,
     @Output scaffoldSourceDirectory: Path,
 ) {
     val contributor = readContributor(contributorManifest)
     val contributorId = contributor.id
-    val metadata = readMetadataSnapshot(metadataSnapshot, contributor)
+    val metadata = readCompilationMetadata(
+        metadataSnapshot = metadataSnapshot,
+        sourceMetadataSnapshots = sourceMetadataSnapshots,
+        contributor = contributor,
+    )
     val targetProfile = readGenerationTargetProfile(generationTargetProfile)
     val files = metadata.generatedFiles(contributorId, targetProfile)
     compiledSourceDirectory.deleteRecursively()
@@ -321,6 +327,99 @@ private fun readMetadataSnapshot(path: Path, contributor: MetadataContributor): 
             (contributor.requires - snapshot.contributorIds.toSet()).sorted().joinToString()
     }
     return snapshot.metadata
+}
+
+private fun readCompilationMetadata(
+    metadataSnapshot: Path,
+    sourceMetadataSnapshots: List<Path>,
+    contributor: MetadataContributor,
+): LowcodeMetadata {
+    val metadata = readMetadataSnapshot(metadataSnapshot, contributor)
+    if (sourceMetadataSnapshots.isEmpty()) {
+        return metadata
+    }
+    val sourceModels = sourceMetadataSnapshots
+        .sortedBy { path -> path.toString() }
+        .flatMap { path -> LowcodeMetadataSnapshots.decode(path.readText()).metadata.models }
+    val ownedSourceModels = sourceModels.filter { model ->
+        model.entitySourceContributorId() == contributor.id
+    }
+    require(ownedSourceModels.isNotEmpty()) {
+        "外部元数据快照未提供当前 contributor 的实体源码: ${contributor.id}"
+    }
+    return metadata.copy(
+        models = mergeCompilationModelCatalog(listOf(metadata.models, sourceModels)),
+    )
+}
+
+internal fun mergeCompilationModelCatalog(
+    catalogs: List<List<LowcodeModelMeta>>,
+): List<LowcodeModelMeta> = catalogs
+    .flatten()
+    .groupBy { model -> model.modelCode }
+    .map { (modelCode, candidates) ->
+        mergeCompilationModel(modelCode, candidates)
+    }
+    .sortedBy { model -> model.modelCode }
+
+private fun mergeCompilationModel(
+    modelCode: String,
+    candidates: List<LowcodeModelMeta>,
+): LowcodeModelMeta {
+    val shells = candidates.map { model ->
+        model.copy(
+            dtoDefinitions = emptyList(),
+            fields = emptyList(),
+            queries = emptyList(),
+            relations = emptyList(),
+        )
+    }.distinct()
+    require(shells.size == 1) {
+        "模型源快照存在冲突: $modelCode"
+    }
+    val dtoDefinitions = candidates
+        .flatMap { model -> model.dtoDefinitions }
+        .mergeExactBy({ dto -> dto.dtoCode }, "$modelCode DTO")
+    val fields = candidates
+        .flatMap { model -> model.fields }
+        .mergeExactBy({ field -> field.id }, "$modelCode 字段")
+        .sortedWith(compareBy({ field -> field.orderNo }, { field -> field.id }))
+    val queries = candidates
+        .flatMap { model -> model.queries }
+        .groupBy { query -> query.id }
+        .map { (queryId, queryCandidates) ->
+            val queryShells = queryCandidates.map { query -> query.copy(items = emptyList()) }.distinct()
+            require(queryShells.size == 1) {
+                "模型 $modelCode 的查询快照存在冲突: $queryId"
+            }
+            queryShells.single().copy(
+                items = queryCandidates
+                    .flatMap { query -> query.items }
+                    .mergeExactBy({ item -> item.id }, "$modelCode 查询条件")
+                    .sortedWith(compareBy({ item -> item.orderNo }, { item -> item.id })),
+            )
+        }
+        .sortedWith(compareBy({ query -> query.orderNo }, { query -> query.id }))
+    val relations = candidates
+        .flatMap { model -> model.relations }
+        .mergeExactBy({ relation -> relation.id }, "$modelCode 关系")
+        .sortedWith(compareBy({ relation -> relation.orderNo }, { relation -> relation.id }))
+    return shells.single().copy(
+        dtoDefinitions = dtoDefinitions,
+        fields = fields,
+        queries = queries,
+        relations = relations,
+    )
+}
+
+private fun <T, K> List<T>.mergeExactBy(
+    key: (T) -> K,
+    description: String,
+): List<T> = groupBy(key).map { (value, candidates) ->
+    require(candidates.distinct().size == 1) {
+        "$description 快照存在冲突: $value"
+    }
+    candidates.first()
 }
 
 private fun readContributor(path: Path): MetadataContributor =

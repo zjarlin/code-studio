@@ -4,6 +4,8 @@ tasks:
       contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      sourceMetadataSnapshots:
+        ${pluginSettings.sourceMetadataSnapshots}
       compiledSourceDirectory: "${taskOutputDir}/compiled"
       scaffoldSourceDirectory: "${taskOutputDir}/scaffolds"
   generateCodeStudioSources:
