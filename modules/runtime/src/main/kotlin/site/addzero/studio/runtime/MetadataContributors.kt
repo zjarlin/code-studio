@@ -39,8 +39,8 @@ object MetadataContributors {
         val contributorsById = linkedMapOf<String, MetadataContributor>()
         contributors.forEach { contributor ->
             val previous = contributorsById.putIfAbsent(contributor.id, contributor)
-            require(previous == null) {
-                "元数据贡献 id 重复: ${contributor.id}"
+            require(previous == null || previous == contributor) {
+                "元数据贡献 id 冲突: ${contributor.id}"
             }
         }
 

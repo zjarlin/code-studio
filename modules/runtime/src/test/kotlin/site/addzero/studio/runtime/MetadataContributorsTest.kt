@@ -23,9 +23,22 @@ class MetadataContributorsTest {
     }
 
     @Test
-    fun `重复 id 缺失依赖和环依赖都被拒绝`() {
+    fun `内容相同的重复清单被折叠`() {
+        val resolved = MetadataContributors.resolve(listOf(contributor("core"), contributor("core")))
+
+        assertEquals(listOf("core"), resolved.map(MetadataContributor::id))
+    }
+
+    @Test
+    fun `同 id 冲突清单缺失依赖和环依赖都被拒绝`() {
         assertThrows(IllegalArgumentException::class.java) {
-            MetadataContributors.resolve(listOf(contributor("core"), contributor("core")))
+            MetadataContributors.resolve(
+                listOf(
+                    contributor("core"),
+                    contributor("core", requires = listOf("dependency")),
+                    contributor("dependency"),
+                ),
+            )
         }
         assertThrows(IllegalArgumentException::class.java) {
             MetadataContributors.resolve(listOf(contributor("feature", requires = listOf("core"))))

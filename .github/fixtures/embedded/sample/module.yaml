@@ -1,5 +1,8 @@
 product: jvm/lib
 
+dependencies:
+  - org.babyfish.jimmer:jimmer-sql-kotlin:0.11.2
+
 apply:
   - //studio/build-config/code-studio.module-template.yaml
 
