@@ -19,6 +19,14 @@ describe('Studio OpenAPI loader', () => {
     )).toBe('https://application.example.test/admin-api')
   })
 
+  it('keeps an embedded application root as the browser origin', () => {
+    expect(resolveStudioApiBaseUrl(
+      '/',
+      'http://127.0.0.1:48183',
+      '',
+    )).toBe('http://127.0.0.1:48183')
+  })
+
   it('uses the Studio origin for loopback metadata in a production build', () => {
     expect(resolveStudioApiBaseUrl(
       'http://localhost:48080/example',

@@ -23,18 +23,19 @@ export function resolveStudioApiBaseUrl(
   browserOrigin: string = window.location.origin,
   defaultApiBase: string = __DEFAULT_API_BASE__,
 ): string {
-  const configuredValue = value?.trim().replace(/\/+$/, '') ?? ''
+  const configuredValue = value?.trim() ?? ''
   if (!configuredValue) {
     return ''
   }
+  const normalizedValue = configuredValue.replace(/\/+$/, '') || '/'
 
   const browserUrl = new URL(browserOrigin)
   const backendUrl = browserAccessibleBackendUrl(defaultApiBase, browserUrl)
-  if (configuredValue.startsWith('/')) {
-    return normalizeUrl(new URL(configuredValue, backendUrl))
+  if (normalizedValue.startsWith('/')) {
+    return normalizeUrl(new URL(normalizedValue, backendUrl))
   }
 
-  const configuredUrl = new URL(configuredValue)
+  const configuredUrl = new URL(normalizedValue)
   if (!isLocalHost(configuredUrl.hostname)) {
     return normalizeUrl(configuredUrl)
   }
