@@ -6,6 +6,8 @@ Profile 的稳定语义键为 `runtime.persistence-model-package`、`runtime.low
 
 普通编译通过 `compileCodeStudioSources` 和 `generateCodeStudioSources` 写入任务输出目录，全程不创建数据源也不运行 Flyway。元数据变更后显式运行 `refreshCodeStudioMetadata`，重放核心迁移和当前 contributor 的 `manifest.requires` 传递闭包，再更新提交到 Git 的 canonical snapshot。依赖位置只从仓库级 `.code-studio/contributors.json` 读取；索引内路径相对仓库根目录，插件不会扫描目录。输入未变化时 Amper 不会删除或重写任何生成输出。
 
+若模型的业务 contributor 与实体源码 contributor 不同，模块必须在 `sourceMetadataSnapshots` 中显式列出包含该模型的 snapshot。该列表是 Amper 任务输入：上游 snapshot 变更会精确使生成失效，但不会引入数据库连接或隐式全仓扫描。
+
 索引格式固定为：
 
 ```json

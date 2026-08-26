@@ -1,0 +1,40 @@
+{
+  "formatVersion": 1,
+  "contributorId": "example.business",
+  "contributorIds": [
+    "example.business"
+  ],
+  "metadata": {
+    "models": [
+      {
+        "id": 1,
+        "modelCode": "exampleSource",
+        "name": "Example source",
+        "packageName": "example.catalog",
+        "className": "ExampleSource",
+        "tableName": "example_source",
+        "kind": "MAPPED_SUPERCLASS",
+        "status": 1,
+        "version": 1,
+        "contributorId": "example.business",
+        "entityConfig": {
+          "sourceMode": "GENERATED",
+          "sourceContributorId": "example.library",
+          "baseMode": "INHERITED"
+        },
+        "dtoDefinitions": [],
+        "routeConfig": null,
+        "fields": [],
+        "queries": [],
+        "relations": [],
+        "featurePackageName": "example.catalog"
+      }
+    ],
+    "dtoDefinitions": [],
+    "routeBindings": [],
+    "contracts": [],
+    "features": [],
+    "dictionaries": [],
+    "constantGroups": []
+  }
+}

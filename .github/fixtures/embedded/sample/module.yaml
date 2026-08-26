@@ -2,3 +2,8 @@ product: jvm/lib
 
 apply:
   - //studio/build-config/code-studio.module-template.yaml
+
+plugins:
+  source-generation:
+    sourceMetadataSnapshots:
+      - source-metadata.json

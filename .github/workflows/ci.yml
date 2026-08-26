@@ -90,7 +90,9 @@ jobs:
       - name: Check Kotlin embedded project
         if: matrix.context == 'embedded'
         working-directory: ${{ steps.workspace.outputs.project }}
-        run: ./studio/kotlin check --project-dir=.
+        run: |
+          ./studio/kotlin check --project-dir=.
+          test -f build/tasks/_sample_generateCodeStudioSources@source-generation/example/catalog/generated/entity/ExampleSource.kt
 
       - name: Test and build UI
         working-directory: ${{ steps.workspace.outputs.source }}
