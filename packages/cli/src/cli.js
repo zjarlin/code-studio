@@ -241,7 +241,7 @@ function moduleTask(positionals, context, command, taskName) {
   }
   const root = findWorkspace(context.cwd);
   const relativeModule = resolveModule(root, positionals[1]);
-  const task = `:${relativeModule.split("/").join(":")}:${taskName}`;
+  const task = `:${path.basename(relativeModule)}:${taskName}@source-generation`;
   const executable = existsSync(path.join(root, "kotlin")) ? path.join(root, "kotlin") : "kotlin";
   runCommand(executable, ["task", task], { cwd: root, env: context.env });
 }

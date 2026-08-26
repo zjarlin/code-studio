@@ -218,7 +218,13 @@ test("refresh delegates to the selected contributor task", () => {
 
   assert.equal(
     readFileSync(path.join(workspace, ".task-invocation"), "utf8"),
-    "task :lib:identity:users:refreshCodeStudioMetadata",
+    "task :users:refreshCodeStudioMetadata@source-generation",
+  );
+
+  assertSuccess(run(workspace, "sync", "identity/users"));
+  assert.equal(
+    readFileSync(path.join(workspace, ".task-invocation"), "utf8"),
+    "task :users:codeStudioSync@source-generation",
   );
 });
 
