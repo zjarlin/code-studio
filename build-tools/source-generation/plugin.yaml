@@ -1,0 +1,61 @@
+tasks:
+  compileCodeStudioSources:
+    action: !site.addzero.toolchain.lowcode.compileLowcodeSources
+      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      compiledSourceDirectory: "${taskOutputDir}/compiled"
+      scaffoldSourceDirectory: "${taskOutputDir}/scaffolds"
+  generateCodeStudioSources:
+    action: !site.addzero.toolchain.lowcode.validateLowcodeSources
+      compiledSourceDirectory: ${tasks.compileCodeStudioSources.action.compiledSourceDirectory}
+      scaffoldSourceDirectory: ${tasks.compileCodeStudioSources.action.scaffoldSourceDirectory}
+      sourceDirectory: "${module.rootDir}/src/main/kotlin"
+      generatedSourceDirectory: ${taskOutputDir}
+  packageCodeStudioContributor:
+    action: !site.addzero.toolchain.lowcode.packageContributorMetadata
+      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      contributorMetadataMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
+      generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      generatedResourcesDirectory: ${taskOutputDir}
+  refreshCodeStudioMetadata:
+    action: !site.addzero.toolchain.lowcode.refreshLowcodeMetadata
+      currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
+      contributorIndex: ${pluginSettings.contributorIndex}
+      platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
+      developmentDatabaseConfig: ${pluginSettings.developmentDatabaseConfig}
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+  generateCodeStudioMigration:
+    action: !site.addzero.toolchain.lowcode.generateLowcodeMigration
+      currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
+      contributorIndex: ${pluginSettings.contributorIndex}
+      platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
+      generatedMigrationDirectory: ${taskOutputDir}
+  codeStudioSync:
+    action: !site.addzero.toolchain.lowcode.materializeLowcodeSources
+      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      sourceDirectory: "${module.rootDir}/src/main/kotlin"
+  verifyCodeStudioSchema:
+    action: !site.addzero.toolchain.lowcode.verifyLowcodeSchema
+      currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
+      contributorIndex: ${pluginSettings.contributorIndex}
+      platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
+
+commands:
+  - generateCodeStudioMigration
+  - packageCodeStudioContributor
+  - refreshCodeStudioMetadata
+  - codeStudioSync
+  - verifyCodeStudioSchema
+
+generated:
+  resources:
+    - directory: ${tasks.packageCodeStudioContributor.action.generatedResourcesDirectory}
+  sources:
+    - language: kotlin
+      directory: ${tasks.generateCodeStudioSources.action.generatedSourceDirectory}

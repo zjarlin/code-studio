@@ -1,0 +1,4 @@
+product: jvm/lib
+
+apply:
+  - //studio/build-config/code-studio.module-template.yaml

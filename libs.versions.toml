@@ -1,0 +1,42 @@
+[versions]
+kotlin = "2.4.0"
+ksp = "2.3.9"
+ktor = "3.5.1"
+jackson = "3.1.5"
+hikari = "7.0.2"
+flyway = "13.2.0"
+postgresql = "42.7.11"
+logback = "1.5.21"
+junit = "5.13.4"
+coroutines = "1.11.0"
+ddlgenerator = "2026.08.11"
+asm = "9.9.1"
+
+[libraries]
+ksp-symbol-processing-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-serialization-jackson3 = { module = "io.ktor:ktor-serialization-jackson3", version.ref = "ktor" }
+ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
+ktor-server-test-host = { module = "io.ktor:ktor-server-test-host", version.ref = "ktor" }
+
+jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+
+ddlgenerator-core = { module = "site.addzero:ddlgenerator-core", version.ref = "ddlgenerator" }
+ddlgenerator-jdbc-adaptor = { module = "site.addzero:ddlgenerator-jdbc-adaptor", version.ref = "ddlgenerator" }
+ddlgenerator-dialect-postgresql = { module = "site.addzero:ddlgenerator-dialect-postgresql", version.ref = "ddlgenerator" }
+tool-jdbc = { module = "site.addzero:tool-jdbc", version.ref = "ddlgenerator" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
+flyway-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "flyway" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+kotlin-metadata-jvm = { module = "org.jetbrains.kotlin:kotlin-metadata-jvm", version.ref = "kotlin" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }

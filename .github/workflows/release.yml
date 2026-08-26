@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+
+  secret-scan:
+    uses: ./.github/workflows/security.yml
+
+  publish-npm:
+    needs:
+      - quality
+      - secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js for trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify tag and package version
+        working-directory: packages/cli
+        run: |
+          version="$(node --print "require('./package.json').version")"
+          test "$GITHUB_REF_NAME" = "v$version"
+
+      - name: Install package dependencies
+        working-directory: packages/cli
+        run: npm ci
+
+      - name: Publish npm package with provenance
+        working-directory: packages/cli
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -1,0 +1,9 @@
+modules:
+  - ./apps/dev-host
+  - ./build-tools/*
+  - ./modules/*
+
+plugins:
+  - ./build-tools/dto-analysis
+  - ./build-tools/source-generation
+  - ./build-tools/studio-ui

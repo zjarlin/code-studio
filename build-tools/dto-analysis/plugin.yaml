@@ -1,0 +1,24 @@
+tasks:
+  analyzeDtoModels:
+    action: !site.addzero.toolchain.dto.analyzeDtoModels
+      compiledArtifactsDirectories:
+        ${pluginSettings.compiledArtifactsDirectories}
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      reportDirectory: ${taskOutputDir}
+  analyzeBusinessSourceOwnership:
+    action: !site.addzero.toolchain.dto.analyzeBusinessSourceOwnership
+      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      moduleSourceDirectory: "${module.rootDir}/src/main/kotlin"
+      reportDirectory: ${taskOutputDir}
+  verifyBusinessSourceOwnership:
+    action: !site.addzero.toolchain.dto.verifyBusinessSourceOwnership
+      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      moduleSourceDirectory: "${module.rootDir}/src/main/kotlin"
+      reportDirectory: ${taskOutputDir}
+
+commands:
+  - analyzeDtoModels
+  - analyzeBusinessSourceOwnership
+  - verifyBusinessSourceOwnership

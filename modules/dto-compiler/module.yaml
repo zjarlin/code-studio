@@ -1,0 +1,6 @@
+product: jvm/lib
+
+description: 从中性 DTO LSI 确定性生成 Kotlin data class，并分析跨来源的结构复用候选。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml

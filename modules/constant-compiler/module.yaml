@@ -1,0 +1,13 @@
+product: jvm/lib
+
+description: 把结构化常量元数据确定性生成为 Kotlin 常量对象。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - $libs.ksp.symbol.processing.api:
+      scope: compile-only
+
+test-dependencies:
+  - $libs.ksp.symbol.processing.api: runtime-only

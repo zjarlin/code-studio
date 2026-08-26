@@ -1,0 +1,9 @@
+product: jvm/lib
+
+description: 定义 Studio 宿主、生成目标和元数据贡献的稳定运行时契约。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - $libs.jackson.module.kotlin

@@ -1,0 +1,7 @@
+product: jvm/amper-plugin
+
+apply:
+  - ../../build-config/kotlin-jvm.module-template.yaml
+
+pluginInfo:
+  id: studio-ui

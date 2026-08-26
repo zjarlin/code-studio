@@ -1,0 +1,8 @@
+product: jvm/lib
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../lowcode-source-compiler
+  - $libs.jackson.databind

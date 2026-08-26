@@ -1,0 +1,33 @@
+{
+  "name": "code-studio",
+  "version": "0.1.0",
+  "description": "Application-owned metadata studio scaffolding for Amper workspaces",
+  "type": "module",
+  "bin": {
+    "code-studio": "./bin/code-studio.js"
+  },
+  "files": [
+    "LICENSE",
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zjarlin/code-studio.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "formatVersion": 1,
+  "id": "example.library",
+  "migrationLocation": "classpath:db/studio/metadata/example.library",
+  "requires": []
+}

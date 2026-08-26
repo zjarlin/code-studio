@@ -1,0 +1,22 @@
+product: jvm/lib
+
+description: 提供 contributor 隔离的 Studio 元数据 JDBC 存储与 HTTP API。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../server: exported
+  - ../lowcode-compiler
+  - ../constant-compiler
+  - ../validation-compiler
+  - $libs.jackson.databind
+  - $libs.jackson.module.kotlin
+  - $libs.kotlinx.coroutines.core
+  - $libs.ktor.server.core
+
+test-dependencies:
+  - $libs.ktor.serialization.jackson3
+  - $libs.ktor.server.content.negotiation
+  - $libs.ktor.server.test.host
+  - $libs.postgresql

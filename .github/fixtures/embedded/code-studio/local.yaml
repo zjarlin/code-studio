@@ -1,0 +1,4 @@
+database:
+  url: ${CODE_STUDIO_DB_JDBC_URL}
+  username: ${CODE_STUDIO_DB_USERNAME}
+  password: ${CODE_STUDIO_DB_PASSWORD}

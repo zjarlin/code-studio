@@ -1,0 +1,9 @@
+modules:
+  - ./sample
+  - ./studio/build-tools/*
+  - ./studio/modules/*
+
+plugins:
+  - ./studio/build-tools/source-generation
+  - ./studio/build-tools/studio-ui
+  - ./studio/build-tools/dto-analysis

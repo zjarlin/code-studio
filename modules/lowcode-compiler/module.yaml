@@ -1,0 +1,15 @@
+product: jvm/lib
+
+description: 聚合低代码元数据及各独立产物编译器。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../runtime: exported
+  - ../lowcode-metadata: exported
+  - ../lowcode-source-compiler: exported
+  - ../lowcode-feature-compiler: exported
+  - ../ddl-compiler: exported
+  - ../lowcode-contract-migration-compiler: exported
+  - ../lowcode-documentation-compiler: exported

@@ -1,0 +1,11 @@
+product: jvm/lib
+
+description: 生成和解析业务运行时使用的低代码契约迁移。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../lowcode-metadata: exported
+  - $libs.jackson.databind
+  - $libs.jackson.module.kotlin

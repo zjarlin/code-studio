@@ -1,0 +1,13 @@
+apply:
+  - ./common-jvm.module-template.yaml
+
+plugins:
+  source-generation:
+    enabled: true
+    contributorIndex: ../../.code-studio/contributors.json
+    generationTargetProfile: ../../.code-studio/target-profile.json
+    platformMigrationDirectory: ../modules/server/src/main/resources/db/studio/core
+    developmentDatabaseConfig: ../../.code-studio/local.yaml
+
+dependencies:
+  - ../modules/lowcode-metadata

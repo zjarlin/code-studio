@@ -1,0 +1,16 @@
+product: jvm/amper-plugin
+
+apply:
+  - ../../build-config/kotlin-jvm.module-template.yaml
+
+pluginInfo:
+  id: dto-analysis
+  settingsClass: site.addzero.toolchain.dto.DtoAnalysisSettings
+
+dependencies:
+  - ../../modules/runtime
+  - ../../modules/dto-compiler
+  - ../../modules/lowcode-source-compiler
+  - $libs.asm
+  - $libs.kotlin.metadata.jvm
+  - $libs.jackson.module.kotlin

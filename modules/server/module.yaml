@@ -1,0 +1,23 @@
+product: jvm/lib
+
+description: 在宿主 Ktor 进程中安装 Studio 路由并迁移应用自有元数据。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+plugins:
+  studio-ui:
+    enabled: true
+
+dependencies:
+  - ../runtime: exported
+  - $libs.flyway.core
+  - $libs.flyway.postgresql: runtime-only
+  - $libs.ktor.server.core
+  - $libs.postgresql: runtime-only
+
+test-dependencies:
+  - $libs.jackson.module.kotlin
+  - $libs.ktor.serialization.jackson3
+  - $libs.ktor.server.content.negotiation
+  - $libs.ktor.server.test.host

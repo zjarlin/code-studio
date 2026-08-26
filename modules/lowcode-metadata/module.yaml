@@ -1,0 +1,13 @@
+product: jvm/lib
+
+description: 定义低代码 LSI、元数据读取、结构校验和查询编译。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../constant-compiler: exported
+  - ../dto-compiler: exported
+  - ../validation-compiler: exported
+  - $libs.jackson.databind
+  - $libs.jackson.module.kotlin

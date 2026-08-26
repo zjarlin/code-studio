@@ -1,0 +1,21 @@
+apply:
+  - ./kotlin-jvm.module-template.yaml
+
+layout: maven-like
+
+repositories:
+  - id: maven-central
+    url: https://repo.maven.apache.org/maven2
+
+settings:
+  kotlin:
+    allWarningsAsErrors: true
+  jvm:
+    storeParameterNames: true
+    test:
+      junitPlatformVersion: 1.13.4
+
+test-dependencies:
+  - bom: $libs.junit.bom
+  - $libs.junit.jupiter
+  - $libs.junit.platform.launcher: runtime-only

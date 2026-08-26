@@ -1,0 +1,26 @@
+product: jvm/amper-plugin
+
+
+apply:
+  - ../../build-config/kotlin-jvm.module-template.yaml
+
+pluginInfo:
+  id: source-generation
+  settingsClass: site.addzero.toolchain.lowcode.LowcodeSourceBuildSettings
+
+dependencies:
+  - ../../modules/runtime
+  - ../../modules/lowcode-compiler
+  - $libs.flyway.core
+  - $libs.flyway.postgresql
+  - $libs.ktor.server.config.yaml
+  - $libs.logback.classic
+  - $libs.jackson.module.kotlin
+  - $libs.postgresql
+  - $libs.ddlgenerator.jdbc.adaptor
+  - $libs.ddlgenerator.dialect.postgresql: runtime-only
+  - $libs.tool.jdbc
+
+repositories:
+  - id: maven-central
+    url: https://repo.maven.apache.org/maven2

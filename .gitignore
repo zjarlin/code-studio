@@ -1,0 +1,9 @@
+.amper/
+.idea/
+.code-studio/local.yaml
+build/
+**/build/
+**/dist/
+**/node_modules/
+*.iml
+*.log

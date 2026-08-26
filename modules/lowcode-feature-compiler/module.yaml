@@ -1,0 +1,9 @@
+product: jvm/lib
+
+description: 从低代码功能 LSI 生成类型化 Service 和 Controller 源码。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../lowcode-source-compiler: exported
