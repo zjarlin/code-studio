@@ -4,7 +4,7 @@
   "description": "Application-owned metadata studio scaffolding for Amper workspaces",
   "type": "module",
   "bin": {
-    "code-studio": "./bin/code-studio.js"
+    "code-studio": "bin/code-studio.js"
   },
   "files": [
     "LICENSE",

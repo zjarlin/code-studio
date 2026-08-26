@@ -51,10 +51,12 @@ function assertSuccess(result) {
   assert.equal(result.status, 0, result.stderr);
 }
 
-test("npm tarball includes the root Apache license", () => {
+test("npm tarball preserves the executable and root Apache license", () => {
   const packageLicense = readFileSync(path.join(PACKAGE_ROOT, "LICENSE"), "utf8");
   const rootLicense = readFileSync(path.resolve(PACKAGE_ROOT, "../..", "LICENSE"), "utf8");
   assert.equal(packageLicense, rootLicense);
+  const packageManifest = JSON.parse(readFileSync(path.join(PACKAGE_ROOT, "package.json"), "utf8"));
+  assert.deepEqual(packageManifest.bin, { "code-studio": "bin/code-studio.js" });
 
   const result = spawnSync(NPM, ["pack", "--dry-run", "--json"], {
     cwd: PACKAGE_ROOT,
@@ -63,6 +65,16 @@ test("npm tarball includes the root Apache license", () => {
   assertSuccess(result);
   const [manifest] = JSON.parse(result.stdout);
   assert.equal(manifest.files.some((file) => file.path === "LICENSE"), true);
+  const executable = manifest.files.find((file) => file.path === "bin/code-studio.js");
+  assert.notEqual(executable, undefined);
+  assert.notEqual(executable.mode & 0o111, 0);
+
+  const publish = spawnSync(NPM, ["publish", "--dry-run", "--json"], {
+    cwd: PACKAGE_ROOT,
+    encoding: "utf8",
+  });
+  assertSuccess(publish);
+  assert.doesNotMatch(publish.stderr, /script name .* was invalid and removed/);
 });
 
 test("init preserves existing YAML and is idempotent", () => {
