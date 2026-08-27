@@ -5,6 +5,9 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.call
 import io.ktor.server.application.createRouteScopedPlugin
+import io.ktor.server.application.log
+import io.ktor.server.engine.ConnectorType
+import io.ktor.server.engine.EngineConnectorConfig
 import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.httpMethod
 import io.ktor.server.request.path
@@ -14,11 +17,13 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.launch
 import site.addzero.studio.runtime.MetadataContributor
 import site.addzero.studio.runtime.MetadataContributors
 import site.addzero.studio.runtime.StudioAccessPolicy
 import site.addzero.studio.runtime.StudioAccessRequest
 import site.addzero.studio.runtime.StudioConfig
+import java.net.URI
 import javax.sql.DataSource
 
 /** 在宿主应用中启动数据库迁移并安装 Studio Controller。 */
@@ -42,6 +47,23 @@ fun Application.installStudio(
         val controller = StudioController(config, accessPolicy, contributors, apiControllers)
         controller.install(this)
     }
+    launch {
+        engine.resolvedConnectors()
+            .mapNotNull { connector -> connector.studioUrl(rootPath) }
+            .forEach { url -> log.info("Code Studio 管理页面: $url") }
+    }
+}
+
+internal fun EngineConnectorConfig.studioUrl(rootPath: String = ""): String? {
+    val scheme = when (type) {
+        ConnectorType.HTTP -> "http"
+        ConnectorType.HTTPS -> "https"
+        else -> return null
+    }
+    val browserHost = host.takeUnless(WILDCARD_HOSTS::contains) ?: "localhost"
+    val root = rootPath.trim().trim('/')
+    val path = if (root.isEmpty()) STUDIO_PATH else "/$root$STUDIO_PATH"
+    return URI(scheme, null, browserHost, port, path, null, null).toString()
 }
 
 /** 安装 Studio HTTP 传输边界。 */
@@ -90,6 +112,9 @@ class StudioController(
 private data class StudioErrorResponse(
     val error: String,
 )
+
+private const val STUDIO_PATH = "/studio/"
+private val WILDCARD_HOSTS = setOf("", "0.0.0.0", "::", "0:0:0:0:0:0:0:0")
 
 private class StudioAccessConfig {
     lateinit var policy: StudioAccessPolicy

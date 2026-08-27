@@ -8,6 +8,8 @@ import io.ktor.serialization.jackson3.jackson
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.application.install
 import io.ktor.server.application.call
+import io.ktor.server.engine.ConnectorType
+import io.ktor.server.engine.EngineConnectorConfig
 import io.ktor.server.response.respond
 import io.ktor.server.routing.routing
 import io.ktor.server.routing.get
@@ -143,6 +145,23 @@ class StudioControllerTest {
         assertEquals("ok", objectMapper.readTree(response.body<String>())["status"].asString())
     }
 
+    @Test
+    fun `使用真实监听信息生成浏览器可访问的 Studio 地址`() {
+        assertEquals(
+            "http://localhost:49000/studio/",
+            connector(ConnectorType.HTTP, "0.0.0.0", 49000).studioUrl(),
+        )
+        assertEquals(
+            "https://example.test:443/application/studio/",
+            connector(ConnectorType.HTTPS, "example.test", 443).studioUrl("/application"),
+        )
+        assertEquals(
+            "http://[::1]:8080/studio/",
+            connector(ConnectorType.HTTP, "::1", 8080).studioUrl(),
+        )
+        assertEquals(null, connector(ConnectorType.UNIX, "localhost", 0).studioUrl())
+    }
+
     private fun controller(
         enabled: Boolean,
         accessPolicy: StudioAccessPolicy = StudioAccessPolicy { true },
@@ -175,6 +194,13 @@ class StudioControllerTest {
         migrationLocation = "classpath:db/studio/metadata/$id",
         requires = requires,
     )
+
+    private fun connector(type: ConnectorType, host: String, port: Int): EngineConnectorConfig =
+        object : EngineConnectorConfig {
+            override val type: ConnectorType = type
+            override val host: String = host
+            override val port: Int = port
+        }
 
     private fun studioAssetPath(): String {
         val index = requireNotNull(javaClass.classLoader.getResource("studio/index.html")) {

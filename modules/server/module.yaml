@@ -14,6 +14,7 @@ dependencies:
   - $libs.flyway.core
   - $libs.flyway.postgresql: runtime-only
   - $libs.ktor.server.core
+  - $libs.kotlinx.coroutines.core
   - $libs.postgresql: runtime-only
 
 test-dependencies:
