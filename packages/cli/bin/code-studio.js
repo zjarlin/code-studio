@@ -1,15 +1,22 @@
 #!/usr/bin/env node
 
 import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const packageRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
-const yamlPackage = path.join(packageRoot, "node_modules", "yaml", "package.json");
+
+function hasRuntimeDependencies() {
+  try {
+    import.meta.resolve("yaml");
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 async function start() {
-  if (!existsSync(yamlPackage)) {
+  if (!hasRuntimeDependencies()) {
     const npm = process.platform === "win32" ? "npm.cmd" : "npm";
     const result = spawnSync(npm, ["ci", "--omit=dev", "--ignore-scripts"], {
       cwd: packageRoot,

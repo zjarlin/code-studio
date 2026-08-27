@@ -44,7 +44,7 @@ function createStudioRepository() {
   chmodSync(wrapper, 0o755);
   git(repository, "add", ".");
   git(repository, "commit", "-m", "fixture");
-  git(repository, "tag", "v0.1.0");
+  git(repository, "tag", "v0.1.1");
   return repository;
 }
 
@@ -84,6 +84,35 @@ test("npm tarball preserves the executable and root Apache license", () => {
   });
   assertSuccess(publish);
   assert.doesNotMatch(publish.stderr, /script name .* was invalid and removed/);
+});
+
+test("installed CLI uses hoisted runtime dependencies without bootstrapping", () => {
+  const installation = temporaryDirectory("installed");
+  const installedPackage = path.join(installation, "node_modules", "code-studio");
+  cpSync(PACKAGE_ROOT, installedPackage, {
+    recursive: true,
+    filter: (source) => !["node_modules", "package-lock.json"].includes(path.basename(source)),
+  });
+
+  const yamlPackage = path.join(installation, "node_modules", "yaml");
+  mkdirSync(yamlPackage, { recursive: true });
+  writeFileSync(path.join(yamlPackage, "package.json"), JSON.stringify({
+    name: "yaml",
+    version: "0.0.0",
+    type: "module",
+    exports: "./index.js",
+  }));
+  writeFileSync(path.join(yamlPackage, "index.js"), "export function isSeq() { return false; }\nexport function parseDocument() {}\n");
+
+  const result = spawnSync(
+    process.execPath,
+    [path.join(installedPackage, "bin", "code-studio.js"), "--help"],
+    { cwd: installation, env: GIT_ENV, encoding: "utf8" },
+  );
+
+  assertSuccess(result);
+  assert.match(result.stdout, /Usage: code-studio/);
+  assert.equal(existsSync(path.join(installedPackage, "node_modules")), false);
 });
 
 test("init preserves existing YAML and is idempotent", () => {
@@ -139,7 +168,7 @@ test("init preserves existing YAML and is idempotent", () => {
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/NodeJSConfigurationType/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/studio\/packages\/cli\/bin\/code-studio\.js/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/\$Prompt:应用模块名:my-app\$/), null);
-  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.0");
+  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.1");
   const studioCliModules = path.join(workspace, "studio", "packages", "cli", "node_modules");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), false);
   const lazyBootstrap = spawnSync(
@@ -148,7 +177,7 @@ test("init preserves existing YAML and is idempotent", () => {
     { cwd: workspace, env: GIT_ENV, encoding: "utf8" },
   );
   assertSuccess(lazyBootstrap);
-  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.0");
+  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.1");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), true);
 
   assertSuccess(run(workspace, "add", "library", "identity/users"));

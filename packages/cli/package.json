@@ -1,6 +1,6 @@
 {
   "name": "code-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Application-owned metadata studio scaffolding for Amper workspaces",
   "type": "module",
   "bin": {
