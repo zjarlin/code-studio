@@ -1,0 +1,17 @@
+product: jvm/lib
+
+description: 为应用初始壳和无启动类的 library 提供通用开发宿主。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../metadata-service
+  - ../server
+  - $libs.hikari
+  - $libs.ktor.serialization.jackson3
+  - $libs.ktor.server.config.yaml
+  - $libs.ktor.server.content.negotiation
+  - $libs.ktor.server.netty
+  - $libs.logback.classic
+  - $libs.postgresql: runtime-only

@@ -16,9 +16,9 @@ tasks:
       generatedSourceDirectory: ${taskOutputDir}
   packageCodeStudioContributor:
     action: !site.addzero.toolchain.lowcode.packageContributorMetadata
-      contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       contributorMetadataMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      moduleResourcesDirectory: "${module.rootDir}/src/main/resources"
       generatedResourcesDirectory: ${taskOutputDir}
   refreshCodeStudioMetadata:
     action: !site.addzero.toolchain.lowcode.refreshLowcodeMetadata

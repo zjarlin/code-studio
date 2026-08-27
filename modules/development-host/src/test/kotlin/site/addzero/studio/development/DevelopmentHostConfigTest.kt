@@ -1,4 +1,4 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -13,7 +13,7 @@ import site.addzero.studio.runtime.MetadataContributors
 import java.nio.file.Files
 import java.nio.file.Path
 
-class DevHostConfigTest {
+class DevelopmentHostConfigTest {
     @Test
     fun `读取 workspace 本地数据库和端口配置`(@TempDir workspace: Path) {
         writeTargetProfile(workspace)
@@ -32,7 +32,7 @@ class DevHostConfigTest {
             """.trimIndent(),
         )
 
-        val config = DevHostConfigLoader.load(workspace, emptyMap())
+        val config = DevelopmentHostConfigLoader.load(workspace, emptyMap())
 
         assertEquals("jdbc:postgresql://localhost:5432/studio", config.database.jdbcUrl)
         assertEquals("studio_user", config.database.username)
@@ -51,7 +51,7 @@ class DevHostConfigTest {
             "CODE_STUDIO_PORT" to "8282",
         )
 
-        val config = DevHostConfigLoader.load(workspace, environment)
+        val config = DevelopmentHostConfigLoader.load(workspace, environment)
 
         assertEquals("jdbc:postgresql://localhost:5432/environment", config.database.jdbcUrl)
         assertEquals("environment_user", config.database.username)
@@ -62,7 +62,7 @@ class DevHostConfigTest {
     fun `严格读取 workspace 生成目标配置`(@TempDir workspace: Path) {
         writeTargetProfile(workspace)
 
-        val profile = DevHostConfigLoader.loadTargetProfile(workspace)
+        val profile = DevelopmentHostConfigLoader.loadTargetProfile(workspace)
 
         assertEquals("application", profile.id)
         assertEquals(
@@ -83,7 +83,7 @@ class DevHostConfigTest {
     @Test
     fun `拒绝缺失的 workspace 生成目标配置`(@TempDir workspace: Path) {
         val error = assertThrows(IllegalArgumentException::class.java) {
-            DevHostConfigLoader.loadTargetProfile(workspace)
+            DevelopmentHostConfigLoader.loadTargetProfile(workspace)
         }
 
         assertTrue(error.message.orEmpty().contains("target-profile.json"))
@@ -97,7 +97,7 @@ class DevHostConfigTest {
         )
 
         val error = assertThrows(IllegalArgumentException::class.java) {
-            DevHostConfigLoader.loadTargetProfile(workspace)
+            DevelopmentHostConfigLoader.loadTargetProfile(workspace)
         }
 
         assertTrue(error.cause?.message.orEmpty().contains("未知字段"))
@@ -105,7 +105,7 @@ class DevHostConfigTest {
 
     @Test
     fun `schema 由 contributor id 稳定净化且不允许环境改写`() {
-        val schema = devSchema("System.User")
+        val schema = developmentSchema("System.User")
 
         assertEquals("code_studio_dev_system_user", schema)
         assertThrows(IllegalArgumentException::class.java) {
@@ -129,7 +129,7 @@ class DevHostConfigTest {
             """.trimIndent(),
         )
 
-        DevHostModule.load(module, module).use { loaded ->
+        DevelopmentModule.load(module, module).use { loaded ->
             assertEquals("example-library", loaded.contributor.id)
         }
     }
@@ -148,7 +148,7 @@ class DevHostConfigTest {
         createLegacyMigration(unrelated, "V3__unrelated.sql")
 
         lateinit var temporaryClasspath: Path
-        DevHostModule.load(workspace, selected).use { loaded ->
+        DevelopmentModule.load(workspace, selected).use { loaded ->
             temporaryClasspath = loaded.temporaryClasspath
             val visibleIds = MetadataContributors.load(loaded.classLoader).map { contributor -> contributor.id }
 
@@ -183,7 +183,7 @@ class DevHostConfigTest {
             builtManifest,
         )
 
-        DevHostModule.load(workspace, selected).use { loaded ->
+        DevelopmentModule.load(workspace, selected).use { loaded ->
             assertEquals("selected-library", loaded.contributor.id)
         }
     }
@@ -194,7 +194,7 @@ class DevHostConfigTest {
         createLegacyMigration(selected, "V1__legacy.sql")
         createAutonomousMigration(selected, "V2__baseline.sql")
 
-        DevHostModule.load(workspace, selected).use { loaded ->
+        DevelopmentModule.load(workspace, selected).use { loaded ->
             assertNotNull(
                 loaded.classLoader.getResource(
                     "db/studio/metadata/selected-library/V2__baseline.sql",

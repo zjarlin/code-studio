@@ -1,4 +1,4 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import io.ktor.server.config.ApplicationConfig
 import io.ktor.server.config.yaml.YamlConfig
@@ -11,7 +11,7 @@ private const val DEFAULT_PORT: Int = 8080
 private const val DEFAULT_MAXIMUM_POOL_SIZE: Int = 4
 private val TARGET_PROFILE_PATH: Path = Path.of(".code-studio/target-profile.json")
 
-internal data class DevHostDatabaseConfig(
+internal data class DevelopmentHostDatabaseConfig(
     val jdbcUrl: String,
     val username: String,
     val password: String,
@@ -33,8 +33,8 @@ internal data class DevHostDatabaseConfig(
     }
 }
 
-internal data class DevHostConfig(
-    val database: DevHostDatabaseConfig,
+internal data class DevelopmentHostConfig(
+    val database: DevelopmentHostDatabaseConfig,
     val port: Int,
     val targetProfile: GenerationTargetProfile,
 ) {
@@ -45,11 +45,12 @@ internal data class DevHostConfig(
     }
 }
 
-internal object DevHostConfigLoader {
+internal object DevelopmentHostConfigLoader {
     fun load(
         workspace: Path,
         environment: Map<String, String> = System.getenv(),
-    ): DevHostConfig {
+        targetProfile: GenerationTargetProfile = loadTargetProfile(workspace),
+    ): DevelopmentHostConfig {
         val localFile = workspace.resolve(".code-studio/local.yaml")
         val localConfig = if (Files.exists(localFile)) {
             requireNotNull(YamlConfig(localFile.toString())) {
@@ -70,9 +71,8 @@ internal object DevHostConfigLoader {
         val port = optionalValue(environment, "CODE_STUDIO_PORT", localConfig, "server.port")
             ?.toInt()
             ?: DEFAULT_PORT
-        val database = DevHostDatabaseConfig(jdbcUrl, username, password, maximumPoolSize)
-        val targetProfile = loadTargetProfile(workspace)
-        return DevHostConfig(database, port, targetProfile)
+        val database = DevelopmentHostDatabaseConfig(jdbcUrl, username, password, maximumPoolSize)
+        return DevelopmentHostConfig(database, port, targetProfile)
     }
 
     fun loadTargetProfile(workspace: Path): GenerationTargetProfile {

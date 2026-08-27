@@ -12,13 +12,19 @@ Run this in a new or existing Amper workspace:
 npx code-studio@latest init
 ```
 
-`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. It preserves unrelated YAML, Git state, and existing local configuration. Use `--dry-run` to inspect the changes first.
+`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
+
+The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
+
+Initialization also installs the root Kotlin wrapper and dependency catalog required by an empty workspace. It preserves unrelated YAML, Git state, existing catalogs, and local configuration. Use `--dry-run` to inspect the changes first.
 
 The generated workspace files are:
 
 - `.code-studio/local.yaml`: ignored local PostgreSQL connection settings.
 - `.code-studio/target-profile.json`: versioned mappings for host-specific generated symbols.
 - `.code-studio/contributors.json`: versioned contributor ID to module-root index.
+- `.run/Code Studio - Create Application.run.xml`: first-application creator, present only while the workspace has no applications.
+- `kotlin` and `libs.versions.toml`: copied from the pinned Studio version only when absent.
 - `studio/`: the source submodule pinned by the consuming repository.
 
 ## Commands
@@ -26,7 +32,7 @@ The generated workspace files are:
 | Command | Purpose |
 | --- | --- |
 | `code-studio init [directory]` | Initialize or update the workspace integration. |
-| `code-studio add app <name>` | Create an application contributor. |
+| `code-studio add app <name>` | Create a runnable application contributor and development host entrypoint. |
 | `code-studio add library <name>` | Create a library contributor without a main class. |
 | `code-studio dev <module>` | Run the shared development host for one library or application. |
 | `code-studio refresh <module>` | Replay the explicit contributor closure and update its canonical metadata snapshot. |
@@ -38,7 +44,7 @@ The generated workspace files are:
 
 ## Ownership Model
 
-An application owns its main class, port, datasource, authentication, application contributor, and writable Studio session. It installs the thin server module and serves `/studio/`, `/studio/config`, and `/studio/api/*`. Production does not expose these routes unless the host explicitly enables them and supplies a `StudioAccessPolicy`.
+The generated application is a runnable development shell backed by `studio/modules/development-host`. It serves `/studio/` from loopback using `.code-studio/local.yaml`, so a new workspace is usable before it has a custom runtime. As the application grows, its source-owned `Application.kt` is the handoff point for the real port, datasource, authentication, dependency injection, and `StudioAccessPolicy`; the generator never overwrites it.
 
 A library owns its `META-INF/code-studio/contributor.json`, immutable metadata migrations, and generated sources. Applications may inspect dependency contributors but cannot mutate them. To edit a library, run its isolated host:
 
@@ -102,7 +108,7 @@ An npm trusted publisher can only be configured after the package exists. Bootst
 ## Layout
 
 - `ui`: embedded Vue application.
-- `modules`: LSI compiler, runtime contracts, and embedded server.
+- `modules`: LSI compiler, runtime contracts, embedded server, and reusable development host.
 - `build-tools`: incremental Amper plugins.
-- `apps/dev-host`: shared library development host, standalone only.
+- `apps/dev-host`: thin standalone launcher for the reusable library development host.
 - `packages/cli`: public `code-studio` npm package.

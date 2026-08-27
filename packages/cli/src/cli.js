@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { existsSync, readFileSync, realpathSync } from "node:fs";
+import { chmod, mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
@@ -9,6 +9,7 @@ import {
   STUDIO_PLUGINS,
   assertScaffoldAvailable,
   contributorId,
+  contributorModuleDirectory,
   findWorkspace,
   isDirectoryNonEmpty,
   isModuleRegistered,
@@ -18,6 +19,7 @@ import {
   readContributors,
   renderGitignore,
   renderContributorIndex,
+  renderCreateApplicationRunConfiguration,
   renderLocalConfig,
   renderProjectYaml,
   renderTargetProfile,
@@ -29,6 +31,7 @@ import { runCommand } from "./command.js";
 
 const DEFAULT_REPOSITORY = "https://github.com/zjarlin/code-studio.git";
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const CREATE_APPLICATION_RUN_FILE = path.join(".run", "Code Studio - Create Application.run.xml");
 
 function outputWriter(stream) {
   return (value) => stream.write(`${value}\n`);
@@ -67,9 +70,17 @@ function gitRepositoryRoot(directory) {
   }
 }
 
+function canonicalPath(value) {
+  try {
+    return realpathSync(value);
+  } catch {
+    return path.resolve(value);
+  }
+}
+
 function ensureGitRepository(root, dryRun, output) {
   const repositoryRoot = gitRepositoryRoot(root);
-  if (repositoryRoot && path.resolve(repositoryRoot) === path.resolve(root)) {
+  if (repositoryRoot && canonicalPath(repositoryRoot) === canonicalPath(root)) {
     return;
   }
   output(`${dryRun ? "would run" : "run"} git init`);
@@ -150,6 +161,22 @@ async function initialize(positionals, values, context, version) {
     alignStudio(root, repository, version, values["dry-run"], context.output);
   }
 
+  const studioCatalog = path.join(root, "studio", "libs.versions.toml");
+  const rootCatalog = path.join(root, "libs.versions.toml");
+  if (!existsSync(rootCatalog) && existsSync(studioCatalog)) {
+    const catalog = await readFile(studioCatalog, "utf8");
+    await writeIfChanged(rootCatalog, catalog, values["dry-run"], context.output);
+  }
+  const studioWrapper = path.join(root, "studio", "kotlin");
+  const rootWrapper = path.join(root, "kotlin");
+  if (!existsSync(rootWrapper) && existsSync(studioWrapper)) {
+    const wrapper = await readFile(studioWrapper, "utf8");
+    const written = await writeIfChanged(rootWrapper, wrapper, values["dry-run"], context.output);
+    if (written && !values["dry-run"]) {
+      await chmod(rootWrapper, 0o755);
+    }
+  }
+
   await writeIfChanged(projectFile, renderedProject, values["dry-run"], context.output);
   await writeIfChanged(gitignoreFile, renderGitignore(gitignoreSource), values["dry-run"], context.output);
   if (!existsSync(localFile)) {
@@ -158,12 +185,29 @@ async function initialize(positionals, values, context, version) {
   if (!existsSync(targetProfileFile)) {
     await writeIfChanged(targetProfileFile, renderTargetProfile(), values["dry-run"], context.output);
   }
+  const contributors = readContributors(root);
   await writeIfChanged(
     contributorIndexFile,
-    renderContributorIndex(root),
+    renderContributorIndex(root, contributors),
     values["dry-run"],
     context.output,
   );
+  const applicationCount = contributors.filter((contributor) =>
+    path.relative(root, contributorModuleDirectory(contributor.file)).split(path.sep)[0] === "apps").length;
+  const runFile = path.join(root, CREATE_APPLICATION_RUN_FILE);
+  if (applicationCount === 0) {
+    await writeIfChanged(
+      runFile,
+      renderCreateApplicationRunConfiguration(),
+      values["dry-run"],
+      context.output,
+    );
+  } else if (applicationCount > 0 && existsSync(runFile)) {
+    context.output(`${values["dry-run"] ? "would remove" : "remove"} ${runFile}`);
+    if (!values["dry-run"]) {
+      await rm(runFile);
+    }
+  }
   context.output(`code-studio ${version} initialized at ${root}`);
 }
 
@@ -176,8 +220,19 @@ async function addModule(positionals, values, context) {
   const root = findWorkspace(context.cwd);
   const segments = normalizeModuleName(name);
   const scaffold = scaffoldFiles(root, kind, segments);
-  assertScaffoldAvailable(scaffold);
   const contributors = readContributors(root);
+  const id = contributorId(segments);
+  const duplicateId = contributors.find((contributor) => contributor.id === id);
+  if (duplicateId) {
+    throw new Error(`contributor id ${id} already exists at ${contributorModuleDirectory(duplicateId.file)}`);
+  }
+  const moduleName = segments.at(-1);
+  const duplicateModuleName = contributors.find((contributor) =>
+    path.basename(contributorModuleDirectory(contributor.file)) === moduleName);
+  if (duplicateModuleName) {
+    throw new Error(`Amper module name ${moduleName} already exists at ${contributorModuleDirectory(duplicateModuleName.file)}`);
+  }
+  assertScaffoldAvailable(scaffold);
 
   const projectFile = path.join(root, "project.yaml");
   const projectSource = await readFile(projectFile, "utf8");
@@ -198,6 +253,9 @@ async function addModule(positionals, values, context) {
     values["dry-run"],
     context.output,
   );
+  if (kind === "app" && !values["dry-run"]) {
+    await rm(path.join(root, CREATE_APPLICATION_RUN_FILE), { force: true });
+  }
   context.output(`${kind} ${name} added`);
 }
 

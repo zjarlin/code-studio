@@ -103,6 +103,15 @@ export function renderTargetProfile() {
   return `${JSON.stringify({ id: "default", symbols: {}, capabilities: [] }, null, 2)}\n`;
 }
 
+export function renderCreateApplicationRunConfiguration() {
+  return `<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Code Studio - 创建应用" type="NodeJSConfigurationType" application-parameters="add app &quot;$Prompt:应用模块名:my-app$&quot;" path-to-js-file="$PROJECT_DIR$/studio/packages/cli/bin/code-studio.js" working-dir="$PROJECT_DIR$">
+    <method v="2" />
+  </configuration>
+</component>
+`;
+}
+
 export function renderContributorIndex(root, contributors = readContributors(root), additional = {}) {
   const entries = contributors
     .map((contributor) => [
@@ -161,8 +170,13 @@ export function contributorId(segments) {
   return segments.join(".");
 }
 
-export function renderModule(product) {
-  return `product: ${product}\n\napply:\n  - //studio/build-config/code-studio.module-template.yaml\n`;
+export function renderModule(kind, mainClass) {
+  const product = kind === "app" ? "jvm/app" : "jvm/lib";
+  const base = `product: ${product}\n\napply:\n  - //studio/build-config/code-studio.module-template.yaml\n`;
+  if (kind === "library") {
+    return base;
+  }
+  return `${base}\ndependencies:\n  - //studio/modules/development-host\n\nsettings:\n  jvm:\n    mainClass: ${mainClass}\n`;
 }
 
 export function renderContributor(id) {
@@ -200,19 +214,55 @@ function renderInitialMigration() {
   return "-- Keeps an empty contributor migration location resolvable.\nSELECT '${contributorId}';\n";
 }
 
+function kotlinPackageSegment(segment) {
+  return segment.replaceAll("-", "_");
+}
+
+export function renderApplication(packageName) {
+  return `package ${packageName}\n\nimport site.addzero.studio.development.runApplicationDevelopmentHost\n\nfun main() {\n    runApplicationDevelopmentHost()\n}\n`;
+}
+
+export function renderDevelopmentLogging() {
+  return `<configuration>
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="org.flywaydb" level="ERROR"/>
+
+    <root level="INFO">
+        <appender-ref ref="console"/>
+    </root>
+</configuration>
+`;
+}
+
 export function scaffoldFiles(root, kind, segments) {
   const category = kind === "app" ? "apps" : "lib";
   const directory = path.join(root, category, ...segments);
   const id = contributorId(segments);
+  const packageName = ["application", ...segments.map(kotlinPackageSegment)].join(".");
+  const packageDirectory = path.join(directory, "src", "main", "kotlin", ...packageName.split("."));
+  const applicationFiles = kind === "app"
+    ? [
+      [path.join(packageDirectory, "Application.kt"), renderApplication(packageName)],
+      [path.join(packageDirectory, "README.md"), `# ${id} Application\n\nApplication development host entrypoint.\n`],
+      [path.join(directory, "src", "main", "resources", "logback.xml"), renderDevelopmentLogging()],
+    ]
+    : [];
   return {
     relativeDirectory: path.posix.join(category, ...segments),
     directory,
     files: new Map([
-      [path.join(directory, "module.yaml"), renderModule(kind === "app" ? "jvm/app" : "jvm/lib")],
+      [path.join(directory, "module.yaml"), renderModule(kind, `${packageName}.ApplicationKt`)],
       [path.join(directory, "README.md"), `# ${id}\n\nCode Studio contributor.\n`],
       [path.join(directory, CONTRIBUTOR_FILE), renderContributor(id)],
       [path.join(directory, CONTRIBUTOR_MIGRATIONS, initialMigrationName(id)), renderInitialMigration()],
       [path.join(directory, METADATA_SNAPSHOT), renderEmptyMetadataSnapshot(id)],
+      ...applicationFiles,
     ]),
   };
 }
@@ -326,7 +376,7 @@ function assertContributorMigrations(contributors) {
   }
 }
 
-function contributorModuleDirectory(manifest) {
+export function contributorModuleDirectory(manifest) {
   return path.resolve(path.dirname(manifest), "../../../../..");
 }
 

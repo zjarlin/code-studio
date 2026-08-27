@@ -36,6 +36,7 @@ import site.addzero.platform.lowcode.generator.restrictToContributors
 import site.addzero.studio.runtime.GenerationTargetProfile
 import site.addzero.studio.runtime.GENERATION_TARGET_PROFILE_RESOURCE
 import site.addzero.studio.runtime.GenerationTargetProfiles
+import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_RESOURCE
 import site.addzero.studio.runtime.MetadataContributor
 import site.addzero.studio.runtime.MetadataContributors
 import tools.jackson.module.kotlin.jacksonObjectMapper
@@ -45,6 +46,7 @@ import java.sql.Connection
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
+import kotlin.io.path.copyTo
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
@@ -53,18 +55,19 @@ import kotlin.io.path.relativeTo
 import kotlin.io.path.walk
 import kotlin.io.path.writeText
 
-/**
- * 把当前贡献者的元数据迁移打包到清单声明的 classpath 位置。
- */
+/** 合并模块资源与当前 contributor 的运行时契约。 */
 @TaskAction
 @OptIn(ExperimentalPathApi::class)
 fun packageContributorMetadata(
-    @Input contributorManifest: Path,
     @Input contributorMetadataMigrationDirectory: Path,
     @Input generationTargetProfile: Path,
+    @Input moduleResourcesDirectory: Path,
     @Output generatedResourcesDirectory: Path,
 ) {
+    val contributorManifest = moduleResourcesDirectory.resolve(METADATA_CONTRIBUTOR_RESOURCE)
     val contributor = readContributor(contributorManifest)
+    generatedResourcesDirectory.deleteRecursively()
+    copyModuleResources(moduleResourcesDirectory, generatedResourcesDirectory)
     copyContributorMetadata(contributor, contributorMetadataMigrationDirectory, generatedResourcesDirectory)
     val profile = readGenerationTargetProfile(generationTargetProfile)
     val profileResource = generatedResourcesDirectory.resolve(GENERATION_TARGET_PROFILE_RESOURCE)
@@ -83,7 +86,6 @@ internal fun copyContributorMetadata(
         "元数据贡献迁移位置必须是 $expectedLocation"
     }
     val targetDirectory = generatedResourcesDirectory.resolve(expectedLocation.removePrefix("classpath:"))
-    generatedResourcesDirectory.deleteRecursively()
     targetDirectory.createDirectories()
     sourceDirectory.walk()
         .filter { path -> path.toFile().isFile && path.fileName.toString().endsWith(".sql") }
@@ -92,6 +94,24 @@ internal fun copyContributorMetadata(
             val target = targetDirectory.resolve(source.relativeTo(sourceDirectory))
             target.createParentDirectories()
             source.toFile().copyTo(target.toFile(), overwrite = true)
+        }
+}
+
+@OptIn(ExperimentalPathApi::class)
+internal fun copyModuleResources(
+    sourceDirectory: Path,
+    generatedResourcesDirectory: Path,
+) {
+    if (!sourceDirectory.exists()) {
+        return
+    }
+    sourceDirectory.walk()
+        .filter { path -> path.toFile().isFile }
+        .sortedBy { path -> path.relativeTo(sourceDirectory).toString() }
+        .forEach { source ->
+            val target = generatedResourcesDirectory.resolve(source.relativeTo(sourceDirectory))
+            target.createParentDirectories()
+            source.copyTo(target, overwrite = true)
         }
 }
 

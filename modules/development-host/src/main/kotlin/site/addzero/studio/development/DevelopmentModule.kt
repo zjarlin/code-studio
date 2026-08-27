@@ -1,4 +1,4 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_RESOURCE
 import site.addzero.studio.runtime.MetadataContributor
@@ -24,7 +24,7 @@ private data class ContributorSource(
     val manifest: Path,
 )
 
-internal class DevHostModule private constructor(
+internal class DevelopmentModule private constructor(
     val contributor: MetadataContributor,
     val classLoader: URLClassLoader,
     internal val temporaryClasspath: Path,
@@ -41,7 +41,7 @@ internal class DevHostModule private constructor(
         fun load(
             workspace: Path,
             module: Path,
-        ): DevHostModule {
+        ): DevelopmentModule {
             val resources = module.resolve("src/main/resources")
             require(Files.isDirectory(resources)) {
                 "模块缺少 src/main/resources: $module"
@@ -60,10 +60,10 @@ internal class DevHostModule private constructor(
             val temporaryClasspath = Files.createTempDirectory("studio-dev-host-")
             return runCatching {
                 val contributorRoots = materializeContributors(requiredSources, temporaryClasspath)
-                val parent = DevHostModule::class.java.classLoader
+                val parent = DevelopmentModule::class.java.classLoader
                 val resourceUrls = contributorRoots.map { root -> root.toUri().toURL() }.toTypedArray()
                 val classLoader = URLClassLoader(resourceUrls, parent)
-                DevHostModule(selectedSource.contributor, classLoader, temporaryClasspath)
+                DevelopmentModule(selectedSource.contributor, classLoader, temporaryClasspath)
             }.getOrElse { cause ->
                 deleteDirectory(temporaryClasspath)
                 throw cause
@@ -206,7 +206,7 @@ internal class DevHostModule private constructor(
     }
 }
 
-internal fun devSchema(contributorId: String): String {
+internal fun developmentSchema(contributorId: String): String {
     val sanitized = contributorId
         .lowercase(Locale.ROOT)
         .replace(Regex("[^a-z0-9_]"), "_")

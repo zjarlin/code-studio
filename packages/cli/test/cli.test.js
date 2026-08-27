@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const REPOSITORY_ROOT = path.resolve(PACKAGE_ROOT, "../..");
 const CLI = path.join(PACKAGE_ROOT, "bin", "code-studio.js");
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const GIT_ENV = {
@@ -33,6 +34,14 @@ function createStudioRepository() {
   writeFileSync(path.join(repository, "README.md"), "# code-studio fixture\n");
   mkdirSync(path.join(repository, "modules"));
   mkdirSync(path.join(repository, "build-tools"));
+  cpSync(PACKAGE_ROOT, path.join(repository, "packages", "cli"), {
+    recursive: true,
+    filter: (source) => path.basename(source) !== "node_modules",
+  });
+  writeFileSync(path.join(repository, "libs.versions.toml"), readFileSync(path.join(REPOSITORY_ROOT, "libs.versions.toml")));
+  const wrapper = path.join(repository, "kotlin");
+  writeFileSync(wrapper, readFileSync(path.join(REPOSITORY_ROOT, "kotlin")));
+  chmodSync(wrapper, 0o755);
   git(repository, "add", ".");
   git(repository, "commit", "-m", "fixture");
   git(repository, "tag", "v0.1.0");
@@ -88,6 +97,8 @@ test("init preserves existing YAML and is idempotent", () => {
   assertSuccess(first);
   const firstProject = readFileSync(path.join(workspace, "project.yaml"), "utf8");
   const firstIgnore = readFileSync(path.join(workspace, ".gitignore"), "utf8");
+  const createApplicationRunFile = path.join(workspace, ".run", "Code Studio - Create Application.run.xml");
+  const createApplicationRun = readFileSync(createApplicationRunFile, "utf8");
   const localFile = path.join(workspace, ".code-studio", "local.yaml");
   const customizedLocal = `${readFileSync(localFile, "utf8")}custom: preserved\n`;
   assert.match(customizedLocal, /CODE_STUDIO_DB_JDBC_URL/);
@@ -100,6 +111,7 @@ test("init preserves existing YAML and is idempotent", () => {
   assert.equal(readFileSync(path.join(workspace, "project.yaml"), "utf8"), firstProject);
   assert.equal(readFileSync(path.join(workspace, ".gitignore"), "utf8"), firstIgnore);
   assert.equal(readFileSync(localFile, "utf8"), customizedLocal);
+  assert.equal(readFileSync(createApplicationRunFile, "utf8"), createApplicationRun);
   assert.deepEqual(JSON.parse(readFileSync(path.join(workspace, ".code-studio", "target-profile.json"), "utf8")), {
     id: "default",
     symbols: {},
@@ -122,7 +134,22 @@ test("init preserves existing YAML and is idempotent", () => {
   assert.equal(project.modules.filter((entry) => entry === "./studio/build-tools/*").length, 1);
   assert.equal(project.modules.includes("./lib/*"), false);
   assert.equal(firstIgnore, "build/\n.code-studio/local.yaml\n");
+  assert.equal(readFileSync(path.join(workspace, "libs.versions.toml"), "utf8"), readFileSync(path.join(REPOSITORY_ROOT, "libs.versions.toml"), "utf8"));
+  assert.equal(readFileSync(path.join(workspace, "kotlin"), "utf8"), readFileSync(path.join(REPOSITORY_ROOT, "kotlin"), "utf8"));
+  assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/NodeJSConfigurationType/), null);
+  assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/studio\/packages\/cli\/bin\/code-studio\.js/), null);
+  assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/\$Prompt:应用模块名:my-app\$/), null);
   assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.0");
+  const studioCliModules = path.join(workspace, "studio", "packages", "cli", "node_modules");
+  assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), false);
+  const lazyBootstrap = spawnSync(
+    process.execPath,
+    [path.join(workspace, "studio", "packages", "cli", "bin", "code-studio.js"), "--version"],
+    { cwd: workspace, env: GIT_ENV, encoding: "utf8" },
+  );
+  assertSuccess(lazyBootstrap);
+  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.0");
+  assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), true);
 
   assertSuccess(run(workspace, "add", "library", "identity/users"));
   const updatedProject = parse(readFileSync(path.join(workspace, "project.yaml"), "utf8"));
@@ -167,6 +194,17 @@ test("add app and library creates autonomous contributors without duplicate regi
   assert.match(appModule, /product: jvm\/app/);
   assert.match(libraryModule, /product: jvm\/lib/);
   assert.match(appModule, /\/\/studio\/build-config\/code-studio\.module-template\.yaml/);
+  assert.match(appModule, /\/\/studio\/modules\/development-host/);
+  assert.match(appModule, /mainClass: application\.orders\.ApplicationKt/);
+  assert.equal(
+    readFileSync(path.join(workspace, "apps", "orders", "src", "main", "kotlin", "application", "orders", "Application.kt"), "utf8"),
+    "package application.orders\n\nimport site.addzero.studio.development.runApplicationDevelopmentHost\n\nfun main() {\n    runApplicationDevelopmentHost()\n}\n",
+  );
+  assert.match(
+    readFileSync(path.join(workspace, "apps", "orders", "src", "main", "resources", "logback.xml"), "utf8"),
+    /<logger name="org\.flywaydb" level="ERROR"\/>/,
+  );
+  assert.equal(existsSync(path.join(workspace, ".run", "Code Studio - Create Application.run.xml")), false);
 
   const contributor = JSON.parse(readFileSync(path.join(workspace, "lib", "identity", "users", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
   assert.deepEqual(contributor, {
@@ -215,7 +253,34 @@ test("add app and library creates autonomous contributors without duplicate regi
 
   const duplicate = run(workspace, "add", "app", "orders");
   assert.notEqual(duplicate.status, 0);
-  assert.match(duplicate.stderr, /already exists/);
+  assert.match(duplicate.stderr, /contributor id orders already exists/);
+});
+
+test("add validates contributor and Amper module identity before writing", () => {
+  const workspace = temporaryDirectory("identity-conflict");
+  assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
+  assertSuccess(run(workspace, "add", "library", "orders"));
+
+  const duplicateId = run(workspace, "add", "app", "orders");
+  assert.notEqual(duplicateId.status, 0);
+  assert.match(duplicateId.stderr, /contributor id orders already exists/);
+  assert.equal(existsSync(path.join(workspace, "apps", "orders")), false);
+
+  assertSuccess(run(workspace, "add", "library", "sales/invoices"));
+  const duplicateModuleName = run(workspace, "add", "app", "fulfillment/invoices");
+  assert.notEqual(duplicateModuleName.status, 0);
+  assert.match(duplicateModuleName.stderr, /Amper module name invoices already exists/);
+  assert.equal(existsSync(path.join(workspace, "apps", "fulfillment", "invoices")), false);
+});
+
+test("hyphenated app IDs map to valid Kotlin packages", () => {
+  const workspace = temporaryDirectory("hyphenated-app");
+  assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
+  assertSuccess(run(workspace, "add", "app", "my-app"));
+
+  const application = path.join(workspace, "apps", "my-app", "src", "main", "kotlin", "application", "my_app", "Application.kt");
+  assert.match(readFileSync(application, "utf8"), /^package application\.my_app/m);
+  assert.match(readFileSync(path.join(workspace, "apps", "my-app", "module.yaml"), "utf8"), /application\.my_app\.ApplicationKt/);
 });
 
 test("refresh delegates to the selected contributor task", () => {

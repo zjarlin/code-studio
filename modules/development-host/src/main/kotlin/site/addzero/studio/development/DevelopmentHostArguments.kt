@@ -1,14 +1,14 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal data class DevHostArguments(
+internal data class DevelopmentHostArguments(
     val workspace: Path,
     val module: Path,
 ) {
     companion object {
-        fun parse(arguments: Array<String>): DevHostArguments {
+        fun parse(arguments: Array<String>): DevelopmentHostArguments {
             val values = parsePairs(arguments)
             val workspace = requiredDirectory(values, "--workspace")
             val moduleArgument = values.getValue("--module")
@@ -25,7 +25,7 @@ internal data class DevHostArguments(
             require(Files.isDirectory(module)) {
                 "--module 不是目录: $module"
             }
-            return DevHostArguments(workspace, module)
+            return DevelopmentHostArguments(workspace, module)
         }
 
         private fun parsePairs(arguments: Array<String>): Map<String, String> {

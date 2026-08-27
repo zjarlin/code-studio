@@ -87,6 +87,21 @@ jobs:
         working-directory: ${{ steps.workspace.outputs.project }}
         run: ./kotlin check
 
+      - name: Check zero-application bootstrap
+        if: matrix.context == 'standalone'
+        shell: bash
+        run: |
+          host="$RUNNER_TEMP/code-studio-zero-app"
+          mkdir -p "$host"
+          ln -s "$GITHUB_WORKSPACE" "$host/studio"
+          node packages/cli/bin/code-studio.js init "$host" --yes --skip-submodule
+          test -f "$host/.run/Code Studio - Create Application.run.xml"
+          cd "$host"
+          node studio/packages/cli/bin/code-studio.js add app example-app
+          test ! -f ".run/Code Studio - Create Application.run.xml"
+          ./kotlin build --build-dir "$RUNNER_TEMP/code-studio-zero-app-build" -m example-app
+          jar tf "$RUNNER_TEMP/code-studio-zero-app-build/tasks/_example-app_jarJvm/example-app-jvm.jar" | grep -Fx META-INF/code-studio/contributor.json
+
       - name: Check Kotlin embedded project
         if: matrix.context == 'embedded'
         working-directory: ${{ steps.workspace.outputs.project }}

@@ -1,4 +1,4 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -13,7 +13,7 @@ import java.nio.file.Path
 import java.util.UUID
 import javax.sql.DataSource
 
-class DevHostPostgresTest {
+class DevelopmentHostPostgresTest {
     @Test
     fun `库依赖闭包的自治 baseline 可以共享 metadata history`() {
         val workspaceValue = System.getenv("CODE_STUDIO_TEST_WORKSPACE")
@@ -39,7 +39,7 @@ class DevHostPostgresTest {
         val expectedContributorIds = linkedSetOf<String>()
         try {
             modules.forEach { module ->
-                DevHostModule.load(workspace, module).use { loaded ->
+                DevelopmentModule.load(workspace, module).use { loaded ->
                     val contributors = MetadataContributors.load(loaded.classLoader)
                     assertEquals(loaded.contributor.id, MetadataContributors.uniqueRoot(contributors).id)
                     expectedContributorIds += contributors.map(MetadataContributor::id)

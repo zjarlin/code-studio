@@ -1,4 +1,4 @@
-package site.addzero.studio.devhost
+package site.addzero.studio.development
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -7,13 +7,13 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class DevHostArgumentsTest {
+class DevelopmentHostArgumentsTest {
     @Test
     fun `解析 workspace 内的库模块`(@TempDir workspace: Path) {
         val module = workspace.resolve("lib/example-library")
         Files.createDirectories(module)
 
-        val arguments = DevHostArguments.parse(
+        val arguments = DevelopmentHostArguments.parse(
             arrayOf(
                 "--workspace",
                 workspace.toString(),
@@ -32,7 +32,7 @@ class DevHostArgumentsTest {
         @TempDir outside: Path,
     ) {
         assertThrows(IllegalArgumentException::class.java) {
-            DevHostArguments.parse(
+            DevelopmentHostArguments.parse(
                 arrayOf(
                     "--workspace",
                     workspace.toString(),
