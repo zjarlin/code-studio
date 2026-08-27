@@ -12,15 +12,42 @@ describe('low-code API client', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
       code: 0,
       msg: '',
-      data: [],
+      data: { rows: [], totalRowCount: 0, totalPageCount: 0 },
     })))
     vi.stubGlobal('fetch', fetchMock)
     configureLowcodeApiAccessToken(() => ' studio-token ')
 
     await new LowcodeApi().models()
 
-    expect(fetchMock).toHaveBeenCalledWith('/studio/api/lowcode/model/list', expect.objectContaining({
+    expect(fetchMock).toHaveBeenCalledWith('/studio/api/lowcode/model/page', expect.objectContaining({
       headers: expect.objectContaining({ Authorization: 'Bearer studio-token' }),
+    }))
+  })
+
+  it('collects the model catalog through bounded page requests', async () => {
+    const first = { id: 1, modelCode: 'alpha', modelType: 'ENTITY', name: 'Alpha', status: 1, version: 1 }
+    const second = { id: 2, modelCode: 'beta', modelType: 'ENTITY', name: 'Beta', status: 1, version: 1 }
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        code: 0,
+        msg: '',
+        data: { rows: [first], totalRowCount: 2, totalPageCount: 2 },
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        code: 0,
+        msg: '',
+        data: { rows: [second], totalRowCount: 2, totalPageCount: 2 },
+      })))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const models = await new LowcodeApi().models()
+
+    expect(models.map((model) => model.modelCode)).toEqual(['alpha', 'beta'])
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/studio/api/lowcode/model/page', expect.objectContaining({
+      body: JSON.stringify({ pageNumber: 1, pageSize: 20, condition: {} }),
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/studio/api/lowcode/model/page', expect.objectContaining({
+      body: JSON.stringify({ pageNumber: 2, pageSize: 20, condition: {} }),
     }))
   })
 
@@ -38,11 +65,11 @@ describe('low-code API client', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    const page = await new LowcodeApi().modelPage(1, 10)
+    const page = await new LowcodeApi().modelPage(1, 10, { keyword: 'example' })
 
     expect(fetchMock).toHaveBeenCalledWith('/studio/api/lowcode/model/page', expect.objectContaining({
       method: 'POST',
-      body: JSON.stringify({ pageNumber: 1, pageSize: 10, condition: {} }),
+      body: JSON.stringify({ pageNumber: 1, pageSize: 10, condition: { keyword: 'example' } }),
     }))
     expect(page.rows).toHaveLength(1)
     expect(page.totalRowCount).toBe(49)

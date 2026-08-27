@@ -78,7 +78,7 @@ const noticeTone = ref<NoticeTone>('success')
 const busy = ref(false)
 const dirty = ref(false)
 const view = ref<WorkspaceView>('editor')
-const pageNumber = ref(0)
+const pageNumber = ref(1)
 const serverTotalRowCount = ref(0)
 const serverTotalPageCount = ref(0)
 const assistantDraftRevision = ref(0)
@@ -86,42 +86,22 @@ const recentAssistantChanges = ref<LowcodeModelRecentChanges>({ sections: [], fi
 
 const selectedModel = computed(() => modelOptions.value.find((item) => String(item.id) === String(selectedId.value)))
 const assistantDraftIdentity = computed(() => `${selectedId.value ?? 'new'}:${assistantDraftRevision.value}`)
-const searchKeyword = computed(() => search.value.trim().toLowerCase())
-const matchingModelOptions = computed(() => {
-  const keyword = searchKeyword.value
-  if (!keyword) {
-    return modelOptions.value
-  }
-  return modelOptions.value.filter((item) =>
-    `${item.name} ${item.modelCode} ${item.contributorId ?? ''}`.toLowerCase().includes(keyword),
-  )
-})
-const visibleModels = computed(() => {
-  if (!searchKeyword.value) {
-    return models.value
-  }
-  const start = pageNumber.value * pageSize
-  return matchingModelOptions.value.slice(start, start + pageSize)
-})
-const totalRowCount = computed(() => searchKeyword.value
-  ? matchingModelOptions.value.length
-  : serverTotalRowCount.value)
-const totalPageCount = computed(() => searchKeyword.value
-  ? Math.ceil(matchingModelOptions.value.length / pageSize)
-  : serverTotalPageCount.value)
+const visibleModels = computed(() => models.value)
+const totalRowCount = computed(() => serverTotalRowCount.value)
+const totalPageCount = computed(() => serverTotalPageCount.value)
 const pageRangeLabel = computed(() => {
   if (totalRowCount.value === 0) {
     return '0 项'
   }
-  const first = pageNumber.value * pageSize + 1
+  const first = (pageNumber.value - 1) * pageSize + 1
   const last = Math.min(first + visibleModels.value.length - 1, totalRowCount.value)
   return `${first}-${last} / ${totalRowCount.value}`
 })
 const pageLabel = computed(() => totalPageCount.value === 0
   ? '0 / 0'
-  : `${pageNumber.value + 1} / ${totalPageCount.value}`)
-const canGoPrevious = computed(() => pageNumber.value > 0)
-const canGoNext = computed(() => pageNumber.value + 1 < totalPageCount.value)
+  : `${pageNumber.value} / ${totalPageCount.value}`)
+const canGoPrevious = computed(() => pageNumber.value > 1)
+const canGoNext = computed(() => pageNumber.value < totalPageCount.value)
 const canPersist = computed(() => ready.value)
 const modelResourceLabel = computed(() => props.mode === 'controller'
   ? 'Controller'
@@ -133,11 +113,9 @@ const modelResourceLabel = computed(() => props.mode === 'controller'
 const saveModelLabel = computed(() => `保存${modelResourceLabel.value}`)
 const editorTitle = computed(() => props.mode === 'controller' ? 'Controller' : '模型')
 
-watch(search, (value) => {
-  pageNumber.value = 0
-  if (!value.trim()) {
-    void run(refreshModels)
-  }
+watch(search, () => {
+  pageNumber.value = 1
+  void run(refreshModels)
 })
 
 onMounted(async () => {
@@ -166,21 +144,22 @@ watch(() => props.createRequest, (request, previous) => {
 })
 
 async function refreshModelData(): Promise<void> {
-  modelOptions.value = await api.models()
-  if (searchKeyword.value) {
-    clampSearchPage()
-    return
-  }
-  await refreshModels()
+  const [options] = await Promise.all([
+    api.models(),
+    refreshModels(),
+  ])
+  modelOptions.value = options
 }
 
 async function refreshModels(requestedPageNumber = pageNumber.value): Promise<void> {
   let resolvedPageNumber = requestedPageNumber
-  let page = await api.modelPage(resolvedPageNumber, pageSize)
-  const lastPageNumber = Math.max(page.totalPageCount - 1, 0)
+  const keyword = search.value.trim()
+  const condition = keyword ? { keyword } : {}
+  let page = await api.modelPage(resolvedPageNumber, pageSize, condition)
+  const lastPageNumber = Math.max(page.totalPageCount, 1)
   if (resolvedPageNumber > lastPageNumber) {
     resolvedPageNumber = lastPageNumber
-    page = await api.modelPage(resolvedPageNumber, pageSize)
+    page = await api.modelPage(resolvedPageNumber, pageSize, condition)
   }
   pageNumber.value = resolvedPageNumber
   models.value = page.rows
@@ -188,17 +167,8 @@ async function refreshModels(requestedPageNumber = pageNumber.value): Promise<vo
   serverTotalPageCount.value = page.totalPageCount
 }
 
-function clampSearchPage(): void {
-  const lastPageNumber = Math.max(Math.ceil(matchingModelOptions.value.length / pageSize) - 1, 0)
-  pageNumber.value = Math.min(pageNumber.value, lastPageNumber)
-}
-
 async function changePage(nextPageNumber: number): Promise<void> {
-  if (busy.value || nextPageNumber < 0 || nextPageNumber >= totalPageCount.value) {
-    return
-  }
-  if (searchKeyword.value) {
-    pageNumber.value = nextPageNumber
+  if (busy.value || nextPageNumber < 1 || nextPageNumber > totalPageCount.value) {
     return
   }
   await run(() => refreshModels(nextPageNumber))
@@ -313,7 +283,7 @@ async function saveModel(): Promise<void> {
     const saved = await api.save(model.value)
     const id = model.value.id ?? saved
     dirty.value = false
-    pageNumber.value = 0
+    pageNumber.value = 1
     await refreshModelData()
     const persisted = modelOptions.value.find((item) => String(item.id) === String(id))
     if (persisted) {

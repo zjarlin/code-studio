@@ -3,7 +3,7 @@ import { defineComponent, h } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TooltipProvider } from '@/components/generated/shadcn/tooltip'
-import type { LsiLibraryFeature, LsiLibrarySpec, LowcodeDtoResourceSummary } from '@/types'
+import type { LsiLibraryFeature, LsiLibrarySpec, LowcodeDtoResourceSummary, LowcodeModelSummary } from '@/types'
 
 import LibraryResourceWorkspace from './LibraryResourceWorkspace.vue'
 
@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   contracts: vi.fn().mockResolvedValue([]),
   dtoDetail: vi.fn(),
   dtos: vi.fn(),
+  modelPage: vi.fn(),
   models: vi.fn(),
   saveDto: vi.fn().mockResolvedValue(true),
   validateDto: vi.fn().mockResolvedValue({ valid: true, errors: [], warnings: [] }),
@@ -21,6 +22,7 @@ vi.mock('@/lowcode-api', () => ({
     contracts = api.contracts
     dtoDetail = api.dtoDetail
     dtos = api.dtos
+    modelPage = api.modelPage
     models = api.models
     saveDto = api.saveDto
     validateDto = api.validateDto
@@ -78,15 +80,31 @@ const dto: LowcodeDtoResourceSummary = {
   description: '工具注册表与策略集合。',
 }
 
-function mountWorkspace() {
+function mountWorkspace(resource: 'dtos' | 'models' = 'dtos') {
   const host = defineComponent(() => () => h(TooltipProvider, null, {
     default: () => h(LibraryResourceWorkspace, {
-      resource: 'dtos',
+      resource,
       features: [feature],
       librarySpec,
     }),
   }))
   return mount(host)
+}
+
+function model(id: number, modelCode: string): LowcodeModelSummary {
+  return {
+    id,
+    featureId: 2,
+    modelCode,
+    modelType: 'ENTITY',
+    name: modelCode,
+    className: modelCode,
+    tableName: modelCode.toLowerCase(),
+    status: 1,
+    version: 1,
+    fields: [],
+    relations: [],
+  }
 }
 
 describe('LibraryResourceWorkspace DTO table', () => {
@@ -136,5 +154,27 @@ describe('LibraryResourceWorkspace DTO table', () => {
       status: 1,
       version: 1,
     }))
+  })
+})
+
+describe('LibraryResourceWorkspace model pagination', () => {
+  it('loads and changes bounded server pages for the current Library', async () => {
+    api.modelPage
+      .mockResolvedValueOnce({ rows: [model(1, 'Alpha')], totalRowCount: 11, totalPageCount: 2 })
+      .mockResolvedValueOnce({ rows: [model(11, 'Omega')], totalRowCount: 11, totalPageCount: 2 })
+    api.dtos.mockResolvedValue([])
+    const wrapper = mountWorkspace('models')
+    await flushPromises()
+
+    expect(api.modelPage).toHaveBeenNthCalledWith(1, 1, 10, { contributorId: 'example' })
+    expect(wrapper.text()).toContain('1 / 2')
+    expect((wrapper.get('input[readonly]').element as HTMLInputElement).value).toBe('Alpha.kt')
+
+    await wrapper.get('button[aria-label="下一页"]').trigger('click')
+    await flushPromises()
+
+    expect(api.modelPage).toHaveBeenNthCalledWith(2, 2, 10, { contributorId: 'example' })
+    expect(wrapper.text()).toContain('2 / 2')
+    expect((wrapper.get('input[readonly]').element as HTMLInputElement).value).toBe('Omega.kt')
   })
 })

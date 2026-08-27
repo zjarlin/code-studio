@@ -32,27 +32,38 @@ import type {
 } from './types'
 
 let accessTokenProvider: () => string = () => ''
+const MODEL_CATALOG_PAGE_SIZE = 20
 
 export function configureLowcodeApiAccessToken(provider: () => string): void {
   accessTokenProvider = provider
 }
 
 export class LowcodeApi {
-  async models(): Promise<LowcodeModelSummary[]> {
-    return this.request('/studio/api/lowcode/model/list', {
-      method: 'POST',
-      body: JSON.stringify({ condition: {} }),
-    })
+  async models(condition: JsonObject = {}): Promise<LowcodeModelSummary[]> {
+    const models: LowcodeModelSummary[] = []
+    let pageNumber = 1
+    let totalPageCount = 1
+    while (pageNumber <= totalPageCount) {
+      const page = await this.modelPage(pageNumber, MODEL_CATALOG_PAGE_SIZE, condition)
+      models.push(...page.rows)
+      totalPageCount = page.totalPageCount
+      pageNumber += 1
+    }
+    return models
   }
 
-  async modelPage(pageNumber: number, pageSize: number): Promise<PageResult<LowcodeModelSummary>> {
+  async modelPage(
+    pageNumber: number,
+    pageSize: number,
+    condition: JsonObject = {},
+  ): Promise<PageResult<LowcodeModelSummary>> {
     const page = await this.request<{
       rows: LowcodeModelSummary[]
       totalRowCount: number | string
       totalPageCount: number | string
     }>('/studio/api/lowcode/model/page', {
       method: 'POST',
-      body: JSON.stringify({ pageNumber, pageSize, condition: {} }),
+      body: JSON.stringify({ pageNumber, pageSize, condition }),
     })
     return {
       rows: page.rows,
