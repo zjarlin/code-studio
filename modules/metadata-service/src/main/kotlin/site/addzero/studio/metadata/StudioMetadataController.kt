@@ -112,10 +112,6 @@ class StudioMetadataController(
 
     private fun Route.installModelEndpoints() {
         route("/model") {
-            post("/list") {
-                val request = call.receive<JsonNode>()
-                call.respondMetadata { store.read { modelList(request) } }
-            }
             post("/page") {
                 val request = call.receive<JsonNode>()
                 call.respondMetadata { store.read { modelPage(request) } }

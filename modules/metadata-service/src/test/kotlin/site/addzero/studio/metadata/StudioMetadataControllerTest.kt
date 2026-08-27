@@ -97,7 +97,15 @@ class StudioMetadataControllerTest {
                 val modelDetail = client.get("/studio/api/lowcode/model/detail?id=$modelId").result()
                 assertEquals(EDITABLE_ID, modelDetail["data"]["contributorId"].asString())
                 assertEquals(1, modelDetail["data"]["fields"].size())
-                assertEquals(1, client.postJson("/studio/api/lowcode/model/list", """{"condition":{}}""").result()["data"].size())
+                val modelPage = client.postJson(
+                    "/studio/api/lowcode/model/page",
+                    """{"pageNumber":1,"pageSize":1,"condition":{"keyword":"Catalog"}}""",
+                ).result()["data"]
+                assertEquals(1, modelPage["rows"].size())
+                assertEquals(1, modelPage["totalRowCount"].asInt())
+                assertEquals(1, modelPage["totalPageCount"].asInt())
+                assertEquals(1, modelPage["rows"][0]["fields"].size())
+                assertEquals(1, modelPage["rows"][0]["queries"][0]["items"].size())
 
                 val dtoCommand = dtoCommand(featureId)
                 assertValid(client, "/studio/api/lowcode/dto/validate", dtoCommand)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Save, Settings2, WandSparkles } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Plus, Save, Settings2, WandSparkles } from '@lucide/vue'
 import { computed, defineAsyncComponent, onMounted, ref, shallowRef, watch } from 'vue'
 
 import IconButton from '@/components/composed/icon-button/IconButton.vue'
@@ -72,6 +72,11 @@ const notice = ref('')
 const dialogOpen = ref(false)
 const activeCode = ref('')
 const editorRequest = ref(0)
+const modelPageNumber = ref(1)
+const modelTotalRowCount = ref(0)
+const modelTotalPageCount = ref(0)
+const loading = ref(false)
+const modelPageSize = 10
 let localSequence = 0
 
 const resourceLabel = computed(() => ({ models: '模型', dtos: 'DTO', services: 'Service' })[props.resource])
@@ -180,20 +185,36 @@ const dtoColumnContext = computed(() => ({
   models: models.value.filter((model) => model.modelType === 'ENTITY')
     .map((model) => `${model.modelCode}:${model.name}`).join('；'),
 }))
+const modelPageRangeLabel = computed(() => {
+  if (modelTotalRowCount.value === 0) return '0 项'
+  const first = (modelPageNumber.value - 1) * modelPageSize + 1
+  const last = Math.min(first + models.value.length - 1, modelTotalRowCount.value)
+  return `${first}-${last} / ${modelTotalRowCount.value}`
+})
+const modelPageLabel = computed(() => modelTotalPageCount.value === 0
+  ? '0 / 0'
+  : `${modelPageNumber.value} / ${modelTotalPageCount.value}`)
 
 onMounted(async () => {
   await refresh()
   if (props.createRequest > 0) createResource()
 })
-watch(() => [props.resource, props.selectedFeatureId, props.features.map((feature) => feature.id).join('|')], refresh)
+watch(() => [props.resource, props.selectedFeatureId, props.features.map((feature) => feature.id).join('|')], () => {
+  modelPageNumber.value = 1
+  void refresh()
+})
 watch(() => props.createRequest, (request, previous) => {
   if (request > previous) createResource()
 })
 
 async function refresh(): Promise<void> {
+  loading.value = true
   notice.value = ''
   try {
-    const [allModels, allDtos, allServices] = await Promise.all([api.models(), api.dtos(), api.contracts()])
+    const modelsRequest = props.resource === 'services' ? Promise.resolve([]) : loadModels()
+    const dtosRequest = props.resource === 'dtos' ? api.dtos() : Promise.resolve([])
+    const servicesRequest = props.resource === 'services' ? api.contracts() : Promise.resolve([])
+    const [allModels, allDtos, allServices] = await Promise.all([modelsRequest, dtosRequest, servicesRequest])
     models.value = allModels.filter((item) => owns(item.featureId))
     dtos.value = allDtos.filter((item) => owns(item.featureId))
     services.value = allServices.filter((item) => owns(item.featureId))
@@ -202,7 +223,30 @@ async function refresh(): Promise<void> {
     dirty.value = new Set()
   } catch (cause) {
     notice.value = cause instanceof Error ? cause.message : `读取${resourceLabel.value}失败`
+  } finally {
+    loading.value = false
   }
+}
+
+async function loadModels(): Promise<LowcodeModelSummary[]> {
+  const condition: JsonObject = { contributorId: contributorId.value }
+  if (selectedFeature.value) condition.featureId = selectedFeature.value.id
+  if (props.resource !== 'models') return api.models(condition)
+  let page = await api.modelPage(modelPageNumber.value, modelPageSize, condition)
+  const lastPageNumber = Math.max(page.totalPageCount, 1)
+  if (modelPageNumber.value > lastPageNumber) {
+    modelPageNumber.value = lastPageNumber
+    page = await api.modelPage(modelPageNumber.value, modelPageSize, condition)
+  }
+  modelTotalRowCount.value = page.totalRowCount
+  modelTotalPageCount.value = page.totalPageCount
+  return page.rows
+}
+
+async function changeModelPage(nextPageNumber: number): Promise<void> {
+  if (loading.value || dirty.value.size > 0 || nextPageNumber < 1 || nextPageNumber > modelTotalPageCount.value) return
+  modelPageNumber.value = nextPageNumber
+  await refresh()
 }
 
 function owns(featureId?: number | string): boolean {
@@ -566,6 +610,27 @@ function dtoColumnClass(key: string): string {
         </TableBody>
       </Table>
     </div>
+
+    <nav v-if="resource === 'models'" class="model-pagination library-resource-pagination" aria-label="Library 模型分页">
+      <span class="model-page-range">{{ modelPageRangeLabel }}</span>
+      <div class="model-page-controls">
+        <IconButton
+          :disabled="loading || dirty.size > 0 || modelPageNumber <= 1"
+          :icon="ChevronLeft"
+          label="上一页"
+          tooltip
+          @click="changeModelPage(modelPageNumber - 1)"
+        />
+        <span class="model-page-label" aria-live="polite">{{ modelPageLabel }}</span>
+        <IconButton
+          :disabled="loading || dirty.size > 0 || modelPageNumber >= modelTotalPageCount"
+          :icon="ChevronRight"
+          label="下一页"
+          tooltip
+          @click="changeModelPage(modelPageNumber + 1)"
+        />
+      </div>
+    </nav>
 
     <Dialog v-model:open="dialogOpen">
       <DialogScrollContent class="library-resource-dialog">
