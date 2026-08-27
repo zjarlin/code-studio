@@ -30,7 +30,6 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
-          registry-url: https://registry.npmjs.org
 
       - name: Verify tag and package version
         working-directory: packages/cli
@@ -45,5 +44,3 @@ jobs:
       - name: Publish npm package with provenance
         working-directory: packages/cli
         run: npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
