@@ -7,6 +7,7 @@ import { parseDocument } from "yaml";
 import {
   INFRASTRUCTURE_FILE,
   assertPublishedCatalog,
+  publishedContributorCoordinates,
   publishedContributors,
   publishedDependencies,
   renderInfrastructureConfig,
@@ -422,8 +423,9 @@ function exactStudioVersion(studio) {
   return runCommand("git", ["describe", "--tags", "--exact-match", "HEAD"], { cwd: studio, capture: true });
 }
 
-function assertPublishedApplicationDependencies(root, contributors) {
+function assertPublishedApplicationDependencies(root, contributors, platformVersion) {
   const expectedDependencies = publishedDependencies();
+  const expectedContributorClasspath = publishedContributorCoordinates(platformVersion);
   const applications = contributors.filter((contributor) =>
     path.relative(root, contributorModuleDirectory(contributor.file)).split(path.sep)[0] === "apps");
   for (const application of applications) {
@@ -432,6 +434,11 @@ function assertPublishedApplicationDependencies(root, contributors) {
     for (const dependency of expectedDependencies) {
       if (!source.split(/\r?\n/).some((line) => line.trim() === `- ${dependency}`)) {
         throw new Error(`${moduleFile} is missing published infrastructure dependency ${dependency}`);
+      }
+    }
+    for (const dependency of expectedContributorClasspath) {
+      if (!source.split(/\r?\n/).some((line) => line.trim() === `- ${dependency}`)) {
+        throw new Error(`${moduleFile} is missing published contributor classpath ${dependency}`);
       }
     }
   }
@@ -506,7 +513,11 @@ function doctor(context, version) {
       throw new Error(`${catalogFile} does not exist`);
     }
     assertPublishedCatalog(readFileSyncUtf8(catalogFile), infrastructure.platformVersion);
-    const applications = assertPublishedApplicationDependencies(root, contributors);
+    const applications = assertPublishedApplicationDependencies(
+      root,
+      contributors,
+      infrastructure.platformVersion,
+    );
     const executable = existsSync(path.join(root, "kotlin")) ? path.join(root, "kotlin") : "kotlin";
     for (const application of applications) {
       const moduleName = path.basename(contributorModuleDirectory(application.file));
