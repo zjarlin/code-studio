@@ -22,9 +22,14 @@ npx --yes code-studio@latest add app "$APP_NAME"
 ./kotlin run -m "$APP_NAME"
 ```
 
-Change the three `CODE_STUDIO_DB_*` values above for your database, or edit `.code-studio/local.yaml` after `init`.
-
 Open [http://127.0.0.1:8080/studio/](http://127.0.0.1:8080/studio/).
+
+## Dev And Prod
+
+- Dev: edit `.code-studio/local.yaml`. `CODE_STUDIO_*` environment variables override it.
+- Prod: set `CODE_STUDIO_DB_JDBC_URL`, `CODE_STUDIO_DB_USERNAME`, `CODE_STUDIO_DB_PASSWORD`, and `CODE_STUDIO_PORT` in the deployment environment. Do not commit production credentials.
+
+There is no separate dev/prod profile yet. Generated applications currently run the development host.
 
 ## Upgrade And Run
 
