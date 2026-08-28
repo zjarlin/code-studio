@@ -183,7 +183,7 @@ EOF
 
 # ********** Project-local version detection **********
 
-# 1. Search upwards for an executable `amper` file and/or `project.yaml`
+# 1. Search upwards for an executable `kotlin` wrapper and/or `project.yaml`
 # Sets wrapper_script to the found wrapper path, or empty string if not found.
 find_project_context() {
   wrapper_script=""

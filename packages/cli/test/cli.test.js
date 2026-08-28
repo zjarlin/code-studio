@@ -44,7 +44,7 @@ function createStudioRepository() {
   chmodSync(wrapper, 0o755);
   git(repository, "add", ".");
   git(repository, "commit", "-m", "fixture");
-  git(repository, "tag", "v0.1.1");
+  git(repository, "tag", "v0.1.2");
   return repository;
 }
 
@@ -168,7 +168,7 @@ test("init preserves existing YAML and is idempotent", () => {
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/NodeJSConfigurationType/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/studio\/packages\/cli\/bin\/code-studio\.js/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/\$Prompt:应用模块名:my-app\$/), null);
-  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.1");
+  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.2");
   const studioCliModules = path.join(workspace, "studio", "packages", "cli", "node_modules");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), false);
   const lazyBootstrap = spawnSync(
@@ -177,7 +177,7 @@ test("init preserves existing YAML and is idempotent", () => {
     { cwd: workspace, env: GIT_ENV, encoding: "utf8" },
   );
   assertSuccess(lazyBootstrap);
-  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.1");
+  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.2");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), true);
 
   assertSuccess(run(workspace, "add", "library", "identity/users"));
@@ -285,7 +285,7 @@ test("add app and library creates autonomous contributors without duplicate regi
   assert.match(duplicate.stderr, /contributor id orders already exists/);
 });
 
-test("add validates contributor and Amper module identity before writing", () => {
+test("add validates contributor and Kotlin Toolchain module identity before writing", () => {
   const workspace = temporaryDirectory("identity-conflict");
   assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
   assertSuccess(run(workspace, "add", "library", "orders"));
@@ -298,7 +298,7 @@ test("add validates contributor and Amper module identity before writing", () =>
   assertSuccess(run(workspace, "add", "library", "sales/invoices"));
   const duplicateModuleName = run(workspace, "add", "app", "fulfillment/invoices");
   assert.notEqual(duplicateModuleName.status, 0);
-  assert.match(duplicateModuleName.stderr, /Amper module name invoices already exists/);
+  assert.match(duplicateModuleName.stderr, /Kotlin Toolchain module name invoices already exists/);
   assert.equal(existsSync(path.join(workspace, "apps", "fulfillment", "invoices")), false);
 });
 

@@ -150,7 +150,7 @@ export function findWorkspace(start) {
     }
     const parent = path.dirname(current);
     if (parent === current) {
-      throw new Error("no Amper project.yaml found");
+      throw new Error("no Kotlin Toolchain project found (project.yaml is missing)");
     }
     current = parent;
   }

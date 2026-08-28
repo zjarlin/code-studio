@@ -1,6 +1,6 @@
 # Code Studio
 
-Code Studio is an application-owned metadata compiler and embedded development studio for Amper projects. It provides generated CRUD, contracts, routes, OpenAPI metadata, and UI without introducing a central Studio process or database.
+Code Studio is an application-owned metadata compiler and embedded development studio for Kotlin Toolchain projects. It provides generated CRUD, contracts, routes, OpenAPI metadata, and UI without introducing a central Studio process or database.
 
 Applications own their PostgreSQL metadata and expose Studio from their own process and port at `/studio/`. Libraries own their metadata migrations and generated code, but do not need a startup class.
 
@@ -21,7 +21,7 @@ npx --yes code-studio@latest doctor
 
 Change `WORKSPACE_DIR` and `APP_NAME` before running the block. `init` creates the Git repository and Studio submodule, while `add app` creates the runnable application under `apps/$APP_NAME`.
 
-`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
+`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Kotlin Toolchain plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload the Kotlin Toolchain project; the new runnable application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
 
 The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
 
@@ -122,6 +122,6 @@ An npm trusted publisher can only be configured after the package exists. Bootst
 
 - `ui`: embedded Vue application.
 - `modules`: LSI compiler, runtime contracts, embedded server, and reusable development host.
-- `build-tools`: incremental Amper plugins.
+- `build-tools`: incremental Kotlin Toolchain plugins.
 - `apps/dev-host`: thin standalone launcher for the reusable library development host.
 - `packages/cli`: public `code-studio` npm package.

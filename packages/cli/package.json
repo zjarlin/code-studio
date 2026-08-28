@@ -1,7 +1,7 @@
 {
   "name": "code-studio",
-  "version": "0.1.1",
-  "description": "Application-owned metadata studio scaffolding for Amper workspaces",
+  "version": "0.1.2",
+  "description": "Application-owned metadata studio scaffolding for Kotlin Toolchain workspaces",
   "type": "module",
   "bin": {
     "code-studio": "bin/code-studio.js"

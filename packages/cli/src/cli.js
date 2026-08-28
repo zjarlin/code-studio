@@ -230,7 +230,7 @@ async function addModule(positionals, values, context) {
   const duplicateModuleName = contributors.find((contributor) =>
     path.basename(contributorModuleDirectory(contributor.file)) === moduleName);
   if (duplicateModuleName) {
-    throw new Error(`Amper module name ${moduleName} already exists at ${contributorModuleDirectory(duplicateModuleName.file)}`);
+    throw new Error(`Kotlin Toolchain module name ${moduleName} already exists at ${contributorModuleDirectory(duplicateModuleName.file)}`);
   }
   assertScaffoldAvailable(scaffold);
 
