@@ -1,6 +1,7 @@
 package site.addzero.toolchain.lowcode
 
 import org.jetbrains.amper.plugins.Configurable
+import org.jetbrains.amper.plugins.Classpath
 import java.nio.file.Path
 
 /**
@@ -8,6 +9,11 @@ import java.nio.file.Path
  */
 @Configurable
 interface LowcodeSourceBuildSettings {
+    /**
+     * 由 Toolchain 独立解析的中央 contributor 制品，禁止包含当前源码模块。
+     */
+    val contributorClasspath: Classpath
+
     /**
      * 生成目标运行时符号映射文件。
      */

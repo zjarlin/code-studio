@@ -6,6 +6,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import site.addzero.studio.runtime.GENERATION_TARGET_PROFILE_RESOURCE
 import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_RESOURCE
+import site.addzero.studio.runtime.metadataSnapshotResource
+import site.addzero.platform.lowcode.generator.LowcodeMetadata
+import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshot
+import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshots
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -40,6 +44,19 @@ class ContributorMetadataPackagingTest {
             """.trimIndent() + "\n",
         )
         Files.writeString(resources.resolve("logback.xml"), "<configuration/>\n")
+        val snapshot = LowcodeMetadataSnapshot(
+            contributorId = "example-app",
+            contributorIds = listOf("example-app"),
+            metadata = LowcodeMetadata(
+                models = emptyList(),
+                dtoDefinitions = emptyList(),
+                routeBindings = emptyList(),
+                contracts = emptyList(),
+            ),
+        )
+        val snapshotFile = workspace.resolve("metadata.json")
+        val snapshotContent = LowcodeMetadataSnapshots.encode(snapshot)
+        Files.writeString(snapshotFile, snapshotContent)
         val output = workspace.resolve("output")
         Files.createDirectories(output)
         Files.writeString(output.resolve("stale.txt"), "stale\n")
@@ -47,6 +64,7 @@ class ContributorMetadataPackagingTest {
         packageContributorMetadata(
             contributorMetadataMigrationDirectory = migrations,
             generationTargetProfile = profile,
+            metadataSnapshot = snapshotFile,
             moduleResourcesDirectory = resources,
             generatedResourcesDirectory = output,
         )
@@ -54,6 +72,10 @@ class ContributorMetadataPackagingTest {
         assertFalse(Files.exists(output.resolve("stale.txt")))
         assertEquals("<configuration/>\n", Files.readString(output.resolve("logback.xml")))
         assertEquals(manifestContent, Files.readString(output.resolve(METADATA_CONTRIBUTOR_RESOURCE)))
+        assertEquals(
+            snapshotContent,
+            Files.readString(output.resolve(metadataSnapshotResource("example-app"))),
+        )
         assertEquals(
             "SELECT '${'$'}{contributorId}';\n",
             Files.readString(output.resolve("db/studio/metadata/example-app/R__example_app.sql")),

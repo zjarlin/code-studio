@@ -28,6 +28,7 @@
     "access": "public"
   },
   "dependencies": {
+    "smol-toml": "^1.8.0",
     "yaml": "^2.8.1"
   }
 }

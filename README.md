@@ -9,10 +9,10 @@ Applications own their PostgreSQL metadata and expose Studio from their own proc
 Run this in a new or existing Amper workspace:
 
 ```shell
-npx code-studio@latest init
+npx code-studio@latest init --infra source
 ```
 
-`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application, its companion `lib/<name>-lib`, and shared `lib/infra/{system-user,system-file,system-foundation,cache}` infrastructure libraries are ready, and the application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
+`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. Infrastructure mode is workspace-owned: `source` creates shared `lib/infra/*` modules for platform development, while `published` creates only a runnable application and `lib/<name>-lib`, with infrastructure aligned by `site.addzero:platform-bom`. The initial default remains `source`; existing workspaces are never switched automatically.
 
 The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
 
@@ -23,6 +23,7 @@ The generated workspace files are:
 - `.code-studio/local.yaml`: ignored local PostgreSQL connection settings.
 - `.code-studio/target-profile.json`: versioned mappings for host-specific generated symbols.
 - `.code-studio/contributors.json`: versioned contributor ID to module-root index.
+- `.code-studio/infrastructure.json`: versioned `source` or `published` mode and the locked published platform version.
 - `.run/Code Studio - Create Application.run.xml`: first-application creator, present only while the workspace has no applications.
 - `kotlin` and `libs.versions.toml`: copied from the pinned Studio version only when absent.
 - `studio/`: the source submodule pinned by the consuming repository.
@@ -31,8 +32,8 @@ The generated workspace files are:
 
 | Command | Purpose |
 | --- | --- |
-| `code-studio init [directory]` | Initialize or update the workspace integration. |
-| `code-studio add app <name>` | Create a runnable application contributor and development host entrypoint. |
+| `code-studio init [directory] [--infra source\|published]` | Initialize or update the workspace integration. |
+| `code-studio add app <name>` | Create a runnable application contributor using the persisted infrastructure mode. |
 | `code-studio add library <name>` | Create a library contributor without a main class. |
 | `code-studio dev <module>` | Run the shared development host for one library or application. |
 | `code-studio refresh <module>` | Replay the explicit contributor closure and update its canonical metadata snapshot. |
@@ -40,13 +41,13 @@ The generated workspace files are:
 | `code-studio doctor` | Validate the submodule version, project wiring, profiles, and contributor graph. |
 | `code-studio upgrade` | Align the submodule with the installed CLI version. |
 
-`--repo <url>` or `CODE_STUDIO_REPOSITORY_URL` selects another source repository. `--skip-submodule` is available for offline and fixture setup.
+`--platform-version yyyy.MM.dd` overrides the CLI-pinned compatibility version only in `published` mode; dynamic `latest` resolution is not supported. `--repo <url>` or `CODE_STUDIO_REPOSITORY_URL` selects another source repository. `--skip-submodule` is available for offline and fixture setup.
 
 ## Ownership Model
 
 The generated application is a runnable development shell backed by `studio/modules/development-host`. It serves `/studio/` from loopback using `.code-studio/local.yaml`, so a new workspace is usable before it has a custom runtime. As the application grows, its source-owned `Application.kt` is the handoff point for the real port, datasource, authentication, dependency injection, and `StudioAccessPolicy`; the generator never overwrites it.
 
-A library owns its `META-INF/code-studio/contributor.json`, immutable metadata migrations, and generated sources. Applications may inspect dependency contributors but cannot mutate them. To edit a library, run its isolated host:
+A library owns its `META-INF/code-studio/contributor.json`, canonical snapshot, immutable metadata migrations, and generated sources. Applications may inspect dependency contributors but cannot mutate them. Published infrastructure is always read-only; use a `source` workspace to change it. To edit a source library, run its isolated host:
 
 ```shell
 code-studio dev identity/users

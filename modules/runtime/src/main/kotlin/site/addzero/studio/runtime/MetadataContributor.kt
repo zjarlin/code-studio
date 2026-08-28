@@ -1,8 +1,16 @@
 package site.addzero.studio.runtime
 
 const val METADATA_CONTRIBUTOR_RESOURCE: String = "META-INF/code-studio/contributor.json"
+const val METADATA_SNAPSHOT_RESOURCE_DIRECTORY: String = "META-INF/code-studio/snapshots"
 const val METADATA_CONTRIBUTOR_FORMAT_VERSION: Int = 1
 private val METADATA_CONTRIBUTOR_ID = Regex("[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*")
+
+fun metadataSnapshotResource(contributorId: String): String {
+    require(METADATA_CONTRIBUTOR_ID.matches(contributorId)) {
+        "元数据贡献 id 必须以小写字母开头，只允许小写字母、数字、- 和 .: $contributorId"
+    }
+    return "$METADATA_SNAPSHOT_RESOURCE_DIRECTORY/$contributorId.json"
+}
 
 /** 一个应用或库随 JAR 发布的元数据贡献清单。 */
 data class MetadataContributor(

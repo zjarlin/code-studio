@@ -117,6 +117,10 @@ test("init preserves existing YAML and is idempotent", () => {
     symbols: {},
     capabilities: [],
   });
+  assert.deepEqual(JSON.parse(readFileSync(path.join(workspace, ".code-studio", "infrastructure.json"), "utf8")), {
+    formatVersion: 1,
+    mode: "source",
+  });
   assert.match(firstProject, /# keep this comment/);
   const project = parse(firstProject);
   assert.deepEqual(project.custom, { mode: "preserved" });
@@ -222,16 +226,23 @@ test("add app creates a companion library and autonomous contributors", () => {
   assert.equal(existsSync(path.join(workspace, ".run", "Code Studio - Create Application.run.xml")), false);
 
   const applicationContributor = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
-  assert.deepEqual(applicationContributor.requires, ["cache", "orders-lib", "system-file", "system-foundation", "system-user"]);
+  assert.deepEqual(applicationContributor.requires, ["orders-lib", "system-file", "system-foundation", "system-user"]);
   const applicationSnapshot = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "lowcode-metadata", "metadata.json"), "utf8"));
-  assert.deepEqual(applicationSnapshot.contributorIds, ["cache", "orders", "orders-lib", "system-file", "system-foundation", "system-user"]);
+  assert.deepEqual(applicationSnapshot.contributorIds, ["orders", "orders-lib", "system-file", "system-foundation", "system-user"]);
 
   for (const infrastructure of ["cache", "system-file", "system-foundation", "system-user"]) {
     const module = readFileSync(path.join(workspace, "lib", "infra", infrastructure, "module.yaml"), "utf8");
     assert.match(module, /product: jvm\/lib/);
   }
+  const cacheModule = readFileSync(path.join(workspace, "lib", "infra", "cache", "module.yaml"), "utf8");
+  assert.match(cacheModule, /\/\/studio\/build-config\/common-jvm\.module-template\.yaml/);
+  assert.doesNotMatch(cacheModule, /code-studio\.module-template\.yaml/);
   const fileModule = readFileSync(path.join(workspace, "lib", "infra", "system-file", "module.yaml"), "utf8");
   assert.match(fileModule, /\/\/lib\/infra\/cache/);
+  assert.equal(
+    existsSync(path.join(workspace, "lib", "infra", "cache", "src", "main", "resources", "META-INF", "code-studio", "contributor.json")),
+    false,
+  );
   const userModule = readFileSync(path.join(workspace, "lib", "infra", "system-user", "module.yaml"), "utf8");
   assert.match(userModule, /\/\/lib\/infra\/system-foundation/);
 
@@ -280,7 +291,6 @@ test("add app creates a companion library and autonomous contributors", () => {
     {
       formatVersion: 1,
       contributors: {
-        cache: "lib/infra/cache",
         "identity.users": "lib/identity/users",
         orders: "apps/orders",
         "orders-lib": "lib/orders-lib",
@@ -334,6 +344,136 @@ test("additional applications reuse initialized infrastructure libraries", () =>
   assert.equal(contributors.contributors["billing-lib"], "lib/billing-lib");
 });
 
+test("published mode generates only the application shell and companion library", () => {
+  const workspace = temporaryDirectory("published");
+  writeFileSync(
+    path.join(workspace, "libs.versions.toml"),
+    "# preserved catalog comment\n[versions]\nkotlin = \"2.4.0\"\n\n[libraries]\nexample = { module = \"example:library\" } # preserved entry\n",
+  );
+
+  assertSuccess(run(
+    workspace,
+    "init",
+    "--yes",
+    "--skip-submodule",
+    "--infra",
+    "published",
+    "--platform-version",
+    "2026.09.01",
+  ));
+  assertSuccess(run(workspace, "add", "app", "orders"));
+  assertSuccess(run(workspace, "add", "app", "billing", "--infra", "published"));
+
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(workspace, ".code-studio", "infrastructure.json"), "utf8")),
+    { formatVersion: 1, mode: "published", platformVersion: "2026.09.01" },
+  );
+  assert.equal(existsSync(path.join(workspace, "lib", "infra")), false);
+  assert.equal(existsSync(path.join(workspace, "lib", "orders-lib", "module.yaml")), true);
+  assert.equal(existsSync(path.join(workspace, "lib", "billing-lib", "module.yaml")), true);
+  assert.equal(parse(readFileSync(path.join(workspace, "project.yaml"), "utf8")).modules.includes("./lib/*/*"), false);
+
+  const appModule = readFileSync(path.join(workspace, "apps", "orders", "module.yaml"), "utf8");
+  assert.match(appModule, /bom: \$libs\.addzero\.platform\.bom/);
+  assert.match(appModule, /\$libs\.addzero\.system\.user/);
+  assert.match(appModule, /\$libs\.addzero\.system\.file/);
+  assert.match(appModule, /\$libs\.addzero\.system\.foundation/);
+  assert.match(appModule, /\$libs\.addzero\.starter\.cache/);
+  assert.match(appModule, /\$libs\.addzero\.object\.storage\.postgresql/);
+  assert.match(appModule, /contributorClasspath:/);
+  assert.match(appModule, /site\.addzero:system-user:2026\.09\.01/);
+  assert.match(appModule, /site\.addzero:system-file:2026\.09\.01/);
+  assert.match(appModule, /site\.addzero:system-foundation:2026\.09\.01/);
+  const contributor = JSON.parse(readFileSync(
+    path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"),
+    "utf8",
+  ));
+  assert.deepEqual(contributor.requires, ["orders-lib", "system-file", "system-foundation", "system-user"]);
+
+  const catalog = readFileSync(path.join(workspace, "libs.versions.toml"), "utf8");
+  assert.match(catalog, /^# preserved catalog comment/m);
+  assert.match(catalog, /example = .*# preserved entry/);
+  assert.match(catalog, /addzero-platform = "2026\.09\.01"/);
+  assert.match(catalog, /addzero-platform-bom = \{ module = "site\.addzero:platform-bom", version\.ref = "addzero-platform" \}/);
+  assert.deepEqual(
+    JSON.parse(readFileSync(path.join(workspace, ".code-studio", "contributors.json"), "utf8")),
+    {
+      formatVersion: 1,
+      contributors: {
+        billing: "apps/billing",
+        "billing-lib": "lib/billing-lib",
+        orders: "apps/orders",
+        "orders-lib": "lib/orders-lib",
+      },
+    },
+  );
+});
+
+test("infrastructure mode and catalog conflicts fail before scaffolding", () => {
+  const sourceWorkspace = temporaryDirectory("mode-conflict");
+  assertSuccess(run(sourceWorkspace, "init", "--yes", "--skip-submodule", "--infra", "source"));
+  const sourceConflict = run(sourceWorkspace, "add", "app", "orders", "--infra", "published");
+  assert.notEqual(sourceConflict.status, 0);
+  assert.match(sourceConflict.stderr, /workspace infrastructure is source, not published/);
+  assert.equal(existsSync(path.join(sourceWorkspace, "apps", "orders")), false);
+
+  const invalidVersion = run(
+    temporaryDirectory("invalid-version"),
+    "init",
+    "--yes",
+    "--skip-submodule",
+    "--infra",
+    "source",
+    "--platform-version",
+    "2026.08.28",
+  );
+  assert.notEqual(invalidVersion.status, 0);
+  assert.match(invalidVersion.stderr, /only valid with --infra published/);
+
+  const catalogWorkspace = temporaryDirectory("catalog-conflict");
+  writeFileSync(path.join(catalogWorkspace, "project.yaml"), "modules: []\nplugins: []\n");
+  writeFileSync(
+    path.join(catalogWorkspace, "libs.versions.toml"),
+    "[libraries]\naddzero-system-user = { module = \"other:user\" }\n",
+  );
+  const catalogConflict = run(
+    catalogWorkspace,
+    "init",
+    "--yes",
+    "--skip-submodule",
+    "--infra",
+    "published",
+  );
+  assert.notEqual(catalogConflict.status, 0);
+  assert.match(catalogConflict.stderr, /catalog alias addzero-system-user conflicts/);
+  assert.equal(existsSync(path.join(catalogWorkspace, ".code-studio", "infrastructure.json")), false);
+  assert.equal(readFileSync(path.join(catalogWorkspace, "project.yaml"), "utf8"), "modules: []\nplugins: []\n");
+
+  const ambiguousWorkspace = temporaryDirectory("ambiguous-mode");
+  writeFileSync(path.join(ambiguousWorkspace, "project.yaml"), "modules: []\nplugins: []\n");
+  const ambiguous = run(ambiguousWorkspace, "add", "app", "orders");
+  assert.notEqual(ambiguous.status, 0);
+  assert.match(ambiguous.stderr, /infrastructure mode cannot be inferred/);
+  assert.equal(existsSync(path.join(ambiguousWorkspace, "apps", "orders")), false);
+});
+
+test("published dry-run performs no writes", () => {
+  const workspace = temporaryDirectory("published-dry-run");
+  const result = run(
+    workspace,
+    "init",
+    "--yes",
+    "--dry-run",
+    "--skip-submodule",
+    "--infra",
+    "published",
+  );
+  assertSuccess(result);
+  assert.match(result.stdout, /would write .*infrastructure\.json/);
+  assert.match(result.stdout, /would write .*libs\.versions\.toml/);
+  assert.deepEqual(readdirSync(workspace), []);
+});
+
 test("hyphenated app IDs map to valid Kotlin packages", () => {
   const workspace = temporaryDirectory("hyphenated-app");
   assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
@@ -367,6 +507,19 @@ test("refresh delegates to the selected contributor task", () => {
   );
 });
 
+test("dev runs application modules with their dependency classpath", () => {
+  const workspace = temporaryDirectory("dev-app");
+  assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
+  assertSuccess(run(workspace, "add", "app", "orders"));
+  const executable = path.join(workspace, "kotlin");
+  writeFileSync(executable, "#!/usr/bin/env node\nrequire('node:fs').writeFileSync('.task-invocation', process.argv.slice(2).join(' '));\n");
+  chmodSync(executable, 0o755);
+
+  assertSuccess(run(workspace, "dev", "orders"));
+
+  assert.equal(readFileSync(path.join(workspace, ".task-invocation"), "utf8"), "run -m orders -p jvm");
+});
+
 test("doctor validates the pinned checkout and contributor graph", () => {
   const workspace = temporaryDirectory("doctor");
   const repository = createStudioRepository();
@@ -397,4 +550,26 @@ test("doctor validates the pinned checkout and contributor graph", () => {
   const unhealthy = run(workspace, "doctor");
   assert.notEqual(unhealthy.status, 0);
   assert.match(unhealthy.stderr, /requires missing contributor missing/);
+});
+
+test("doctor validates published mode and resolves the generated workspace", () => {
+  const workspace = temporaryDirectory("published-doctor");
+  const repository = createStudioRepository();
+  assertSuccess(run(workspace, "init", "--yes", "--repo", repository, "--infra", "published"));
+  assertSuccess(run(workspace, "add", "app", "orders"));
+  const executable = path.join(workspace, "kotlin");
+  writeFileSync(
+    executable,
+    "#!/usr/bin/env node\nrequire('node:fs').writeFileSync('.doctor-build', process.argv.slice(2).join(' '));\n",
+  );
+  chmodSync(executable, 0o755);
+
+  const healthy = run(workspace, "doctor");
+
+  assertSuccess(healthy);
+  assert.match(healthy.stdout, /ok published infrastructure 2026\.08\.28/);
+  assert.equal(
+    readFileSync(path.join(workspace, ".doctor-build"), "utf8"),
+    "task :orders:compileCodeStudioSources@source-generation",
+  );
 });

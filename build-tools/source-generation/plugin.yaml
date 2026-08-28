@@ -6,6 +6,8 @@ tasks:
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
       sourceMetadataSnapshots:
         ${pluginSettings.sourceMetadataSnapshots}
+      contributorIndex: ${pluginSettings.contributorIndex}
+      contributorClasspath: ${pluginSettings.contributorClasspath}
       compiledSourceDirectory: "${taskOutputDir}/compiled"
       scaffoldSourceDirectory: "${taskOutputDir}/scaffolds"
   generateCodeStudioSources:
@@ -18,6 +20,7 @@ tasks:
     action: !site.addzero.toolchain.lowcode.packageContributorMetadata
       contributorMetadataMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
       moduleResourcesDirectory: "${module.rootDir}/src/main/resources"
       generatedResourcesDirectory: ${taskOutputDir}
   refreshCodeStudioMetadata:
@@ -25,16 +28,20 @@ tasks:
       currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       contributorIndex: ${pluginSettings.contributorIndex}
+      contributorClasspath: ${pluginSettings.contributorClasspath}
       platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
       developmentDatabaseConfig: ${pluginSettings.developmentDatabaseConfig}
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
+      publishedContributorDirectory: "${taskOutputDir}/published-contributors"
   generateCodeStudioMigration:
     action: !site.addzero.toolchain.lowcode.generateLowcodeMigration
       currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       contributorIndex: ${pluginSettings.contributorIndex}
+      contributorClasspath: ${pluginSettings.contributorClasspath}
       platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
-      generatedMigrationDirectory: ${taskOutputDir}
+      publishedContributorDirectory: "${taskOutputDir}/published-contributors"
+      generatedMigrationDirectory: "${taskOutputDir}/candidate"
   codeStudioSync:
     action: !site.addzero.toolchain.lowcode.materializeLowcodeSources
       contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
@@ -46,7 +53,9 @@ tasks:
       currentContributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       currentContributorMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       contributorIndex: ${pluginSettings.contributorIndex}
+      contributorClasspath: ${pluginSettings.contributorClasspath}
       platformMigrationDirectory: ${pluginSettings.platformMigrationDirectory}
+      publishedContributorDirectory: "${taskOutputDir}/published-contributors"
 
 commands:
   - generateCodeStudioMigration
