@@ -7,12 +7,14 @@ import { fileURLToPath } from "node:url";
 const packageRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 function hasRuntimeDependencies() {
-  try {
-    import.meta.resolve("yaml");
-    return true;
-  } catch {
-    return false;
+  for (const name of ["yaml", "smol-toml"]) {
+    try {
+      import.meta.resolve(name);
+    } catch {
+      return false;
+    }
   }
+  return true;
 }
 
 async function start() {

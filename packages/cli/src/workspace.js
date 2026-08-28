@@ -2,6 +2,11 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { isSeq, parseDocument } from "yaml";
+import {
+  publishedContributorCoordinates,
+  publishedContributorIds,
+  publishedDependencies,
+} from "./infrastructure.js";
 
 export const STUDIO_MODULES = ["./studio/build-tools/*", "./studio/modules/*"];
 export const STUDIO_PLUGINS = [
@@ -14,10 +19,31 @@ const CONTRIBUTOR_FILE = path.join("src", "main", "resources", "META-INF", "code
 const CONTRIBUTOR_MIGRATIONS = path.join("src", "main", "lowcode-metadata", "db", "studio", "migration");
 const METADATA_SNAPSHOT = path.join("src", "main", "lowcode-metadata", "metadata.json");
 const APPLICATION_INFRASTRUCTURE_LIBRARIES = [
-  { name: "cache", description: "Framework-neutral cache contracts and implementations.", requires: [] },
-  { name: "system-file", description: "File upload, metadata, content access, and storage adapters.", requires: ["cache"] },
-  { name: "system-foundation", description: "Configuration, dictionary, and other system foundation capabilities.", requires: [] },
-  { name: "system-user", description: "Users, departments, roles, menus, permissions, and access policies.", requires: ["system-foundation"] },
+  {
+    name: "cache",
+    description: "Framework-neutral cache contracts and implementations.",
+    dependencies: [],
+    requires: [],
+    contributesMetadata: false,
+  },
+  {
+    name: "system-file",
+    description: "File upload, metadata, content access, and storage adapters.",
+    dependencies: ["cache"],
+    requires: [],
+  },
+  {
+    name: "system-foundation",
+    description: "Configuration, dictionary, and other system foundation capabilities.",
+    dependencies: [],
+    requires: [],
+  },
+  {
+    name: "system-user",
+    description: "Users, departments, roles, menus, permissions, and access policies.",
+    dependencies: ["system-foundation"],
+    requires: ["system-foundation"],
+  },
 ];
 
 function parseYamlDocument(source, fileName) {
@@ -54,10 +80,16 @@ function appendMissing(sequence, requested) {
   }
 }
 
-export function renderProjectYaml(source, requestedModules, fileExists, requestedPlugins = []) {
+export function renderProjectYaml(
+  source,
+  requestedModules,
+  fileExists,
+  requestedPlugins = [],
+  newWorkspaceModules = NEW_WORKSPACE_MODULES,
+) {
   const document = parseYamlDocument(source, "project.yaml");
   const modules = stringSequence(document, "modules");
-  const moduleDefaults = fileExists ? requestedModules : NEW_WORKSPACE_MODULES;
+  const moduleDefaults = fileExists ? requestedModules : newWorkspaceModules;
   appendMissing(modules, moduleDefaults);
   if (!fileExists || requestedPlugins.length > 0) {
     const plugins = stringSequence(document, "plugins");
@@ -176,9 +208,18 @@ export function contributorId(segments) {
   return segments.join(".");
 }
 
-export function renderModule(kind, mainClass, dependencies = []) {
+export function renderModule(
+  kind,
+  mainClass,
+  dependencies = [],
+  contributorClasspath = [],
+  contributesMetadata = true,
+) {
   const product = kind === "app" ? "jvm/app" : "jvm/lib";
-  const base = `product: ${product}\n\napply:\n  - //studio/build-config/code-studio.module-template.yaml\n`;
+  const template = contributesMetadata
+    ? "//studio/build-config/code-studio.module-template.yaml"
+    : "//studio/build-config/common-jvm.module-template.yaml";
+  const base = `product: ${product}\n\napply:\n  - ${template}\n`;
   const moduleDependencies = kind === "app"
     ? [...dependencies, "//studio/modules/development-host"]
     : dependencies;
@@ -186,13 +227,22 @@ export function renderModule(kind, mainClass, dependencies = []) {
     return base;
   }
   const dependencySource = [...new Set(moduleDependencies)]
-    .sort()
+    .sort((left, right) => {
+      const leftBom = left.startsWith("bom: ");
+      const rightBom = right.startsWith("bom: ");
+      return leftBom === rightBom ? left.localeCompare(right) : leftBom ? -1 : 1;
+    })
     .map((dependency) => `  - ${dependency}`)
     .join("\n");
   const settings = kind === "app"
     ? `\nsettings:\n  jvm:\n    mainClass: ${mainClass}\n`
     : "";
-  return `${base}\ndependencies:\n${dependencySource}\n${settings}`;
+  const pluginSettings = contributorClasspath.length === 0
+    ? ""
+    : `\nplugins:\n  source-generation:\n    contributorClasspath:\n${contributorClasspath
+      .map((dependency) => `      - ${dependency}`)
+      .join("\n")}\n`;
+  return `${base}\ndependencies:\n${dependencySource}\n${pluginSettings}${settings}`;
 }
 
 export function renderContributor(id, requires = []) {
@@ -269,40 +319,72 @@ export function scaffoldFiles(root, kind, segments, options = {}) {
       [path.join(directory, "src", "main", "resources", "logback.xml"), renderDevelopmentLogging()],
     ]
     : [];
-  return {
-    id,
-    shared: options.shared ?? false,
-    relativeDirectory: path.posix.join(category, ...segments),
-    directory,
-    files: new Map([
-      [path.join(directory, "module.yaml"), renderModule(kind, `${packageName}.ApplicationKt`, options.dependencies)],
-      [path.join(directory, "README.md"), `# ${id}\n\n${options.description ?? "Code Studio contributor."}\n`],
+  const contributorFiles = options.contributesMetadata === false
+    ? []
+    : [
       [path.join(directory, CONTRIBUTOR_FILE), renderContributor(id, options.requires)],
       [path.join(directory, CONTRIBUTOR_MIGRATIONS, initialMigrationName(id)), renderInitialMigration()],
       [path.join(directory, METADATA_SNAPSHOT), renderEmptyMetadataSnapshot(id, options.requires)],
+    ];
+  return {
+    id,
+    contributesMetadata: options.contributesMetadata !== false,
+    shared: options.shared ?? false,
+    relativeDirectory: path.posix.join(category, ...segments),
+    directory,
+    moduleFile: path.join(directory, "module.yaml"),
+    contributorFile: path.join(directory, CONTRIBUTOR_FILE),
+    files: new Map([
+      [
+        path.join(directory, "module.yaml"),
+        renderModule(
+          kind,
+          `${packageName}.ApplicationKt`,
+          options.dependencies,
+          options.contributorClasspath,
+          options.contributesMetadata !== false,
+        ),
+      ],
+      [path.join(directory, "README.md"), `# ${id}\n\n${options.description ?? "Code Studio contributor."}\n`],
+      ...contributorFiles,
       ...applicationFiles,
     ]),
   };
 }
 
-export function moduleScaffolds(root, kind, segments) {
+export function moduleScaffolds(root, kind, segments, infrastructure = { mode: "source" }) {
   if (kind === "library") {
     return [scaffoldFiles(root, kind, segments)];
   }
   const librarySegments = [...segments.slice(0, -1), `${segments.at(-1)}-lib`];
   const applicationLibrary = scaffoldFiles(root, "library", librarySegments);
-  const infrastructureLibraries = APPLICATION_INFRASTRUCTURE_LIBRARIES.map(({ name, description, requires }) =>
+  if (infrastructure.mode === "published") {
+    const application = scaffoldFiles(root, kind, segments, {
+      dependencies: [`//${applicationLibrary.relativeDirectory}`, ...publishedDependencies()],
+      requires: [applicationLibrary.id, ...publishedContributorIds()],
+      contributorClasspath: publishedContributorCoordinates(infrastructure.platformVersion),
+    });
+    return [application, applicationLibrary];
+  }
+  const infrastructureLibraries = APPLICATION_INFRASTRUCTURE_LIBRARIES.map(({
+    name,
+    description,
+    dependencies,
+    requires,
+    contributesMetadata = true,
+  }) =>
     scaffoldFiles(root, "library", ["infra", name], {
       id: name,
       description,
-      dependencies: requires.map((dependency) => `//lib/infra/${dependency}`),
+      dependencies: dependencies.map((dependency) => `//lib/infra/${dependency}`),
       requires,
       shared: true,
+      contributesMetadata,
     }));
   const libraries = [applicationLibrary, ...infrastructureLibraries];
   const application = scaffoldFiles(root, kind, segments, {
     dependencies: libraries.map((library) => `//${library.relativeDirectory}`),
-    requires: libraries.map((library) => library.id),
+    requires: libraries.filter((library) => library.contributesMetadata).map((library) => library.id),
   });
   return [application, ...libraries];
 }
@@ -319,6 +401,23 @@ export function assertScaffoldAvailable(scaffold) {
   if (readdirSync(scaffold.directory).length > 0) {
     throw new Error(`${scaffold.directory} is not empty`);
   }
+}
+
+export function assertSharedLibraryCompatible(scaffold) {
+  if (!existsSync(scaffold.moduleFile)) {
+    return false;
+  }
+  if (scaffold.contributesMetadata || existsSync(scaffold.contributorFile)) {
+    throw new Error(`${scaffold.directory} conflicts with the non-contributor infrastructure library`);
+  }
+  const moduleSource = readFileSync(scaffold.moduleFile, "utf8");
+  if (!/^product:\s+jvm\/lib\s*$/m.test(moduleSource)) {
+    throw new Error(`${scaffold.moduleFile} is not a jvm/lib module`);
+  }
+  if (moduleSource.includes("code-studio.module-template.yaml")) {
+    throw new Error(`${scaffold.moduleFile} enables source generation for a non-contributor library`);
+  }
+  return true;
 }
 
 function findContributorFiles(directory, result) {
@@ -338,7 +437,7 @@ function findContributorFiles(directory, result) {
   }
 }
 
-export function readContributors(root) {
+export function readContributors(root, externalContributors = []) {
   const files = [];
   findContributorFiles(path.join(root, "apps"), files);
   findContributorFiles(path.join(root, "lib"), files);
@@ -365,9 +464,15 @@ export function readContributors(root) {
     }
     byId.set(contributor.id, contributor);
   }
+  const externalIds = new Set(externalContributors.map((contributor) => contributor.id));
+  for (const contributor of externalContributors) {
+    if (byId.has(contributor.id)) {
+      throw new Error(`contributor id ${contributor.id} exists in source and published infrastructure`);
+    }
+  }
   for (const contributor of contributors) {
     for (const dependency of contributor.requires) {
-      if (!byId.has(dependency)) {
+      if (!byId.has(dependency) && !externalIds.has(dependency)) {
         throw new Error(`${contributor.id} requires missing contributor ${dependency}`);
       }
     }
@@ -375,6 +480,35 @@ export function readContributors(root) {
   assertAcyclicContributors(contributors);
   assertContributorMigrations(contributors);
   return contributors;
+}
+
+export function assertUniqueApplicationRoots(root, contributors, externalContributors = []) {
+  const contributorsById = new Map(
+    [...externalContributors, ...contributors].map((contributor) => [contributor.id, contributor]),
+  );
+  const applications = contributors.filter((contributor) =>
+    path.relative(root, contributorModuleDirectory(contributor.file)).split(path.sep)[0] === "apps");
+  for (const application of applications) {
+    const closure = new Map();
+    const pending = [application.id];
+    while (pending.length > 0) {
+      const id = pending.pop();
+      if (closure.has(id)) {
+        continue;
+      }
+      const contributor = contributorsById.get(id);
+      if (!contributor) {
+        throw new Error(`${application.id} requires missing contributor ${id}`);
+      }
+      closure.set(id, contributor);
+      pending.push(...contributor.requires);
+    }
+    const requiredIds = new Set(Array.from(closure.values()).flatMap((contributor) => contributor.requires));
+    const roots = Array.from(closure.keys()).filter((id) => !requiredIds.has(id)).sort();
+    if (roots.length !== 1 || roots[0] !== application.id) {
+      throw new Error(`${application.id} contributor closure must have one root; found ${roots.join(", ") || "<none>"}`);
+    }
+  }
 }
 
 function assertContributorMigrations(contributors) {
@@ -434,7 +568,11 @@ function sqlFiles(directory) {
 }
 
 function assertAcyclicContributors(contributors) {
-  const remaining = new Map(contributors.map((contributor) => [contributor.id, new Set(contributor.requires)]));
+  const contributorIds = new Set(contributors.map((contributor) => contributor.id));
+  const remaining = new Map(contributors.map((contributor) => [
+    contributor.id,
+    new Set(contributor.requires.filter((dependency) => contributorIds.has(dependency))),
+  ]));
   let removed;
   do {
     removed = 0;

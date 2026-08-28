@@ -118,6 +118,13 @@ class MetadataContributorsTest {
         }
         contributor("identity.users")
         contributor("example-service")
+        assertEquals(
+            "META-INF/code-studio/snapshots/identity.users.json",
+            metadataSnapshotResource("identity.users"),
+        )
+        assertThrows(IllegalArgumentException::class.java) {
+            metadataSnapshotResource("../outside")
+        }
     }
 
     @Test

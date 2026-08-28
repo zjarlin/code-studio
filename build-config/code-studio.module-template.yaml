@@ -1,6 +1,7 @@
 plugins:
   source-generation:
     enabled: true
+    contributorClasspath: []
     contributorIndex: ../../.code-studio/contributors.json
     generationTargetProfile: ../../.code-studio/target-profile.json
     sourceMetadataSnapshots: []

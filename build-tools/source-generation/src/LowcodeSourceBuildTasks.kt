@@ -1,6 +1,7 @@
 package site.addzero.toolchain.lowcode
 
 import io.ktor.server.config.yaml.YamlConfig
+import org.jetbrains.amper.plugins.Classpath
 import org.jetbrains.amper.plugins.Input
 import org.jetbrains.amper.plugins.Output
 import org.jetbrains.amper.plugins.TaskAction
@@ -39,6 +40,7 @@ import site.addzero.studio.runtime.GenerationTargetProfiles
 import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_RESOURCE
 import site.addzero.studio.runtime.MetadataContributor
 import site.addzero.studio.runtime.MetadataContributors
+import site.addzero.studio.runtime.metadataSnapshotResource
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -61,6 +63,7 @@ import kotlin.io.path.writeText
 fun packageContributorMetadata(
     @Input contributorMetadataMigrationDirectory: Path,
     @Input generationTargetProfile: Path,
+    @Input metadataSnapshot: Path,
     @Input moduleResourcesDirectory: Path,
     @Output generatedResourcesDirectory: Path,
 ) {
@@ -69,6 +72,10 @@ fun packageContributorMetadata(
     generatedResourcesDirectory.deleteRecursively()
     copyModuleResources(moduleResourcesDirectory, generatedResourcesDirectory)
     copyContributorMetadata(contributor, contributorMetadataMigrationDirectory, generatedResourcesDirectory)
+    val snapshot = readMetadataSnapshotValue(metadataSnapshot, contributor)
+    val snapshotResource = generatedResourcesDirectory.resolve(metadataSnapshotResource(contributor.id))
+    snapshotResource.createParentDirectories()
+    snapshotResource.writeText(LowcodeMetadataSnapshots.encode(snapshot))
     val profile = readGenerationTargetProfile(generationTargetProfile)
     val profileResource = generatedResourcesDirectory.resolve(GENERATION_TARGET_PROFILE_RESOURCE)
     profileResource.createParentDirectories()
@@ -120,16 +127,23 @@ fun generateLowcodeMigration(
     @Input currentContributorManifest: Path,
     @Input currentContributorMigrationDirectory: Path,
     @Input contributorIndex: Path,
+    @Input contributorClasspath: Classpath,
     @Input platformMigrationDirectory: Path,
+    @Output publishedContributorDirectory: Path,
     @Output generatedMigrationDirectory: Path,
 ) {
     val contributors = contributorClosure(
         currentContributorManifest,
         currentContributorMigrationDirectory,
         contributorIndex,
+        contributorClasspath,
+    )
+    val publishedMigrations = extractPublishedContributorMigrations(
+        contributors.publishedArtifacts,
+        publishedContributorDirectory,
     )
     val contributorId = contributors.current.id
-    val diff = lowcodeSchemaDiff(contributorId, platformMigrationDirectory, contributors)
+    val diff = lowcodeSchemaDiff(contributorId, platformMigrationDirectory, contributors, publishedMigrations)
     generatedMigrationDirectory.toFile().mkdirs()
     generatedMigrationDirectory.resolve("candidate.sql").writeText(
         if (diff.statements.isEmpty()) {
@@ -146,15 +160,22 @@ fun verifyLowcodeSchema(
     @Input currentContributorManifest: Path,
     @Input currentContributorMigrationDirectory: Path,
     @Input contributorIndex: Path,
+    @Input contributorClasspath: Classpath,
     @Input platformMigrationDirectory: Path,
+    @Output publishedContributorDirectory: Path,
 ) {
     val contributors = contributorClosure(
         currentContributorManifest,
         currentContributorMigrationDirectory,
         contributorIndex,
+        contributorClasspath,
+    )
+    val publishedMigrations = extractPublishedContributorMigrations(
+        contributors.publishedArtifacts,
+        publishedContributorDirectory,
     )
     val contributorId = contributors.current.id
-    val diff = lowcodeSchemaDiff(contributorId, platformMigrationDirectory, contributors)
+    val diff = lowcodeSchemaDiff(contributorId, platformMigrationDirectory, contributors, publishedMigrations)
     check(diff.operations.isEmpty()) {
         "低代码元数据与数据库结构不一致，请运行 generateLowcodeMigration 并审核候选 SQL：\n${diff.statements.joinToString("\n")}"
     }
@@ -169,10 +190,17 @@ private fun lowcodeSchemaDiff(
     contributorId: String,
     platformMigrationDirectory: Path,
     contributors: ContributorClosure,
+    publishedMigrations: Map<String, Path>,
 ): LowcodeSchemaDiff {
     val metadataDatabaseConfig = databaseConfig()
     val metadataDataSource = metadataDatabaseConfig.toDataSource()
-    migrateMetadata(metadataDataSource, metadataDatabaseConfig.schema.requiredStudioSchema(), platformMigrationDirectory, contributors)
+    migrateMetadata(
+        metadataDataSource,
+        metadataDatabaseConfig.schema.requiredStudioSchema(),
+        platformMigrationDirectory,
+        contributors,
+        publishedMigrations,
+    )
     val metadata = metadataDataSource.connection.use(LowcodeMetadataDatabaseReader::read)
         .restrictToContributors(contributors.ids)
     val desired = DdlCompiler.compile(
@@ -241,17 +269,27 @@ fun compileLowcodeSources(
     @Input generationTargetProfile: Path,
     @Input metadataSnapshot: Path,
     @Input sourceMetadataSnapshots: List<Path>,
+    @Input contributorIndex: Path,
+    @Input contributorClasspath: Classpath,
     @Output compiledSourceDirectory: Path,
     @Output scaffoldSourceDirectory: Path,
 ) {
     val contributor = readContributor(contributorManifest)
     val contributorId = contributor.id
+    val contributors = contributorClosure(
+        currentContributorManifest = contributorManifest,
+        currentContributorMigrationDirectory = null,
+        contributorIndex = contributorIndex,
+        contributorClasspath = contributorClasspath,
+    )
+    val targetProfile = readGenerationTargetProfile(generationTargetProfile)
+    requirePublishedTargetProfile(contributors.publishedArtifacts, targetProfile)
     val metadata = readCompilationMetadata(
         metadataSnapshot = metadataSnapshot,
         sourceMetadataSnapshots = sourceMetadataSnapshots,
         contributor = contributor,
+        publishedSnapshots = contributors.publishedArtifacts.map(PublishedContributorArtifact::snapshot),
     )
-    val targetProfile = readGenerationTargetProfile(generationTargetProfile)
     val files = metadata.generatedFiles(contributorId, targetProfile)
     compiledSourceDirectory.deleteRecursively()
     scaffoldSourceDirectory.deleteRecursively()
@@ -267,18 +305,31 @@ fun refreshLowcodeMetadata(
     @Input currentContributorManifest: Path,
     @Input currentContributorMigrationDirectory: Path,
     @Input contributorIndex: Path,
+    @Input contributorClasspath: Classpath,
     @Input platformMigrationDirectory: Path,
     @Input developmentDatabaseConfig: Path,
     @Input metadataSnapshot: Path,
+    @Output publishedContributorDirectory: Path,
 ) {
     val contributors = contributorClosure(
         currentContributorManifest,
         currentContributorMigrationDirectory,
         contributorIndex,
+        contributorClasspath,
+    )
+    val publishedMigrations = extractPublishedContributorMigrations(
+        contributors.publishedArtifacts,
+        publishedContributorDirectory,
     )
     val databaseConfig = databaseConfig(developmentDatabaseConfig = developmentDatabaseConfig)
     val dataSource = databaseConfig.toDataSource()
-    migrateMetadata(dataSource, databaseConfig.schema.requiredStudioSchema(), platformMigrationDirectory, contributors)
+    migrateMetadata(
+        dataSource,
+        databaseConfig.schema.requiredStudioSchema(),
+        platformMigrationDirectory,
+        contributors,
+        publishedMigrations,
+    )
     val metadata = dataSource.connection.use(LowcodeMetadataDatabaseReader::read)
         .restrictToContributors(contributors.ids)
     val snapshot = LowcodeMetadataSnapshot(
@@ -338,6 +389,13 @@ private fun readGenerationTargetProfile(path: Path): GenerationTargetProfile =
     configurationObjectMapper.readValue(path.toFile(), GenerationTargetProfile::class.java)
 
 private fun readMetadataSnapshot(path: Path, contributor: MetadataContributor): LowcodeMetadata {
+    return readMetadataSnapshotValue(path, contributor).metadata
+}
+
+private fun readMetadataSnapshotValue(
+    path: Path,
+    contributor: MetadataContributor,
+): LowcodeMetadataSnapshot {
     val snapshot = LowcodeMetadataSnapshots.decode(path.readText())
     require(snapshot.contributorId == contributor.id) {
         "元数据快照归属 ${snapshot.contributorId} 与当前 manifest ${contributor.id} 不一致"
@@ -346,15 +404,18 @@ private fun readMetadataSnapshot(path: Path, contributor: MetadataContributor): 
         "元数据快照 ${contributor.id} 缺少 manifest.requires: " +
             (contributor.requires - snapshot.contributorIds.toSet()).sorted().joinToString()
     }
-    return snapshot.metadata
+    return snapshot
 }
 
 private fun readCompilationMetadata(
     metadataSnapshot: Path,
     sourceMetadataSnapshots: List<Path>,
     contributor: MetadataContributor,
+    publishedSnapshots: List<LowcodeMetadataSnapshot>,
 ): LowcodeMetadata {
-    val metadata = readMetadataSnapshot(metadataSnapshot, contributor)
+    val metadataCatalogs = listOf(readMetadataSnapshot(metadataSnapshot, contributor)) +
+        publishedSnapshots.map(LowcodeMetadataSnapshot::metadata)
+    val metadata = mergeCompilationMetadata(metadataCatalogs)
     if (sourceMetadataSnapshots.isEmpty()) {
         return metadata
     }
@@ -371,6 +432,28 @@ private fun readCompilationMetadata(
         models = mergeCompilationModelCatalog(listOf(metadata.models, sourceModels)),
     )
 }
+
+internal fun mergeCompilationMetadata(catalogs: List<LowcodeMetadata>): LowcodeMetadata = LowcodeMetadata(
+    models = mergeCompilationModelCatalog(catalogs.map(LowcodeMetadata::models)),
+    dtoDefinitions = catalogs.flatMap(LowcodeMetadata::dtoDefinitions)
+        .mergeExactBy({ dto -> dto.dtoCode }, "DTO")
+        .sortedBy { dto -> dto.dtoCode },
+    routeBindings = catalogs.flatMap(LowcodeMetadata::routeBindings)
+        .mergeExactBy({ binding -> binding.routeCode }, "路由绑定")
+        .sortedBy { binding -> binding.routeCode },
+    contracts = catalogs.flatMap(LowcodeMetadata::contracts)
+        .mergeExactBy({ contract -> contract.contractCode }, "业务契约")
+        .sortedBy { contract -> contract.contractCode },
+    features = catalogs.flatMap(LowcodeMetadata::features)
+        .mergeExactBy({ feature -> feature.contributorId to feature.featureCode }, "功能")
+        .sortedWith(compareBy({ feature -> feature.contributorId }, { feature -> feature.featureCode })),
+    dictionaries = catalogs.flatMap(LowcodeMetadata::dictionaries)
+        .mergeExactBy({ dictionary -> dictionary.dictionaryCode }, "字典")
+        .sortedBy { dictionary -> dictionary.dictionaryCode },
+    constantGroups = catalogs.flatMap(LowcodeMetadata::constantGroups)
+        .mergeExactBy({ group -> group.groupCode }, "常量组")
+        .sortedBy { group -> group.groupCode },
+)
 
 internal fun mergeCompilationModelCatalog(
     catalogs: List<List<LowcodeModelMeta>>,
@@ -443,7 +526,7 @@ private fun <T, K> List<T>.mergeExactBy(
 }
 
 private fun readContributor(path: Path): MetadataContributor =
-    configurationObjectMapper.readValue(path.toFile(), MetadataContributor::class.java)
+    MetadataContributors.read(path.toUri().toURL())
 
 private data class ContributorIndex(
     val formatVersion: Int = CONTRIBUTOR_INDEX_FORMAT_VERSION,
@@ -465,24 +548,41 @@ private data class ContributorSource(
     val migrationDirectory: Path = root.resolve(CONTRIBUTOR_MIGRATION_DIRECTORY)
 }
 
+private data class ContributorInput(
+    val manifest: MetadataContributor,
+    val source: ContributorSource? = null,
+    val published: PublishedContributorArtifact? = null,
+) {
+    init {
+        require((source == null) != (published == null)) {
+            "contributor ${manifest.id} 必须且只能来自源码或中央制品"
+        }
+    }
+}
+
 private data class ContributorClosure(
     val current: MetadataContributor,
-    val orderedSources: List<ContributorSource>,
+    val orderedInputs: List<ContributorInput>,
 ) {
-    val ordered: List<MetadataContributor> = orderedSources.map(ContributorSource::manifest)
+    val ordered: List<MetadataContributor> = orderedInputs.map(ContributorInput::manifest)
     val ids: Set<String> = ordered.mapTo(linkedSetOf(), MetadataContributor::id)
+    val publishedArtifacts: List<PublishedContributorArtifact> =
+        orderedInputs.mapNotNull(ContributorInput::published)
 }
 
 private fun contributorClosure(
     currentContributorManifest: Path,
-    currentContributorMigrationDirectory: Path,
+    currentContributorMigrationDirectory: Path?,
     contributorIndex: Path,
+    contributorClasspath: Classpath,
 ): ContributorClosure {
     val manifestPath = currentContributorManifest.toAbsolutePath().normalize()
     val currentRoot = contributorRoot(manifestPath)
-    val expectedMigrationDirectory = currentRoot.resolve(CONTRIBUTOR_MIGRATION_DIRECTORY).normalize()
-    require(currentContributorMigrationDirectory.toAbsolutePath().normalize() == expectedMigrationDirectory) {
-        "当前 contributor migration 目录必须是 $expectedMigrationDirectory"
+    if (currentContributorMigrationDirectory != null) {
+        val expectedMigrationDirectory = currentRoot.resolve(CONTRIBUTOR_MIGRATION_DIRECTORY).normalize()
+        require(currentContributorMigrationDirectory.toAbsolutePath().normalize() == expectedMigrationDirectory) {
+            "当前 contributor migration 目录必须是 $expectedMigrationDirectory"
+        }
     }
     val current = readContributorSource(currentRoot)
     val indexPath = contributorIndex.toAbsolutePath().normalize()
@@ -505,22 +605,34 @@ private fun contributorClosure(
         }
     }
 
-    val sourcesById = linkedMapOf(current.manifest.id to current)
+    val publishedById = readPublishedContributorArtifacts(contributorClasspath, repositoryRoot)
+    val conflicts = index.contributors.keys.intersect(publishedById.keys)
+    require(conflicts.isEmpty()) {
+        "contributor 同时来自源码和中央制品: ${conflicts.sorted().joinToString()}"
+    }
+    val inputsById = linkedMapOf(
+        current.manifest.id to ContributorInput(manifest = current.manifest, source = current),
+    )
     fun visit(id: String) {
-        if (id in sourcesById) return
-        val relativePath = index.contributors[id]
-            ?: error("contributor ${current.manifest.id} 的依赖 $id 未登记到 $indexPath")
-        val root = resolveContributorRoot(repositoryRoot, id, relativePath)
-        val source = readContributorSource(root)
-        require(source.manifest.id == id) {
-            "contributor index 的 $id 指向 manifest ${source.manifest.id}: $root"
+        if (id in inputsById) {
+            return
         }
-        sourcesById[id] = source
-        source.manifest.requires.forEach(::visit)
+        val input = index.contributors[id]?.let { relativePath ->
+            val root = resolveContributorRoot(repositoryRoot, id, relativePath)
+            val source = readContributorSource(root)
+            require(source.manifest.id == id) {
+                "contributor index 的 $id 指向 manifest ${source.manifest.id}: $root"
+            }
+            ContributorInput(manifest = source.manifest, source = source)
+        } ?: publishedById[id]?.let { published ->
+            ContributorInput(manifest = published.contributor, published = published)
+        } ?: error("contributor ${current.manifest.id} 的依赖 $id 既不在 $indexPath，也不在中央制品 classpath")
+        inputsById[id] = input
+        input.manifest.requires.forEach(::visit)
     }
     current.manifest.requires.forEach(::visit)
-    val ordered = MetadataContributors.resolve(sourcesById.values.map(ContributorSource::manifest))
-    return ContributorClosure(current.manifest, ordered.map { contributor -> sourcesById.getValue(contributor.id) })
+    val ordered = MetadataContributors.resolve(inputsById.values.map(ContributorInput::manifest))
+    return ContributorClosure(current.manifest, ordered.map { contributor -> inputsById.getValue(contributor.id) })
 }
 
 private fun contributorRoot(manifestPath: Path): Path {
@@ -558,6 +670,7 @@ private fun migrateMetadata(
     schema: String,
     platformMigrationDirectory: Path,
     contributors: ContributorClosure,
+    publishedMigrations: Map<String, Path>,
 ) {
     val platformLocation = "filesystem:${platformMigrationDirectory.toAbsolutePath().normalize()}"
     dataSource.connection.use { connection ->
@@ -574,15 +687,17 @@ private fun migrateMetadata(
                 placeholders = mapOf("studioSchema" to schema),
             )
             registerContributors(connection, schema, contributors.ordered)
-            contributors.orderedSources.forEach { source ->
+            contributors.orderedInputs.forEach { input ->
+                val migrationDirectory = input.source?.migrationDirectory
+                    ?: publishedMigrations.getValue(input.manifest.id)
                 migrateLocations(
                     dataSource = dataSource,
                     schema = schema,
-                    location = "filesystem:${source.migrationDirectory.toAbsolutePath().normalize()}",
+                    location = "filesystem:${migrationDirectory.toAbsolutePath().normalize()}",
                     historyTable = CODE_STUDIO_METADATA_HISTORY_TABLE,
                     placeholders = mapOf(
                         "studioSchema" to schema,
-                        "contributorId" to source.manifest.id,
+                        "contributorId" to input.manifest.id,
                     ),
                     tolerateOtherContributorMigrations = true,
                 )
