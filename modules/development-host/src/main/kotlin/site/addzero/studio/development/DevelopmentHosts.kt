@@ -7,6 +7,7 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.routing.routing
 import site.addzero.studio.metadata.StudioMetadataController
 import site.addzero.studio.runtime.GenerationTargetProfiles
 import site.addzero.studio.runtime.MetadataContributors
@@ -67,14 +68,10 @@ private fun runDevelopmentHost(
             install(ContentNegotiation) {
                 jackson()
             }
-            val studioConfig = StudioConfig(
-                contributorId = contributorId,
-                apiBaseUrl = "/",
-                displayName = contributorId,
-                openApiPath = "/v3/api-docs",
-                capabilities = setOf("metadata"),
-                enabled = true,
-            )
+            routing {
+                DevelopmentApiController.install(this)
+            }
+            val studioConfig = developmentStudioConfig(contributorId)
             val metadataController = StudioMetadataController(
                 dataSource = dataSource,
                 schema = schema,
@@ -92,6 +89,15 @@ private fun runDevelopmentHost(
         }.start(wait = true)
     }
 }
+
+internal fun developmentStudioConfig(contributorId: String): StudioConfig = StudioConfig(
+    contributorId = contributorId,
+    apiBaseUrl = "/",
+    displayName = contributorId,
+    openApiPath = "/v3/api-docs",
+    capabilities = setOf("metadata", "api"),
+    enabled = true,
+)
 
 private fun createDataSource(config: DevelopmentHostConfig): HikariDataSource {
     val hikariConfig = HikariConfig()

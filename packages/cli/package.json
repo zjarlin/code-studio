@@ -1,6 +1,6 @@
 {
   "name": "code-studio",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Application-owned metadata studio scaffolding for Kotlin Toolchain workspaces",
   "type": "module",
   "bin": {

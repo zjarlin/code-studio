@@ -44,7 +44,7 @@ function createStudioRepository() {
   chmodSync(wrapper, 0o755);
   git(repository, "add", ".");
   git(repository, "commit", "-m", "fixture");
-  git(repository, "tag", "v0.1.2");
+  git(repository, "tag", "v0.1.3");
   return repository;
 }
 
@@ -168,7 +168,7 @@ test("init preserves existing YAML and is idempotent", () => {
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/NodeJSConfigurationType/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/studio\/packages\/cli\/bin\/code-studio\.js/), null);
   assert.notEqual(readFileSync(createApplicationRunFile, "utf8").match(/\$Prompt:应用模块名:my-app\$/), null);
-  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.2");
+  assert.equal(git(path.join(workspace, "studio"), "describe", "--tags", "--exact-match"), "v0.1.3");
   const studioCliModules = path.join(workspace, "studio", "packages", "cli", "node_modules");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), false);
   const lazyBootstrap = spawnSync(
@@ -177,7 +177,7 @@ test("init preserves existing YAML and is idempotent", () => {
     { cwd: workspace, env: GIT_ENV, encoding: "utf8" },
   );
   assertSuccess(lazyBootstrap);
-  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.2");
+  assert.equal(lazyBootstrap.stdout.trim().split(/\r?\n/).at(-1), "0.1.3");
   assert.equal(existsSync(path.join(studioCliModules, "yaml", "package.json")), true);
 
   assertSuccess(run(workspace, "add", "library", "identity/users"));

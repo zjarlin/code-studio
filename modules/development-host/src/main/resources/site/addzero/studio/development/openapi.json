@@ -1,0 +1,55 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Development API",
+    "version": "1.0.0",
+    "description": "Built-in API for verifying the generated application runtime."
+  },
+  "tags": [
+    {
+      "name": "Example",
+      "description": "Built-in runnable examples."
+    }
+  ],
+  "paths": {
+    "/hello": {
+      "get": {
+        "operationId": "getHello",
+        "summary": "Hello World",
+        "description": "Returns a greeting from the generated application.",
+        "tags": [
+          "Example"
+        ],
+        "responses": {
+          "200": {
+            "description": "Greeting returned successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HelloResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HelloResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Greeting message.",
+            "example": "Hello, world!"
+          }
+        }
+      }
+    }
+  }
+}

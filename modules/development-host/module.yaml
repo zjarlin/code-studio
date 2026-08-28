@@ -15,3 +15,7 @@ dependencies:
   - $libs.ktor.server.netty
   - $libs.logback.classic
   - $libs.postgresql: runtime-only
+
+test-dependencies:
+  - $libs.jackson.module.kotlin
+  - $libs.ktor.server.test.host

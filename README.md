@@ -23,6 +23,7 @@ npx --yes code-studio@latest add app "$APP_NAME"
 ```
 
 Open [http://127.0.0.1:8080/studio/](http://127.0.0.1:8080/studio/).
+Open [API documentation](http://127.0.0.1:8080/studio/?mode=api-docs), select `Hello World`, and run `GET /hello`.
 
 ## Dev And Prod
 
