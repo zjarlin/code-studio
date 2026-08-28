@@ -7,13 +7,25 @@ When the workspace has no applications, `init` creates the shared IntelliJ run c
 The IDE creator requires Node.js 22 or newer and the IntelliJ Node.js plugin. The equivalent terminal command is `code-studio add app <name>`.
 
 ```shell
-npx code-studio@latest init --yes
-npx code-studio add app orders
+WORKSPACE_DIR="$HOME/Desktop/code-studio-demo"
+APP_NAME="demo"
+
+mkdir -p "$WORKSPACE_DIR"
+cd "$WORKSPACE_DIR"
+npx --yes code-studio@latest init . --yes
+npx --yes code-studio@latest add app "$APP_NAME"
+npx --yes code-studio@latest doctor
+```
+
+Change `WORKSPACE_DIR` and `APP_NAME` before running the block. Open `WORKSPACE_DIR`, not `studio/`, in IntelliJ IDEA with the Kotlin Toolchain plugin enabled. If IDEA reports that modules have no SDK, configure the Project SDK with a locally installed JDK 21 and reload the project.
+
+Additional commands:
+
+```shell
 npx code-studio add library identity/users
 npx code-studio dev identity/users
 npx code-studio refresh identity/users
 npx code-studio sync identity/users
-npx code-studio doctor
 ```
 
 Use `--dry-run` to inspect file changes. `CODE_STUDIO_REPOSITORY_URL` or `--repo` selects another repository, and `--skip-submodule` supports offline workspace setup. Local database values may reference `CODE_STUDIO_DB_JDBC_URL`, `CODE_STUDIO_DB_USERNAME`, and `CODE_STUDIO_DB_PASSWORD`.

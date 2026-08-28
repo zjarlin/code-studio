@@ -6,15 +6,28 @@ Applications own their PostgreSQL metadata and expose Studio from their own proc
 
 ## Quick Start
 
-Run this in a new or existing Amper workspace:
+Set the workspace directory and application name, then run the complete bootstrap:
 
 ```shell
-npx code-studio@latest init
+WORKSPACE_DIR="$HOME/Desktop/code-studio-demo"
+APP_NAME="demo"
+
+mkdir -p "$WORKSPACE_DIR"
+cd "$WORKSPACE_DIR"
+npx --yes code-studio@latest init . --yes
+npx --yes code-studio@latest add app "$APP_NAME"
+npx --yes code-studio@latest doctor
 ```
+
+Change `WORKSPACE_DIR` and `APP_NAME` before running the block. `init` creates the Git repository and Studio submodule, while `add app` creates the runnable application under `apps/$APP_NAME`.
 
 `init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
 
 The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
+
+### IntelliJ IDEA
+
+Open `WORKSPACE_DIR`, not its `studio/` subdirectory, with the Kotlin Toolchain plugin enabled. The modules target JDK 21. If IDEA reports that modules have no SDK, click `Configure...`, set the Project SDK to a locally installed JDK 21, and reload the Kotlin Toolchain project.
 
 Initialization also installs the root Kotlin wrapper and dependency catalog required by an empty workspace. It preserves unrelated YAML, Git state, existing catalogs, and local configuration. Use `--dry-run` to inspect the changes first.
 
