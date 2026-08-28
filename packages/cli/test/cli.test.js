@@ -197,32 +197,38 @@ test("init dry-run leaves an empty directory untouched", () => {
   assert.deepEqual(readdirSync(workspace), []);
 });
 
-test("add dry-run includes the pending contributor without writing files", () => {
+test("add app dry-run includes both modules without writing files", () => {
   const workspace = temporaryDirectory("add-dry-run");
   assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
 
-  const result = run(workspace, "add", "library", "identity/users", "--dry-run");
+  const result = run(workspace, "add", "app", "orders", "--dry-run");
 
   assertSuccess(result);
+  assert.match(result.stdout, /would write .*apps.*orders.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*orders-lib.*module\.yaml/);
   assert.match(result.stdout, /would write .*contributors\.json/);
-  assert.equal(existsSync(path.join(workspace, "lib", "identity", "users")), false);
+  assert.equal(existsSync(path.join(workspace, "apps", "orders")), false);
+  assert.equal(existsSync(path.join(workspace, "lib", "orders-lib")), false);
   assert.deepEqual(
     JSON.parse(readFileSync(path.join(workspace, ".code-studio", "contributors.json"), "utf8")),
     { formatVersion: 1, contributors: {} },
   );
 });
 
-test("add app and library creates autonomous contributors without duplicate registrations", () => {
+test("add app creates a companion library and autonomous contributors", () => {
   const workspace = temporaryDirectory("add");
   assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
   assertSuccess(run(workspace, "add", "app", "orders"));
   assertSuccess(run(workspace, "add", "library", "identity/users"));
 
   const appModule = readFileSync(path.join(workspace, "apps", "orders", "module.yaml"), "utf8");
+  const companionLibraryModule = readFileSync(path.join(workspace, "lib", "orders-lib", "module.yaml"), "utf8");
   const libraryModule = readFileSync(path.join(workspace, "lib", "identity", "users", "module.yaml"), "utf8");
   assert.match(appModule, /product: jvm\/app/);
+  assert.match(companionLibraryModule, /product: jvm\/lib/);
   assert.match(libraryModule, /product: jvm\/lib/);
   assert.match(appModule, /\/\/studio\/build-config\/code-studio\.module-template\.yaml/);
+  assert.match(appModule, /\/\/lib\/orders-lib/);
   assert.match(appModule, /\/\/studio\/modules\/development-host/);
   assert.match(appModule, /mainClass: application\.orders\.ApplicationKt/);
   assert.equal(
@@ -234,6 +240,11 @@ test("add app and library creates autonomous contributors without duplicate regi
     /<logger name="org\.flywaydb" level="ERROR"\/>/,
   );
   assert.equal(existsSync(path.join(workspace, ".run", "Code Studio - Create Application.run.xml")), false);
+
+  const applicationContributor = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
+  assert.deepEqual(applicationContributor.requires, ["orders-lib"]);
+  const applicationSnapshot = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "lowcode-metadata", "metadata.json"), "utf8"));
+  assert.deepEqual(applicationSnapshot.contributorIds, ["orders", "orders-lib"]);
 
   const contributor = JSON.parse(readFileSync(path.join(workspace, "lib", "identity", "users", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
   assert.deepEqual(contributor, {
@@ -276,6 +287,7 @@ test("add app and library creates autonomous contributors without duplicate regi
       contributors: {
         "identity.users": "lib/identity/users",
         orders: "apps/orders",
+        "orders-lib": "lib/orders-lib",
       },
     },
   );
@@ -300,6 +312,12 @@ test("add validates contributor and Kotlin Toolchain module identity before writ
   assert.notEqual(duplicateModuleName.status, 0);
   assert.match(duplicateModuleName.stderr, /Kotlin Toolchain module name invoices already exists/);
   assert.equal(existsSync(path.join(workspace, "apps", "fulfillment", "invoices")), false);
+
+  assertSuccess(run(workspace, "add", "library", "payments-lib"));
+  const companionConflict = run(workspace, "add", "app", "payments");
+  assert.notEqual(companionConflict.status, 0);
+  assert.match(companionConflict.stderr, /contributor id payments-lib already exists/);
+  assert.equal(existsSync(path.join(workspace, "apps", "payments")), false);
 });
 
 test("hyphenated app IDs map to valid Kotlin packages", () => {
@@ -310,6 +328,7 @@ test("hyphenated app IDs map to valid Kotlin packages", () => {
   const application = path.join(workspace, "apps", "my-app", "src", "main", "kotlin", "application", "my_app", "Application.kt");
   assert.match(readFileSync(application, "utf8"), /^package application\.my_app/m);
   assert.match(readFileSync(path.join(workspace, "apps", "my-app", "module.yaml"), "utf8"), /application\.my_app\.ApplicationKt/);
+  assert.equal(existsSync(path.join(workspace, "lib", "my-app-lib", "module.yaml")), true);
 });
 
 test("refresh delegates to the selected contributor task", () => {

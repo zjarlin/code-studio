@@ -8,12 +8,12 @@ import {
   STUDIO_MODULES,
   STUDIO_PLUGINS,
   assertScaffoldAvailable,
-  contributorId,
   contributorModuleDirectory,
   findWorkspace,
   isDirectoryNonEmpty,
   isModuleRegistered,
   isPluginRegistered,
+  moduleScaffolds,
   moduleContributor,
   normalizeModuleName,
   readContributors,
@@ -24,7 +24,6 @@ import {
   renderProjectYaml,
   renderTargetProfile,
   resolveModule,
-  scaffoldFiles,
   writeIfChanged,
 } from "./workspace.js";
 import { runCommand } from "./command.js";
@@ -219,37 +218,50 @@ async function addModule(positionals, values, context) {
   }
   const root = findWorkspace(context.cwd);
   const segments = normalizeModuleName(name);
-  const scaffold = scaffoldFiles(root, kind, segments);
+  const scaffolds = moduleScaffolds(root, kind, segments);
   const contributors = readContributors(root);
-  const id = contributorId(segments);
-  const duplicateId = contributors.find((contributor) => contributor.id === id);
-  if (duplicateId) {
-    throw new Error(`contributor id ${id} already exists at ${contributorModuleDirectory(duplicateId.file)}`);
-  }
-  const moduleName = segments.at(-1);
-  const duplicateModuleName = contributors.find((contributor) =>
-    path.basename(contributorModuleDirectory(contributor.file)) === moduleName);
-  if (duplicateModuleName) {
-    throw new Error(`Kotlin Toolchain module name ${moduleName} already exists at ${contributorModuleDirectory(duplicateModuleName.file)}`);
-  }
-  assertScaffoldAvailable(scaffold);
+  const contributorIds = new Set();
+  const moduleNames = new Set();
+  for (const scaffold of scaffolds) {
+    const duplicateId = contributors.find((contributor) => contributor.id === scaffold.id);
+    if (duplicateId || contributorIds.has(scaffold.id)) {
+      const location = duplicateId ? ` at ${contributorModuleDirectory(duplicateId.file)}` : "";
+      throw new Error(`contributor id ${scaffold.id} already exists${location}`);
+    }
+    contributorIds.add(scaffold.id);
 
+    const moduleName = path.basename(scaffold.directory);
+    const duplicateModuleName = contributors.find((contributor) =>
+      path.basename(contributorModuleDirectory(contributor.file)) === moduleName);
+    if (duplicateModuleName || moduleNames.has(moduleName)) {
+      const location = duplicateModuleName ? ` at ${contributorModuleDirectory(duplicateModuleName.file)}` : "";
+      throw new Error(`Kotlin Toolchain module name ${moduleName} already exists${location}`);
+    }
+    moduleNames.add(moduleName);
+    assertScaffoldAvailable(scaffold);
+  }
   const projectFile = path.join(root, "project.yaml");
   const projectSource = await readFile(projectFile, "utf8");
-  let projectOutput = projectSource;
-  if (!isModuleRegistered(projectSource, scaffold.relativeDirectory)) {
-    projectOutput = renderProjectYaml(projectSource, [`./${scaffold.relativeDirectory}`], true);
-  }
+  const missingModules = scaffolds
+    .map((scaffold) => scaffold.relativeDirectory)
+    .filter((relativeDirectory) => !isModuleRegistered(projectSource, relativeDirectory))
+    .map((relativeDirectory) => `./${relativeDirectory}`);
+  const projectOutput = missingModules.length === 0
+    ? projectSource
+    : renderProjectYaml(projectSource, missingModules, true);
 
-  for (const [file, content] of scaffold.files) {
-    await writeIfChanged(file, content, values["dry-run"], context.output);
+  for (const scaffold of scaffolds) {
+    for (const [file, content] of scaffold.files) {
+      await writeIfChanged(file, content, values["dry-run"], context.output);
+    }
   }
   await writeIfChanged(projectFile, projectOutput, values["dry-run"], context.output);
+  const pendingContributors = Object.fromEntries(
+    scaffolds.map((scaffold) => [scaffold.id, scaffold.relativeDirectory]),
+  );
   await writeIfChanged(
     path.join(root, ".code-studio", "contributors.json"),
-    renderContributorIndex(root, contributors, {
-      [contributorId(segments)]: scaffold.relativeDirectory,
-    }),
+    renderContributorIndex(root, contributors, pendingContributors),
     values["dry-run"],
     context.output,
   );
