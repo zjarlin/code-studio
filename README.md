@@ -12,7 +12,7 @@ Run this in a new or existing Amper workspace:
 npx code-studio@latest init
 ```
 
-`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application and its companion `lib/<name>-lib` module are ready, and the application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
+`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. In a workspace without applications it also creates the shared IntelliJ run configuration `Code Studio - 创建应用`. Run it, enter a stable module name, then reload Amper; the new runnable application, its companion `lib/<name>-lib`, and shared `lib/infra/{system-user,system-file,system-foundation,cache}` infrastructure libraries are ready, and the application appears as `运行模块 <name>`. The one-time creator configuration is removed after the first application is created.
 
 The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
 

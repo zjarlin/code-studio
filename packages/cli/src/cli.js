@@ -222,11 +222,22 @@ async function addModule(positionals, values, context) {
   const contributors = readContributors(root);
   const contributorIds = new Set();
   const moduleNames = new Set();
+  const newScaffolds = [];
   for (const scaffold of scaffolds) {
     const duplicateId = contributors.find((contributor) => contributor.id === scaffold.id);
-    if (duplicateId || contributorIds.has(scaffold.id)) {
-      const location = duplicateId ? ` at ${contributorModuleDirectory(duplicateId.file)}` : "";
-      throw new Error(`contributor id ${scaffold.id} already exists${location}`);
+    if (duplicateId) {
+      const existingDirectory = path.relative(root, contributorModuleDirectory(duplicateId.file))
+        .split(path.sep)
+        .join("/");
+      if (scaffold.shared && existingDirectory === scaffold.relativeDirectory) {
+        contributorIds.add(scaffold.id);
+        moduleNames.add(path.basename(scaffold.directory));
+        continue;
+      }
+      throw new Error(`contributor id ${scaffold.id} already exists at ${contributorModuleDirectory(duplicateId.file)}`);
+    }
+    if (contributorIds.has(scaffold.id)) {
+      throw new Error(`contributor id ${scaffold.id} already exists`);
     }
     contributorIds.add(scaffold.id);
 
@@ -239,6 +250,7 @@ async function addModule(positionals, values, context) {
     }
     moduleNames.add(moduleName);
     assertScaffoldAvailable(scaffold);
+    newScaffolds.push(scaffold);
   }
 
   const projectFile = path.join(root, "project.yaml");
@@ -251,14 +263,14 @@ async function addModule(positionals, values, context) {
     ? projectSource
     : renderProjectYaml(projectSource, missingModules, true);
 
-  for (const scaffold of scaffolds) {
+  for (const scaffold of newScaffolds) {
     for (const [file, content] of scaffold.files) {
       await writeIfChanged(file, content, values["dry-run"], context.output);
     }
   }
   await writeIfChanged(projectFile, projectOutput, values["dry-run"], context.output);
   const pendingContributors = Object.fromEntries(
-    scaffolds.map((scaffold) => [scaffold.id, scaffold.relativeDirectory]),
+    newScaffolds.map((scaffold) => [scaffold.id, scaffold.relativeDirectory]),
   );
   await writeIfChanged(
     path.join(root, ".code-studio", "contributors.json"),
