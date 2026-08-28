@@ -9,10 +9,16 @@ export const STUDIO_PLUGINS = [
   "./studio/build-tools/studio-ui",
   "./studio/build-tools/dto-analysis",
 ];
-const NEW_WORKSPACE_MODULES = ["./apps/*", "./lib/*", ...STUDIO_MODULES];
+const NEW_WORKSPACE_MODULES = ["./apps/*", "./lib/*", "./lib/*/*", ...STUDIO_MODULES];
 const CONTRIBUTOR_FILE = path.join("src", "main", "resources", "META-INF", "code-studio", "contributor.json");
 const CONTRIBUTOR_MIGRATIONS = path.join("src", "main", "lowcode-metadata", "db", "studio", "migration");
 const METADATA_SNAPSHOT = path.join("src", "main", "lowcode-metadata", "metadata.json");
+const APPLICATION_INFRASTRUCTURE_LIBRARIES = [
+  { name: "cache", description: "Framework-neutral cache contracts and implementations.", requires: [] },
+  { name: "system-file", description: "File upload, metadata, content access, and storage adapters.", requires: ["cache"] },
+  { name: "system-foundation", description: "Configuration, dictionary, and other system foundation capabilities.", requires: [] },
+  { name: "system-user", description: "Users, departments, roles, menus, permissions, and access policies.", requires: ["system-foundation"] },
+];
 
 function parseYamlDocument(source, fileName) {
   const document = parseDocument(source);
@@ -173,14 +179,20 @@ export function contributorId(segments) {
 export function renderModule(kind, mainClass, dependencies = []) {
   const product = kind === "app" ? "jvm/app" : "jvm/lib";
   const base = `product: ${product}\n\napply:\n  - //studio/build-config/code-studio.module-template.yaml\n`;
-  if (kind === "library") {
+  const moduleDependencies = kind === "app"
+    ? [...dependencies, "//studio/modules/development-host"]
+    : dependencies;
+  if (moduleDependencies.length === 0) {
     return base;
   }
-  const dependencySource = [...new Set([...dependencies, "//studio/modules/development-host"])]
+  const dependencySource = [...new Set(moduleDependencies)]
     .sort()
     .map((dependency) => `  - ${dependency}`)
     .join("\n");
-  return `${base}\ndependencies:\n${dependencySource}\n\nsettings:\n  jvm:\n    mainClass: ${mainClass}\n`;
+  const settings = kind === "app"
+    ? `\nsettings:\n  jvm:\n    mainClass: ${mainClass}\n`
+    : "";
+  return `${base}\ndependencies:\n${dependencySource}\n${settings}`;
 }
 
 export function renderContributor(id, requires = []) {
@@ -247,7 +259,7 @@ export function renderDevelopmentLogging() {
 export function scaffoldFiles(root, kind, segments, options = {}) {
   const category = kind === "app" ? "apps" : "lib";
   const directory = path.join(root, category, ...segments);
-  const id = contributorId(segments);
+  const id = options.id ?? contributorId(segments);
   const packageName = ["application", ...segments.map(kotlinPackageSegment)].join(".");
   const packageDirectory = path.join(directory, "src", "main", "kotlin", ...packageName.split("."));
   const applicationFiles = kind === "app"
@@ -259,11 +271,12 @@ export function scaffoldFiles(root, kind, segments, options = {}) {
     : [];
   return {
     id,
+    shared: options.shared ?? false,
     relativeDirectory: path.posix.join(category, ...segments),
     directory,
     files: new Map([
       [path.join(directory, "module.yaml"), renderModule(kind, `${packageName}.ApplicationKt`, options.dependencies)],
-      [path.join(directory, "README.md"), `# ${id}\n\nCode Studio contributor.\n`],
+      [path.join(directory, "README.md"), `# ${id}\n\n${options.description ?? "Code Studio contributor."}\n`],
       [path.join(directory, CONTRIBUTOR_FILE), renderContributor(id, options.requires)],
       [path.join(directory, CONTRIBUTOR_MIGRATIONS, initialMigrationName(id)), renderInitialMigration()],
       [path.join(directory, METADATA_SNAPSHOT), renderEmptyMetadataSnapshot(id, options.requires)],
@@ -277,12 +290,21 @@ export function moduleScaffolds(root, kind, segments) {
     return [scaffoldFiles(root, kind, segments)];
   }
   const librarySegments = [...segments.slice(0, -1), `${segments.at(-1)}-lib`];
-  const library = scaffoldFiles(root, "library", librarySegments);
+  const applicationLibrary = scaffoldFiles(root, "library", librarySegments);
+  const infrastructureLibraries = APPLICATION_INFRASTRUCTURE_LIBRARIES.map(({ name, description, requires }) =>
+    scaffoldFiles(root, "library", ["infra", name], {
+      id: name,
+      description,
+      dependencies: requires.map((dependency) => `//lib/infra/${dependency}`),
+      requires,
+      shared: true,
+    }));
+  const libraries = [applicationLibrary, ...infrastructureLibraries];
   const application = scaffoldFiles(root, kind, segments, {
-    dependencies: [`//${library.relativeDirectory}`],
-    requires: [library.id],
+    dependencies: libraries.map((library) => `//${library.relativeDirectory}`),
+    requires: libraries.map((library) => library.id),
   });
-  return [application, library];
+  return [application, ...libraries];
 }
 
 export function assertScaffoldAvailable(scaffold) {

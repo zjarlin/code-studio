@@ -205,9 +205,14 @@ test("add app dry-run includes both modules without writing files", () => {
 
   assertSuccess(result);
   assert.match(result.stdout, /would write .*apps.*orders.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*cache.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*system-file.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*system-foundation.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*system-user.*module\.yaml/);
   assert.match(result.stdout, /would write .*lib.*orders-lib.*module\.yaml/);
   assert.match(result.stdout, /would write .*contributors\.json/);
   assert.equal(existsSync(path.join(workspace, "apps", "orders")), false);
+  assert.equal(existsSync(path.join(workspace, "lib", "infra", "system-user")), false);
   assert.equal(existsSync(path.join(workspace, "lib", "orders-lib")), false);
   assert.deepEqual(
     JSON.parse(readFileSync(path.join(workspace, ".code-studio", "contributors.json"), "utf8")),
@@ -228,6 +233,10 @@ test("add app creates a companion library and autonomous contributors", () => {
   assert.match(companionLibraryModule, /product: jvm\/lib/);
   assert.match(libraryModule, /product: jvm\/lib/);
   assert.match(appModule, /\/\/studio\/build-config\/code-studio\.module-template\.yaml/);
+  assert.match(appModule, /\/\/lib\/infra\/cache/);
+  assert.match(appModule, /\/\/lib\/infra\/system-file/);
+  assert.match(appModule, /\/\/lib\/infra\/system-foundation/);
+  assert.match(appModule, /\/\/lib\/infra\/system-user/);
   assert.match(appModule, /\/\/lib\/orders-lib/);
   assert.match(appModule, /\/\/studio\/modules\/development-host/);
   assert.match(appModule, /mainClass: application\.orders\.ApplicationKt/);
@@ -242,9 +251,18 @@ test("add app creates a companion library and autonomous contributors", () => {
   assert.equal(existsSync(path.join(workspace, ".run", "Code Studio - Create Application.run.xml")), false);
 
   const applicationContributor = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
-  assert.deepEqual(applicationContributor.requires, ["orders-lib"]);
+  assert.deepEqual(applicationContributor.requires, ["cache", "orders-lib", "system-file", "system-foundation", "system-user"]);
   const applicationSnapshot = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "lowcode-metadata", "metadata.json"), "utf8"));
-  assert.deepEqual(applicationSnapshot.contributorIds, ["orders", "orders-lib"]);
+  assert.deepEqual(applicationSnapshot.contributorIds, ["cache", "orders", "orders-lib", "system-file", "system-foundation", "system-user"]);
+
+  for (const infrastructure of ["cache", "system-file", "system-foundation", "system-user"]) {
+    const module = readFileSync(path.join(workspace, "lib", "infra", infrastructure, "module.yaml"), "utf8");
+    assert.match(module, /product: jvm\/lib/);
+  }
+  const fileModule = readFileSync(path.join(workspace, "lib", "infra", "system-file", "module.yaml"), "utf8");
+  assert.match(fileModule, /\/\/lib\/infra\/cache/);
+  const userModule = readFileSync(path.join(workspace, "lib", "infra", "system-user", "module.yaml"), "utf8");
+  assert.match(userModule, /\/\/lib\/infra\/system-foundation/);
 
   const contributor = JSON.parse(readFileSync(path.join(workspace, "lib", "identity", "users", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
   assert.deepEqual(contributor, {
@@ -274,7 +292,13 @@ test("add app creates a companion library and autonomous contributors", () => {
     },
   );
   const project = parse(readFileSync(path.join(workspace, "project.yaml"), "utf8"));
-  assert.deepEqual(project.modules, ["./apps/*", "./lib/*", "./studio/build-tools/*", "./studio/modules/*", "./lib/identity/users"]);
+  assert.deepEqual(project.modules, [
+    "./apps/*",
+    "./lib/*",
+    "./lib/*/*",
+    "./studio/build-tools/*",
+    "./studio/modules/*",
+  ]);
   assert.deepEqual(project.plugins, [
     "./studio/build-tools/source-generation",
     "./studio/build-tools/studio-ui",
@@ -285,9 +309,13 @@ test("add app creates a companion library and autonomous contributors", () => {
     {
       formatVersion: 1,
       contributors: {
+        cache: "lib/infra/cache",
         "identity.users": "lib/identity/users",
         orders: "apps/orders",
         "orders-lib": "lib/orders-lib",
+        "system-file": "lib/infra/system-file",
+        "system-foundation": "lib/infra/system-foundation",
+        "system-user": "lib/infra/system-user",
       },
     },
   );
@@ -318,6 +346,21 @@ test("add validates contributor and Kotlin Toolchain module identity before writ
   assert.notEqual(companionConflict.status, 0);
   assert.match(companionConflict.stderr, /contributor id payments-lib already exists/);
   assert.equal(existsSync(path.join(workspace, "apps", "payments")), false);
+});
+
+test("additional applications reuse initialized infrastructure libraries", () => {
+  const workspace = temporaryDirectory("shared-infrastructure");
+  assertSuccess(run(workspace, "init", "--yes", "--skip-submodule"));
+  assertSuccess(run(workspace, "add", "app", "orders"));
+  assertSuccess(run(workspace, "add", "app", "billing"));
+
+  const billingModule = readFileSync(path.join(workspace, "apps", "billing", "module.yaml"), "utf8");
+  assert.match(billingModule, /\/\/lib\/infra\/system-user/);
+  assert.match(billingModule, /\/\/lib\/billing-lib/);
+  const contributors = JSON.parse(readFileSync(path.join(workspace, ".code-studio", "contributors.json"), "utf8"));
+  assert.equal(contributors.contributors["system-user"], "lib/infra/system-user");
+  assert.equal(contributors.contributors.billing, "apps/billing");
+  assert.equal(contributors.contributors["billing-lib"], "lib/billing-lib");
 });
 
 test("hyphenated app IDs map to valid Kotlin packages", () => {
