@@ -1,36 +1,12 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { parse as parseToml } from "smol-toml";
+import { PLATFORM_ARTIFACTS } from "./infrastructure-manifest.js";
+
+export { PLATFORM_ARTIFACTS } from "./infrastructure-manifest.js";
 
 export const INFRASTRUCTURE_FILE = path.join(".code-studio", "infrastructure.json");
 export const INFRASTRUCTURE_MODES = ["source", "published"];
-
-export const PLATFORM_ARTIFACTS = Object.freeze({
-  compatibleVersion: "2026.08.28",
-  versionAlias: "addzero-platform",
-  bom: {
-    alias: "addzero-platform-bom",
-    module: "site.addzero:platform-bom",
-  },
-  libraries: [
-    { alias: "addzero-system-user", module: "site.addzero:system-user", contributorId: "system-user" },
-    { alias: "addzero-system-file", module: "site.addzero:system-file", contributorId: "system-file" },
-    { alias: "addzero-system-foundation", module: "site.addzero:system-foundation", contributorId: "system-foundation" },
-    { alias: "addzero-starter-cache", module: "site.addzero:starter-cache" },
-    { alias: "addzero-object-storage-postgresql", module: "site.addzero:object-storage-postgresql" },
-  ],
-  contributors: [
-    { id: "system-audit-model", requires: [] },
-    { id: "system-area", requires: ["system-audit-model"] },
-    { id: "system-file", requires: ["system-audit-model"] },
-    { id: "system-foundation", requires: ["system-audit-model"] },
-    { id: "system-sms", requires: ["system-audit-model"] },
-    {
-      id: "system-user",
-      requires: ["system-area", "system-audit-model", "system-foundation", "system-sms"],
-    },
-  ],
-});
 
 export function validatePlatformVersion(value) {
   if (!/^\d{4}\.\d{2}\.\d{2}$/.test(value)) {
@@ -120,19 +96,32 @@ export function publishedDependencies() {
 
 export function publishedContributorIds() {
   return PLATFORM_ARTIFACTS.libraries
-    .map(({ contributorId }) => contributorId)
+    .map(({ contributor }) => contributor?.id)
     .filter(Boolean);
 }
 
 export function publishedContributorCoordinates(platformVersion) {
   const version = validatePlatformVersion(platformVersion);
   return PLATFORM_ARTIFACTS.libraries
-    .filter(({ contributorId }) => contributorId)
+    .filter(({ contributor }) => contributor)
     .map(({ module }) => `${module}:${version}`);
 }
 
 export function publishedContributors() {
-  return PLATFORM_ARTIFACTS.contributors.map((contributor) => ({ ...contributor }));
+  return PLATFORM_ARTIFACTS.libraries
+    .filter(({ contributor }) => contributor)
+    .map(({ contributor }) => ({ ...contributor, requires: [...contributor.requires] }));
+}
+
+export function sourceInfrastructureLibraries() {
+  return PLATFORM_ARTIFACTS.libraries.map(({ artifact, module, dependencies, contributor }) => ({
+    name: artifact,
+    description: `Source infrastructure module for ${module}.`,
+    dependencies: [...dependencies],
+    id: contributor?.id ?? artifact,
+    requires: contributor ? [...contributor.requires] : [],
+    contributesMetadata: contributor !== undefined,
+  }));
 }
 
 export function renderPublishedCatalog(source, platformVersion) {

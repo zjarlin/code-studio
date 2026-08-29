@@ -6,6 +6,7 @@ import {
   publishedContributorCoordinates,
   publishedContributorIds,
   publishedDependencies,
+  sourceInfrastructureLibraries,
 } from "./infrastructure.js";
 
 export const STUDIO_MODULES = ["./studio/build-tools/*", "./studio/modules/*"];
@@ -18,34 +19,6 @@ const NEW_WORKSPACE_MODULES = ["./apps/*", "./lib/*", "./lib/*/*", ...STUDIO_MOD
 const CONTRIBUTOR_FILE = path.join("src", "main", "resources", "META-INF", "code-studio", "contributor.json");
 const CONTRIBUTOR_MIGRATIONS = path.join("src", "main", "lowcode-metadata", "db", "studio", "migration");
 const METADATA_SNAPSHOT = path.join("src", "main", "lowcode-metadata", "metadata.json");
-const APPLICATION_INFRASTRUCTURE_LIBRARIES = [
-  {
-    name: "cache",
-    description: "Framework-neutral cache contracts and implementations.",
-    dependencies: [],
-    requires: [],
-    contributesMetadata: false,
-  },
-  {
-    name: "system-file",
-    description: "File upload, metadata, content access, and storage adapters.",
-    dependencies: ["cache"],
-    requires: [],
-  },
-  {
-    name: "system-foundation",
-    description: "Configuration, dictionary, and other system foundation capabilities.",
-    dependencies: [],
-    requires: [],
-  },
-  {
-    name: "system-user",
-    description: "Users, departments, roles, menus, permissions, and access policies.",
-    dependencies: ["system-foundation"],
-    requires: ["system-foundation"],
-  },
-];
-
 function parseYamlDocument(source, fileName) {
   const document = parseDocument(source);
   if (document.errors.length > 0) {
@@ -366,15 +339,16 @@ export function moduleScaffolds(root, kind, segments, infrastructure = { mode: "
     });
     return [application, applicationLibrary];
   }
-  const infrastructureLibraries = APPLICATION_INFRASTRUCTURE_LIBRARIES.map(({
+  const infrastructureLibraries = sourceInfrastructureLibraries().map(({
     name,
     description,
     dependencies,
+    id,
     requires,
-    contributesMetadata = true,
+    contributesMetadata,
   }) =>
     scaffoldFiles(root, "library", ["infra", name], {
-      id: name,
+      id,
       description,
       dependencies: dependencies.map((dependency) => `//lib/infra/${dependency}`),
       requires,

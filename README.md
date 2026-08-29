@@ -25,9 +25,7 @@ npx --yes code-studio@latest add app "$APP_NAME"
 Open [http://127.0.0.1:8080/studio/](http://127.0.0.1:8080/studio/).
 Open [API documentation](http://127.0.0.1:8080/studio/?mode=api-docs), select `Hello World`, and run `GET /hello`.
 
-Creating an application also creates its companion `lib/<name>-lib` module and shared `lib/infra/{system-user,system-file,system-foundation,cache}` infrastructure libraries. Later applications reuse the infrastructure modules. The application depends on those libraries and remains the metadata root.
-
-Infrastructure mode is workspace-owned. `source` creates shared `lib/infra/*` modules for platform development; `published` creates only the application and `lib/<name>-lib`, with infrastructure aligned by `site.addzero:platform-bom`. The initial default is `source`, and existing workspaces are never switched automatically.
+Creating an application also creates its companion `lib/<name>-lib` module. In `source` mode, initialization creates the complete reusable platform, starter, system, and object-storage set under `lib/infra/*`; later applications reuse those modules. In `published` mode, the same set is aligned by `site.addzero:platform-bom`. The initial default is `source`, and existing workspaces are never switched automatically.
 
 ## Dev And Prod
 

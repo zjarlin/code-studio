@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
+import { PLATFORM_ARTIFACTS } from "../src/infrastructure.js";
 
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const REPOSITORY_ROOT = path.resolve(PACKAGE_ROOT, "../..");
@@ -19,6 +20,62 @@ const GIT_ENV = {
   GIT_COMMITTER_EMAIL: "code-studio@example.invalid",
   GIT_ALLOW_PROTOCOL: "file",
 };
+const EXPECTED_PLATFORM_ARTIFACTS = [
+  "cache",
+  "core",
+  "crud",
+  "crypto",
+  "dictionary-translation",
+  "inject",
+  "lowcode",
+  "object-storage",
+  "object-storage-minio",
+  "object-storage-postgresql",
+  "persistence",
+  "plugin",
+  "starter-banner",
+  "starter-business-controller",
+  "starter-cache",
+  "starter-captcha",
+  "starter-core",
+  "starter-curllog",
+  "starter-database",
+  "starter-object-storage",
+  "starter-observability",
+  "starter-openapi",
+  "starter-scheduled-jobs",
+  "starter-security",
+  "starter-studio",
+  "starter-web",
+  "system-agent",
+  "system-area",
+  "system-audit-model",
+  "system-file",
+  "system-foundation",
+  "system-logger",
+  "system-mail",
+  "system-message",
+  "system-oauth2",
+  "system-sms",
+  "system-tenant",
+  "system-user",
+  "tool-str",
+  "web",
+];
+const EXPECTED_CONTRIBUTOR_IDS = [
+  "system-agent",
+  "system-area",
+  "system-audit-model",
+  "system-file",
+  "system-foundation",
+  "system-logger",
+  "system-mail",
+  "system-message",
+  "system-oauth2",
+  "system-sms",
+  "system-tenant",
+  "system-user",
+];
 
 function temporaryDirectory(name) {
   return mkdtempSync(path.join(tmpdir(), `code-studio-${name}-`));
@@ -60,6 +117,24 @@ function assertSuccess(result) {
   assert.equal(result.status, 0, result.stderr);
 }
 
+test("infrastructure manifest covers every reusable platform artifact", () => {
+  const artifacts = PLATFORM_ARTIFACTS.libraries.map(({ artifact }) => artifact);
+  const contributors = PLATFORM_ARTIFACTS.libraries
+    .map(({ contributor }) => contributor?.id)
+    .filter(Boolean);
+  assert.deepEqual(artifacts.toSorted(), EXPECTED_PLATFORM_ARTIFACTS);
+  assert.deepEqual(contributors.toSorted(), EXPECTED_CONTRIBUTOR_IDS);
+
+  const artifactSet = new Set(artifacts);
+  for (const library of PLATFORM_ARTIFACTS.libraries) {
+    assert.equal(library.alias, `addzero-${library.artifact}`);
+    assert.equal(library.module, `site.addzero:${library.artifact}`);
+    for (const dependency of library.dependencies) {
+      assert.equal(artifactSet.has(dependency), true, `${library.artifact} requires unknown artifact ${dependency}`);
+    }
+  }
+});
+
 test("npm tarball preserves the executable and root Apache license", () => {
   const packageLicense = readFileSync(path.join(PACKAGE_ROOT, "LICENSE"), "utf8");
   const rootLicense = readFileSync(path.resolve(PACKAGE_ROOT, "../..", "LICENSE"), "utf8");
@@ -94,15 +169,21 @@ test("installed CLI uses hoisted runtime dependencies without bootstrapping", ()
     filter: (source) => !["node_modules", "package-lock.json"].includes(path.basename(source)),
   });
 
-  const yamlPackage = path.join(installation, "node_modules", "yaml");
-  mkdirSync(yamlPackage, { recursive: true });
-  writeFileSync(path.join(yamlPackage, "package.json"), JSON.stringify({
-    name: "yaml",
-    version: "0.0.0",
-    type: "module",
-    exports: "./index.js",
-  }));
-  writeFileSync(path.join(yamlPackage, "index.js"), "export function isSeq() { return false; }\nexport function parseDocument() {}\n");
+  const runtimePackages = {
+    "smol-toml": "export function parse() { return {}; }\n",
+    yaml: "export function isSeq() { return false; }\nexport function parseDocument() {}\n",
+  };
+  for (const [name, source] of Object.entries(runtimePackages)) {
+    const packageDirectory = path.join(installation, "node_modules", name);
+    mkdirSync(packageDirectory, { recursive: true });
+    writeFileSync(path.join(packageDirectory, "package.json"), JSON.stringify({
+      name,
+      version: "0.0.0",
+      type: "module",
+      exports: "./index.js",
+    }));
+    writeFileSync(path.join(packageDirectory, "index.js"), source);
+  }
 
   const result = spawnSync(
     process.execPath,
@@ -213,6 +294,11 @@ test("add app dry-run includes both modules without writing files", () => {
   assert.match(result.stdout, /would write .*lib.*infra.*system-file.*module\.yaml/);
   assert.match(result.stdout, /would write .*lib.*infra.*system-foundation.*module\.yaml/);
   assert.match(result.stdout, /would write .*lib.*infra.*system-user.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*crud.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*starter-business-controller.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*starter-openapi.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*starter-scheduled-jobs.*module\.yaml/);
+  assert.match(result.stdout, /would write .*lib.*infra.*object-storage-minio.*module\.yaml/);
   assert.match(result.stdout, /would write .*lib.*orders-lib.*module\.yaml/);
   assert.match(result.stdout, /would write .*contributors\.json/);
   assert.equal(existsSync(path.join(workspace, "apps", "orders")), false);
@@ -255,11 +341,11 @@ test("add app creates a companion library and autonomous contributors", () => {
   assert.equal(existsSync(path.join(workspace, ".run", "Code Studio - Create Application.run.xml")), false);
 
   const applicationContributor = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
-  assert.deepEqual(applicationContributor.requires, ["orders-lib", "system-file", "system-foundation", "system-user"]);
+  assert.deepEqual(applicationContributor.requires, ["orders-lib", ...EXPECTED_CONTRIBUTOR_IDS]);
   const applicationSnapshot = JSON.parse(readFileSync(path.join(workspace, "apps", "orders", "src", "main", "lowcode-metadata", "metadata.json"), "utf8"));
-  assert.deepEqual(applicationSnapshot.contributorIds, ["orders", "orders-lib", "system-file", "system-foundation", "system-user"]);
+  assert.deepEqual(applicationSnapshot.contributorIds, ["orders", "orders-lib", ...EXPECTED_CONTRIBUTOR_IDS]);
 
-  for (const infrastructure of ["cache", "system-file", "system-foundation", "system-user"]) {
+  for (const infrastructure of EXPECTED_PLATFORM_ARTIFACTS) {
     const module = readFileSync(path.join(workspace, "lib", "infra", infrastructure, "module.yaml"), "utf8");
     assert.match(module, /product: jvm\/lib/);
   }
@@ -274,6 +360,12 @@ test("add app creates a companion library and autonomous contributors", () => {
   );
   const userModule = readFileSync(path.join(workspace, "lib", "infra", "system-user", "module.yaml"), "utf8");
   assert.match(userModule, /\/\/lib\/infra\/system-foundation/);
+  const crudModule = readFileSync(path.join(workspace, "lib", "infra", "crud", "module.yaml"), "utf8");
+  assert.match(crudModule, /\/\/lib\/infra\/core/);
+  assert.match(crudModule, /\/\/lib\/infra\/persistence/);
+  assert.match(crudModule, /\/\/lib\/infra\/web/);
+  const scheduledJobsModule = readFileSync(path.join(workspace, "lib", "infra", "starter-scheduled-jobs", "module.yaml"), "utf8");
+  assert.match(scheduledJobsModule, /\/\/lib\/infra\/starter-database/);
 
   const contributor = JSON.parse(readFileSync(path.join(workspace, "lib", "identity", "users", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"), "utf8"));
   assert.deepEqual(contributor, {
@@ -323,9 +415,7 @@ test("add app creates a companion library and autonomous contributors", () => {
         "identity.users": "lib/identity/users",
         orders: "apps/orders",
         "orders-lib": "lib/orders-lib",
-        "system-file": "lib/infra/system-file",
-        "system-foundation": "lib/infra/system-foundation",
-        "system-user": "lib/infra/system-user",
+        ...Object.fromEntries(EXPECTED_CONTRIBUTOR_IDS.map((id) => [id, `lib/infra/${id}`])),
       },
     },
   );
@@ -409,21 +499,32 @@ test("published mode generates only the application shell and companion library"
   assert.match(appModule, /\$libs\.addzero\.system\.foundation/);
   assert.match(appModule, /\$libs\.addzero\.starter\.cache/);
   assert.match(appModule, /\$libs\.addzero\.object\.storage\.postgresql/);
+  assert.match(appModule, /\$libs\.addzero\.crud/);
+  assert.match(appModule, /\$libs\.addzero\.starter\.business\.controller/);
+  assert.match(appModule, /\$libs\.addzero\.starter\.openapi/);
+  assert.match(appModule, /\$libs\.addzero\.starter\.scheduled\.jobs/);
+  assert.match(appModule, /\$libs\.addzero\.object\.storage\.minio/);
   assert.match(appModule, /contributorClasspath:/);
-  assert.match(appModule, /site\.addzero:system-user:2026\.09\.01/);
-  assert.match(appModule, /site\.addzero:system-file:2026\.09\.01/);
-  assert.match(appModule, /site\.addzero:system-foundation:2026\.09\.01/);
+  for (const artifact of EXPECTED_PLATFORM_ARTIFACTS) {
+    assert.match(appModule, new RegExp(`\\$libs\\.${`addzero-${artifact}`.replaceAll("-", "\\.")}`));
+  }
+  for (const contributorId of EXPECTED_CONTRIBUTOR_IDS) {
+    assert.match(appModule, new RegExp(`site\\.addzero:${contributorId}:2026\\.09\\.01`));
+  }
   const contributor = JSON.parse(readFileSync(
     path.join(workspace, "apps", "orders", "src", "main", "resources", "META-INF", "code-studio", "contributor.json"),
     "utf8",
   ));
-  assert.deepEqual(contributor.requires, ["orders-lib", "system-file", "system-foundation", "system-user"]);
+  assert.deepEqual(contributor.requires, ["orders-lib", ...EXPECTED_CONTRIBUTOR_IDS]);
 
   const catalog = readFileSync(path.join(workspace, "libs.versions.toml"), "utf8");
   assert.match(catalog, /^# preserved catalog comment/m);
   assert.match(catalog, /example = .*# preserved entry/);
   assert.match(catalog, /addzero-platform = "2026\.09\.01"/);
   assert.match(catalog, /addzero-platform-bom = \{ module = "site\.addzero:platform-bom", version\.ref = "addzero-platform" \}/);
+  for (const artifact of EXPECTED_PLATFORM_ARTIFACTS) {
+    assert.match(catalog, new RegExp(`addzero-${artifact} = \\{ module = "site\\.addzero:${artifact}" \\}`));
+  }
   assert.deepEqual(
     JSON.parse(readFileSync(path.join(workspace, ".code-studio", "contributors.json"), "utf8")),
     {
