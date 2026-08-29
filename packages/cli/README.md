@@ -2,9 +2,9 @@
 
 `code-studio` initializes an Amper workspace with the Code Studio submodule and scaffolds application-owned metadata contributors. Initialization idempotently registers the Studio modules and Amper plugins, installs the root Kotlin wrapper and catalog when absent, and creates ignored local database settings plus a versioned generation target profile.
 
-Infrastructure mode is stored in `.code-studio/infrastructure.json`. The initial default is `source`: applications get a runnable shell, `lib/<name>-lib`, and reusable `lib/infra/{system-user,system-file,system-foundation,cache}` modules. `cache` is an ordinary source library and is not a metadata contributor. Later applications reuse these modules.
+Infrastructure mode is stored in `.code-studio/infrastructure.json`. The initial default is `source`: applications get a runnable shell, `lib/<name>-lib`, and shared `lib/infra/<artifact>` modules for every reusable platform, starter, system, object-storage provider, and common tool artifact. Only `system-*` modules are metadata contributors. Later applications reuse the same infrastructure modules.
 
-`published` creates only the application shell and `lib/<name>-lib`. It imports `site.addzero:platform-bom` plus the system, cache starter, and PostgreSQL object-storage artifacts from the dependency catalog. The version is a CLI-pinned `yyyy.MM.dd` value unless `--platform-version` is supplied. Published contributors are readable in Studio but remain dependency-owned and cannot be edited by the application.
+`published` creates only the application shell and `lib/<name>-lib`. It imports `site.addzero:platform-bom` plus all 40 platform artifacts from the dependency catalog, including CRUD, runtime starters, RBAC, file storage, dictionaries, cache, scheduled jobs, OpenAPI, captcha, logs, messaging, OAuth, tenancy, Studio integration, and PostgreSQL or MinIO object storage. The version is a CLI-pinned `yyyy.MM.dd` value unless `--platform-version` is supplied. Published contributors are readable in Studio but remain dependency-owned and cannot be edited by the application.
 
 The IDE creator requires Node.js 22 or newer and the IntelliJ Node.js plugin. The equivalent terminal command is `code-studio add app <name>`.
 

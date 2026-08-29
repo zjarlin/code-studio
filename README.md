@@ -12,7 +12,7 @@ Run this in a new or existing Amper workspace:
 npx code-studio@latest init --infra source
 ```
 
-`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. Infrastructure mode is workspace-owned: `source` creates shared `lib/infra/*` modules for platform development, while `published` creates only a runnable application and `lib/<name>-lib`, with infrastructure aligned by `site.addzero:platform-bom`. The initial default remains `source`; existing workspaces are never switched automatically.
+`init` adds this repository at `studio/` as a submodule, checks out the tag matching the npm package version, and idempotently registers the modules and Amper plugins in `project.yaml`. Infrastructure mode is workspace-owned: `source` creates shared `lib/infra/*` modules for the complete reusable platform, starter, system, and object-storage set, while `published` creates only a runnable application and `lib/<name>-lib`, with the same set aligned by `site.addzero:platform-bom`. The initial default remains `source`; existing workspaces are never switched automatically.
 
 The IDE creator uses the Node.js run configuration and requires Node.js 22 or newer plus the IntelliJ Node.js plugin. `code-studio add app <name>` is the equivalent terminal command.
 
