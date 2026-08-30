@@ -1,6 +1,6 @@
 # code-studio CLI
 
-`code-studio` initializes a Kotlin Toolchain workspace with the Code Studio submodule and scaffolds application-owned metadata contributors. Initialization idempotently registers the Studio modules and Kotlin Toolchain plugins, installs the root Kotlin wrapper and catalog when absent, and creates ignored local database settings plus a versioned generation target profile.
+`code-studio` initializes a Kotlin Toolchain workspace with the Code Studio submodule and scaffolds application-owned metadata contributors. Initialization idempotently registers the Studio modules and Kotlin Toolchain plugins, installs the root Kotlin wrapper and catalog when absent, and creates ignored local database settings, a versioned generation target profile, and IDE-editable source templates under `.code-studio/templates`. Existing template changes are preserved.
 
 Infrastructure mode is stored in `.code-studio/infrastructure.json`. The initial default is `source`: applications get a runnable shell, `lib/<name>-lib`, and shared `lib/infra/<artifact>` modules for every reusable platform, starter, system, object-storage provider, and common tool artifact. Only `system-*` modules are metadata contributors. Later applications reuse the same infrastructure modules.
 

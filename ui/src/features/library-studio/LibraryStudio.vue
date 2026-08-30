@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Boxes, Braces, CheckCircle2, ChevronDown, ChevronRight, Code, Database, Eye, FileCode2, Folder, FolderOpen, GitBranch, LayoutDashboard, Library as LibraryIcon, ListTree, Plus, RefreshCw, Save, Search, Trash2 } from '@lucide/vue'
+import { Boxes, Braces, CheckCircle2, ChevronDown, ChevronRight, Clock3, Code, Database, Eye, FileCode2, Folder, FolderOpen, GitBranch, LayoutDashboard, Library as LibraryIcon, ListTree, Plus, RefreshCw, Save, Search, Trash2 } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 
@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/generated
 import { LowcodeApi } from '@/lowcode-api'
 import type {
   ApplicationIdentityMode,
+  ConventionFileKind,
   LibraryDefinitionDraft,
   LibraryKind,
   LowcodeValidationResult,
@@ -47,6 +48,10 @@ interface ResourceTabDefinition {
   icon: Component
 }
 
+interface ResourceCreateDefinition extends ResourceTabDefinition {
+  conventionKind?: ConventionFileKind
+}
+
 const api = new LowcodeApi()
 const catalog = useLibraryResourceCatalog(api)
 const libraries = catalog.libraries
@@ -62,6 +67,7 @@ const notice = ref('')
 const noticeTone = ref<'error' | 'success'>('success')
 const validation = ref<LowcodeValidationResult>()
 const activeTab = ref<LibraryTab>('overview')
+const conventionFileCreateKind = ref<ConventionFileKind>('SERVICE')
 const createRequests = ref<Record<CreatableTab, number>>({
   models: 0,
   queries: 0,
@@ -75,6 +81,15 @@ const resourceTabs: ResourceTabDefinition[] = [
   { value: 'queries', label: '查询', icon: GitBranch },
   { value: 'dtos', label: 'DTO', icon: Braces },
   { value: 'services', label: '约定文件', icon: FileCode2 },
+  { value: 'constants', label: '常量', icon: Code },
+]
+
+const resourceCreateItems: ResourceCreateDefinition[] = [
+  { value: 'models', label: '模型', icon: Database },
+  { value: 'queries', label: '查询', icon: GitBranch },
+  { value: 'dtos', label: 'DTO', icon: Braces },
+  { value: 'services', label: 'Service', icon: FileCode2, conventionKind: 'SERVICE' },
+  { value: 'services', label: '定时任务', icon: Clock3, conventionKind: 'SCHEDULED_JOB' },
   { value: 'constants', label: '常量', icon: Code },
 ]
 
@@ -102,6 +117,12 @@ const searchMatches = computed(() => catalog.matches(search.value))
 const tabCounts = computed(() => selectedLibrary.value
   ? catalog.countsFor(selectedLibrary.value, selectedFeatureId.value)
   : { features: 0, models: 0, queries: 0, dtos: 0, services: 0, constants: 0 })
+const resourceCreateLabel = computed(() => {
+  if (selectedId.value === undefined) return '资源（请先选择 Library）'
+  if (readOnly.value) return '资源（依赖 Library 只读）'
+  if (features.value.length === 0) return '资源（请先创建功能目录）'
+  return '资源'
+})
 const visibleResourceTabs = computed(() => resourceTabs.filter(({ value }) => tabCounts.value[value] > 0))
 const visibleLibraries = computed(() => {
   const keyword = search.value.trim().toLowerCase()
@@ -289,9 +310,12 @@ function setContributorId(value: string | number): void {
   markDirty()
 }
 
-function createInTab(tab: CreatableTab): void {
+function createInTab(tab: CreatableTab, conventionKind?: ConventionFileKind): void {
   if (readOnly.value || !selectedLibrary.value || features.value.length === 0) {
     return
+  }
+  if (tab === 'services') {
+    conventionFileCreateKind.value = conventionKind ?? 'SERVICE'
   }
   activeTab.value = tab
   createRequests.value = {
@@ -356,14 +380,15 @@ async function run(action: () => Promise<unknown>): Promise<void> {
               <DropdownMenuItem :disabled="readOnly || selectedId === undefined" @select="run(addFeature)"><ListTree />功能目录</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <DropdownMenuLabel>{{ resourceCreateLabel }}</DropdownMenuLabel>
             <DropdownMenuGroup>
               <DropdownMenuItem
-                v-for="tab in resourceTabs"
-                :key="tab.value"
-                :disabled="readOnly || selectedId === undefined || features.length === 0 || (tab.value === 'queries' && tabCounts.models === 0)"
-                @select="createInTab(tab.value)"
+                v-for="item in resourceCreateItems"
+                :key="`${item.value}:${item.conventionKind ?? 'default'}`"
+                :disabled="readOnly || selectedId === undefined || features.length === 0 || (item.value === 'queries' && tabCounts.models === 0)"
+                @select="createInTab(item.value, item.conventionKind)"
               >
-                <component :is="tab.icon" />{{ tab.label }}
+                <component :is="item.icon" />{{ item.label }}
               </DropdownMenuItem>
             </DropdownMenuGroup>
           </DropdownMenuContent>
@@ -475,7 +500,7 @@ async function run(action: () => Promise<unknown>): Promise<void> {
         <TabsContent v-if="activeTab === 'models'" value="models" class="library-tab-content"><LibraryResourceWorkspace resource="models" :create-request="createRequests.models" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'queries'" value="queries" class="library-tab-content"><LibraryQueryTable :create-request="createRequests.queries" :features="features" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'dtos'" value="dtos" class="library-tab-content"><LibraryResourceWorkspace resource="dtos" :create-request="createRequests.dtos" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
-        <TabsContent v-if="activeTab === 'services'" value="services" class="library-tab-content"><ConventionFileWorkspace :create-request="createRequests.services" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
+        <TabsContent v-if="activeTab === 'services'" value="services" class="library-tab-content"><ConventionFileWorkspace :create-kind="conventionFileCreateKind" :create-request="createRequests.services" :features="features" :library-spec="draft.spec" :read-only="readOnly" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'constants'" value="constants" class="library-tab-content">
           <ConstantWorkspace v-if="constantFeatures.length" :create-request="createRequests.constants" :features="constantFeatures" :selected-feature-code="selectedFeature?.featureCode" @count-change="handleConstantCount" />
           <div v-else class="feature-workbench-empty"><Code /><strong>请先创建功能目录</strong></div>

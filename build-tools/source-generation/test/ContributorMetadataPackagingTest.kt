@@ -10,6 +10,8 @@ import site.addzero.studio.runtime.metadataSnapshotResource
 import site.addzero.platform.lowcode.generator.LowcodeMetadata
 import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshot
 import site.addzero.platform.lowcode.generator.LowcodeMetadataSnapshots
+import site.addzero.platform.lowcode.generator.SourceTemplateCatalog
+import site.addzero.platform.lowcode.generator.SourceTemplateKind
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -58,12 +60,14 @@ class ContributorMetadataPackagingTest {
         val snapshotContent = LowcodeMetadataSnapshots.encode(snapshot)
         Files.writeString(snapshotFile, snapshotContent)
         val output = workspace.resolve("output")
+        val templates = writeSourceTemplates(workspace.resolve("templates"))
         Files.createDirectories(output)
         Files.writeString(output.resolve("stale.txt"), "stale\n")
 
         packageContributorMetadata(
             contributorMetadataMigrationDirectory = migrations,
             generationTargetProfile = profile,
+            sourceTemplateDirectory = templates,
             metadataSnapshot = snapshotFile,
             moduleResourcesDirectory = resources,
             generatedResourcesDirectory = output,
@@ -90,5 +94,11 @@ class ContributorMetadataPackagingTest {
             """.trimIndent() + "\n",
             Files.readString(output.resolve(GENERATION_TARGET_PROFILE_RESOURCE)),
         )
+        SourceTemplateKind.entries.forEach { kind ->
+            assertEquals(
+                SourceTemplateCatalog.DEFAULT.source(kind),
+                Files.readString(output.resolve(kind.resourcePath("example-app"))),
+            )
+        }
     }
 }

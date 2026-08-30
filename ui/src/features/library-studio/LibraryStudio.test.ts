@@ -112,7 +112,9 @@ vi.mock('../constants/constant-api', () => ({
 }))
 
 function mountStudio() {
-  const host = defineComponent(() => () => h(TooltipProvider, null, { default: () => h(LibraryStudio) }))
+  const host = defineComponent(() => () => h(TooltipProvider, null, {
+    default: () => h(LibraryStudio, { editableContributorId: 'example-foundation' }),
+  }))
   return mount(host, { global: { stubs: { LibraryResourceWorkspace: true, LibraryQueryTable: true } } })
 }
 
@@ -163,6 +165,8 @@ describe('LibraryStudio', () => {
 
     const menuItems = document.body.querySelectorAll('[role="menuitem"]')
     const labels = Array.from(menuItems).map((item) => item.textContent?.trim())
+    expect(labels).toContain('Service')
+    expect(labels).toContain('定时任务')
     expect(labels).toContain('常量')
   })
 

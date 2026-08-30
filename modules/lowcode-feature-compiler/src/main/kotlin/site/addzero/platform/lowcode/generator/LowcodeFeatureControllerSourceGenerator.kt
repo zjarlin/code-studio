@@ -49,6 +49,7 @@ object LowcodeFeatureControllerSourceGenerator {
         features: List<LsiLowcodeFeature>,
         models: List<LowcodeModelMeta>,
         routeBindings: List<LowcodeRouteBinding>,
+        templates: SourceTemplateCatalog = SourceTemplateCatalog.DEFAULT,
     ): List<LowcodeGeneratedFile> {
         val modelCodes = features.flatMap(LsiLowcodeFeature::modelCodes).toSet()
         return models
@@ -59,11 +60,15 @@ object LowcodeFeatureControllerSourceGenerator {
             .sortedBy { (_, route) -> route.qualifiedName }
             .map { (model, route) ->
                 route.requireValidExcelMetadata()
-                generateController(route, model)
+                generateController(route, model, templates)
             }
     }
 
-    private fun generateController(route: LsiLowcodeRoute, model: LowcodeModelMeta): LowcodeGeneratedFile {
+    private fun generateController(
+        route: LsiLowcodeRoute,
+        model: LowcodeModelMeta,
+        templates: SourceTemplateCatalog,
+    ): LowcodeGeneratedFile {
         val layout = route.featurePackageName.generatedLayout()
         val packageName = layout.packageName(LowcodeGeneratedResourceKind.CONTROLLER)
         val controllerName = route.className + "Controller"
@@ -88,25 +93,31 @@ object LowcodeFeatureControllerSourceGenerator {
         if (hasExcelCapability) {
             imports += "${generationTargetSymbol(GenerationTargetSymbols.LOWCODE_RUNTIME_PACKAGE)}.ExcelController"
         }
-        val content = """
+        val header = """
             |$EDITABLE_CONTROLLER_MARKER
             |$CONTROLLER_SIGNATURE_PREFIX${route.controllerSignature(hasGraphCapability)}
             |package $packageName
             |
             |${imports.joinToString("\n") { importName -> "import $importName" }}
-            |
+        """.trimMargin()
+        val documentation = """
             |/**
             | * ${route.displayName ?: route.className} CRUD Controller。
             | *
             | * 本文件首次由低代码元数据生成，后续由业务代码维护。
             | */
-            |@Single
-            |class $controllerName(
-            |    override val service: $serviceName,
-            |) : ${controllerTypes.joinToString()} {
-            |    override val routeKey = "${route.path.escapeKotlin()}"
-            |}
-        """.trimMargin().lineSequence().joinToString("\n") { line -> line.trimEnd() } + "\n"
+        """.trimMargin()
+        val content = templates.render(
+            SourceTemplateKind.CONTROLLER,
+            mapOf(
+                "header" to header,
+                "documentation" to documentation,
+                "className" to controllerName,
+                "serviceName" to serviceName,
+                "controllerTypes" to controllerTypes.joinToString(),
+                "routeKey" to route.path.escapeKotlin(),
+            ),
+        )
         return LowcodeGeneratedFile(
             packageName = packageName,
             fileName = controllerName,

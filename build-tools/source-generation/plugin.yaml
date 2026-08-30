@@ -3,6 +3,7 @@ tasks:
     action: !site.addzero.toolchain.lowcode.compileLowcodeSources
       contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      sourceTemplateDirectory: ${pluginSettings.sourceTemplateDirectory}
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
       sourceMetadataSnapshots:
         ${pluginSettings.sourceMetadataSnapshots}
@@ -20,6 +21,7 @@ tasks:
     action: !site.addzero.toolchain.lowcode.packageContributorMetadata
       contributorMetadataMigrationDirectory: "${module.rootDir}/src/main/lowcode-metadata/db/studio/migration"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      sourceTemplateDirectory: ${pluginSettings.sourceTemplateDirectory}
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
       moduleResourcesDirectory: "${module.rootDir}/src/main/resources"
       generatedResourcesDirectory: ${taskOutputDir}
@@ -46,6 +48,7 @@ tasks:
     action: !site.addzero.toolchain.lowcode.materializeLowcodeSources
       contributorManifest: "${module.rootDir}/src/main/resources/META-INF/code-studio/contributor.json"
       generationTargetProfile: ${pluginSettings.generationTargetProfile}
+      sourceTemplateDirectory: ${pluginSettings.sourceTemplateDirectory}
       metadataSnapshot: "${module.rootDir}/src/main/lowcode-metadata/metadata.json"
       sourceDirectory: "${module.rootDir}/src/main/kotlin"
   verifyCodeStudioSchema:

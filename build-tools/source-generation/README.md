@@ -1,6 +1,6 @@
 # Source generation
 
-Kotlin Toolchain 插件从模块内固定的 `META-INF/code-studio/contributor.json` 读取稳定贡献者 ID，并从 `src/main/lowcode-metadata/metadata.json` 离线编译当前应用或库拥有的源码。插件不会扫描宿主仓库寻找其他模块。`generationTargetProfile` 指向 JSON 格式的 `GenerationTargetProfile`；生成结果中的宿主运行时符号必须由它显式覆盖。
+Kotlin Toolchain 插件从模块内固定的 `META-INF/code-studio/contributor.json` 读取稳定贡献者 ID，并从 `src/main/lowcode-metadata/metadata.json` 离线编译当前应用或库拥有的源码。插件不会扫描宿主仓库寻找其他模块。`generationTargetProfile` 指向 JSON 格式的 `GenerationTargetProfile`；生成结果中的宿主运行时符号必须由它显式覆盖。`sourceTemplateDirectory` 指向 `.code-studio/templates`，作为 Controller、Service 和定时任务可编辑脚手架的确定性构建输入。
 
 Profile 的稳定语义键为 `runtime.persistence-model-package`、`runtime.lowcode-package`、`runtime.web-package`、`runtime.core-package`、`runtime.audit-principal` 和 `runtime.dictionary-annotation`。可选 Agent 扩展必须同时声明 `capabilities: ["agent"]`、`extension.agent-package` 和 `runtime.core-package`；未启用时不会生成 Agent 适配源码。
 
@@ -25,4 +25,4 @@ Profile 的稳定语义键为 `runtime.persistence-model-package`、`runtime.low
 ./kotlin task ':module:codeStudioSync'
 ```
 
-历史元数据 SQL 只从 `src/main/lowcode-metadata/db/studio/migration` 打包到 manifest 声明的 classpath location；原业务 `db/migration` 不会混入。每个 JAR 同时携带 `META-INF/code-studio/snapshots/<id>.json` 和 canonical `META-INF/code-studio/target-profile.json`。普通编译直接合并 JAR snapshot；refresh、候选迁移和 schema 校验先把中央迁移按排序后的安全相对路径解压到任务输出，中央 snapshot 始终只读。元数据数据库使用 `CODE_STUDIO_DB_*`；目标业务数据库使用 `LOWCODE_TARGET_DB_*`，两者不会隐式互换。
+历史元数据 SQL 只从 `src/main/lowcode-metadata/db/studio/migration` 打包到 manifest 声明的 classpath location；原业务 `db/migration` 不会混入。每个 JAR 同时携带 `META-INF/code-studio/snapshots/<id>.json`、canonical `META-INF/code-studio/target-profile.json` 和 `META-INF/code-studio/templates/<id>/*`。Studio 预览按 contributor ID 读取同一模板，避免与构建结果分叉。普通编译直接合并 JAR snapshot；refresh、候选迁移和 schema 校验先把中央迁移按排序后的安全相对路径解压到任务输出，中央 snapshot 始终只读。元数据数据库使用 `CODE_STUDIO_DB_*`；目标业务数据库使用 `LOWCODE_TARGET_DB_*`，两者不会隐式互换。

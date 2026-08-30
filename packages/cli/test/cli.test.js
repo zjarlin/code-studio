@@ -149,6 +149,7 @@ test("npm tarball preserves the executable and root Apache license", () => {
   assertSuccess(result);
   const [manifest] = JSON.parse(result.stdout);
   assert.equal(manifest.files.some((file) => file.path === "LICENSE"), true);
+  assert.equal(manifest.files.some((file) => file.path === "templates/controller.kt.tpl"), true);
   const executable = manifest.files.find((file) => file.path === "bin/code-studio.js");
   assert.notEqual(executable, undefined);
   assert.notEqual(executable.mode & 0o111, 0);
@@ -211,16 +212,26 @@ test("init preserves existing YAML and is idempotent", () => {
   const createApplicationRun = readFileSync(createApplicationRunFile, "utf8");
   const localFile = path.join(workspace, ".code-studio", "local.yaml");
   const customizedLocal = `${readFileSync(localFile, "utf8")}custom: preserved\n`;
+  const controllerTemplate = path.join(workspace, ".code-studio", "templates", "controller.kt.tpl");
+  const customizedControllerTemplate = `${readFileSync(controllerTemplate, "utf8")}\n// preserved\n`;
   assert.match(customizedLocal, /CODE_STUDIO_DB_JDBC_URL/);
   assert.match(customizedLocal, /CODE_STUDIO_DB_USERNAME/);
   assert.match(customizedLocal, /CODE_STUDIO_DB_PASSWORD/);
   writeFileSync(localFile, customizedLocal);
+  writeFileSync(controllerTemplate, customizedControllerTemplate);
 
   const second = run(workspace, "init", "--yes", "--repo", repository);
   assertSuccess(second);
   assert.equal(readFileSync(path.join(workspace, "project.yaml"), "utf8"), firstProject);
   assert.equal(readFileSync(path.join(workspace, ".gitignore"), "utf8"), firstIgnore);
   assert.equal(readFileSync(localFile, "utf8"), customizedLocal);
+  assert.equal(readFileSync(controllerTemplate, "utf8"), customizedControllerTemplate);
+  for (const fileName of ["service-implementation.kt.tpl", "service.kt.tpl", "scheduled-job.kt.tpl"]) {
+    assert.equal(
+      readFileSync(path.join(workspace, ".code-studio", "templates", fileName), "utf8"),
+      readFileSync(path.join(workspace, "studio", "packages", "cli", "templates", fileName), "utf8"),
+    );
+  }
   assert.equal(readFileSync(createApplicationRunFile, "utf8"), createApplicationRun);
   assert.deepEqual(JSON.parse(readFileSync(path.join(workspace, ".code-studio", "target-profile.json"), "utf8")), {
     id: "default",

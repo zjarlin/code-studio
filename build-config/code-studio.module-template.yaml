@@ -4,6 +4,7 @@ plugins:
     contributorClasspath: []
     contributorIndex: ../../.code-studio/contributors.json
     generationTargetProfile: ../../.code-studio/target-profile.json
+    sourceTemplateDirectory: ../../.code-studio/templates
     sourceMetadataSnapshots: []
     platformMigrationDirectory: ../modules/server/src/main/resources/db/studio/core
     developmentDatabaseConfig: ../../.code-studio/local.yaml

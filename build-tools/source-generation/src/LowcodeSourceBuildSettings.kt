@@ -20,6 +20,11 @@ interface LowcodeSourceBuildSettings {
     val generationTargetProfile: Path
 
     /**
+     * Controller、Service 和定时任务的可编辑源码模板目录。
+     */
+    val sourceTemplateDirectory: Path
+
+    /**
      * 显式提供由当前 contributor 产出实体源码的外部模型快照。
      */
     val sourceMetadataSnapshots: List<Path>

@@ -46,6 +46,7 @@ class PublishedContributorArtifactsTest {
         val profile = repository.resolve(".code-studio/target-profile.json")
         Files.createDirectories(profile.parent)
         Files.writeString(profile, GenerationTargetProfiles.encode(defaultProfile()))
+        val templates = writeSourceTemplates(repository.resolve(".code-studio/templates"))
         val index = repository.resolve(".code-studio/contributors.json")
         Files.writeString(
             index,
@@ -63,6 +64,7 @@ class PublishedContributorArtifactsTest {
         compileLowcodeSources(
             contributorManifest = manifest,
             generationTargetProfile = profile,
+            sourceTemplateDirectory = templates,
             metadataSnapshot = snapshotFile,
             sourceMetadataSnapshots = emptyList(),
             contributorIndex = index,
@@ -75,6 +77,7 @@ class PublishedContributorArtifactsTest {
             compileLowcodeSources(
                 contributorManifest = manifest,
                 generationTargetProfile = profile,
+                sourceTemplateDirectory = templates,
                 metadataSnapshot = snapshotFile,
                 sourceMetadataSnapshots = emptyList(),
                 contributorIndex = index,

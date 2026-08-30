@@ -14,6 +14,7 @@ import site.addzero.platform.lowcode.generator.LowcodeGeneratedFile
 import site.addzero.platform.lowcode.generator.LowcodeMetadata
 import site.addzero.platform.lowcode.generator.LowcodeModuleCompiler
 import site.addzero.platform.lowcode.generator.LowcodeSourceCompiler
+import site.addzero.platform.lowcode.generator.SourceTemplateCatalog
 import site.addzero.platform.lowcode.generator.LsiLowcodeDtoDefinition
 import site.addzero.platform.lowcode.generator.LsiLowcodeFeature
 import site.addzero.studio.runtime.GenerationTargetProfile
@@ -101,11 +102,13 @@ internal class MetadataPreviewService(
         }
         return store.compile { metadata ->
             val featurePackages = metadata.selectedFeaturePackages(id, featureId)
+            val templates = SourceTemplateCatalog.load(contributorId)
             val files = LowcodeModuleCompiler.generate(
                 metadata = metadata,
                 contributorId = contributorId,
                 featurePackages = featurePackages,
                 targetProfile = targetProfile,
+                templates = templates,
             )
             LibraryMetadataPreview(id, featureId, files.toPreviewFiles())
         }

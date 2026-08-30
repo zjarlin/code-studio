@@ -9,6 +9,7 @@ object LowcodeModuleCompiler {
         contributorId: String,
         featurePackages: Set<String>? = null,
         targetProfile: GenerationTargetProfile,
+        templates: SourceTemplateCatalog = SourceTemplateCatalog.DEFAULT,
     ): List<LowcodeGeneratedFile> {
         targetProfile.requireSupportedCapabilities()
         val moduleModels = metadata.models.filter { model -> model.contributorId == contributorId }
@@ -47,6 +48,7 @@ object LowcodeModuleCompiler {
                     routeBindings = resolvedRouteBindings,
                     dtoDefinitions = metadata.dtoDefinitions,
                     includeAgentTools = AGENT_CAPABILITY in targetProfile.capabilities,
+                    templates = templates,
                 ),
             )
             addAll(
@@ -62,11 +64,13 @@ object LowcodeModuleCompiler {
                     features = moduleFeatures,
                     models = metadata.models,
                     routeBindings = resolvedRouteBindings,
+                    templates = templates,
                 ),
             )
             addAll(
                 ConventionFileSourceGenerator.generate(
                     metadata.conventionFiles.filter { file -> file.contributorId == contributorId },
+                    templates = templates,
                 ),
             )
             addAll(

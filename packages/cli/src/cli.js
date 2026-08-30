@@ -44,6 +44,12 @@ import { runCommand } from "./command.js";
 const DEFAULT_REPOSITORY = "https://github.com/zjarlin/code-studio.git";
 const PACKAGE_ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const CREATE_APPLICATION_RUN_FILE = path.join(".run", "Code Studio - Create Application.run.xml");
+const SOURCE_TEMPLATE_FILES = [
+  "controller.kt.tpl",
+  "service-implementation.kt.tpl",
+  "service.kt.tpl",
+  "scheduled-job.kt.tpl",
+];
 
 function outputWriter(stream) {
   return (value) => stream.write(`${value}\n`);
@@ -182,6 +188,7 @@ async function initialize(positionals, values, context, version) {
   const gitignoreSource = existsSync(gitignoreFile) ? await readFile(gitignoreFile, "utf8") : "";
   const localFile = path.join(root, ".code-studio", "local.yaml");
   const targetProfileFile = path.join(root, ".code-studio", "target-profile.json");
+  const sourceTemplateDirectory = path.join(root, ".code-studio", "templates");
   const contributorIndexFile = path.join(root, ".code-studio", "contributors.json");
   const infrastructureFile = path.join(root, INFRASTRUCTURE_FILE);
   const repository = values.repo ?? context.env.CODE_STUDIO_REPOSITORY_URL ?? DEFAULT_REPOSITORY;
@@ -221,6 +228,13 @@ async function initialize(positionals, values, context, version) {
   }
   if (!existsSync(targetProfileFile)) {
     await writeIfChanged(targetProfileFile, renderTargetProfile(), values["dry-run"], context.output);
+  }
+  for (const fileName of SOURCE_TEMPLATE_FILES) {
+    const target = path.join(sourceTemplateDirectory, fileName);
+    if (!existsSync(target)) {
+      const source = path.join(PACKAGE_ROOT, "templates", fileName);
+      await writeIfChanged(target, await readFile(source, "utf8"), values["dry-run"], context.output);
+    }
   }
   await writeIfChanged(
     infrastructureFile,
@@ -485,6 +499,12 @@ function doctor(context, version) {
   parseYamlFile(localFile);
   const targetProfileFile = path.join(root, ".code-studio", "target-profile.json");
   parseTargetProfile(targetProfileFile);
+  for (const fileName of SOURCE_TEMPLATE_FILES) {
+    const template = path.join(root, ".code-studio", "templates", fileName);
+    if (!existsSync(template)) {
+      throw new Error(`${template} does not exist; run code-studio init`);
+    }
+  }
   const studio = path.join(root, "studio");
   if (!gitRepositoryRoot(studio)) {
     throw new Error(`${studio} is not a Git checkout`);

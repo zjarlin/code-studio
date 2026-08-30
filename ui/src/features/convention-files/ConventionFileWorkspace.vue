@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Save, Trash2 } from '@lucide/vue'
+import { Clock3, Plus, Save, Trash2 } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 
 import IconButton from '@/components/composed/icon-button/IconButton.vue'
@@ -20,11 +20,13 @@ interface ConventionFileRow extends ConventionFileCommand {
 }
 
 const props = withDefaults(defineProps<{
+  createKind?: ConventionFileKind
   createRequest?: number
   features: LsiLibraryFeature[]
+  readOnly?: boolean
   selectedFeatureId?: number | string
   librarySpec: LsiLibrarySpec
-}>(), { createRequest: 0 })
+}>(), { createKind: 'SERVICE', createRequest: 0, readOnly: false })
 const emit = defineEmits<{ changed: [] }>()
 const api = new LowcodeApi()
 const rows = ref<ConventionFileRow[]>([])
@@ -39,7 +41,7 @@ const visibleFeatures = computed(() => props.selectedFeatureId == null
 
 onMounted(async () => {
   await refresh()
-  if (props.createRequest > 0) addRow()
+  if (props.createRequest > 0) addRow(props.createKind)
 })
 
 watch(() => [props.selectedFeatureId, props.features.map((feature) => feature.id).join('|')], () => {
@@ -47,7 +49,7 @@ watch(() => [props.selectedFeatureId, props.features.map((feature) => feature.id
 })
 
 watch(() => props.createRequest, (request, previous) => {
-  if (request > previous) addRow()
+  if (request > previous) addRow(props.createKind)
 })
 
 async function refresh(): Promise<void> {
@@ -74,7 +76,8 @@ function toRow(value: ConventionFileSummary): ConventionFileRow {
   }
 }
 
-function addRow(): void {
+function addRow(kind: ConventionFileKind = 'SERVICE'): void {
+  if (props.readOnly) return
   const feature = visibleFeatures.value[0]
   if (!feature) {
     notice.value = '请先创建功能目录'
@@ -86,7 +89,7 @@ function addRow(): void {
     fileCode: '',
     name: '',
     className: '',
-    kind: 'SERVICE',
+    kind,
     status: 1,
     description: null,
   }, ...rows.value]
@@ -155,7 +158,10 @@ async function remove(row: ConventionFileRow): Promise<void> {
   <section class="convention-file-workspace">
     <header class="convention-file-toolbar">
       <div><strong>Service / 定时任务</strong><span>约定文件由生成器创建，业务实现由 IDE 维护</span></div>
-      <Button size="sm" type="button" @click="addRow"><Plus />新增约定文件</Button>
+      <div class="convention-file-create-actions">
+        <Button :disabled="readOnly" size="sm" type="button" variant="outline" @click="addRow('SERVICE')"><Plus />Service</Button>
+        <Button :disabled="readOnly" size="sm" type="button" @click="addRow('SCHEDULED_JOB')"><Clock3 />定时任务</Button>
+      </div>
     </header>
 
     <p v-if="notice" class="convention-file-notice" role="status">{{ notice }}</p>
@@ -179,7 +185,7 @@ async function remove(row: ConventionFileRow): Promise<void> {
           <TableEmpty v-if="!loading && rows.length === 0" :colspan="9">暂无约定文件</TableEmpty>
           <TableRow v-for="row in rows" :key="row.rowKey">
             <TableCell>
-              <Select :model-value="row.kind" @update:model-value="updateKind(row, $event)">
+              <Select :disabled="readOnly" :model-value="row.kind" @update:model-value="updateKind(row, $event)">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="SERVICE">Service</SelectItem>
@@ -188,20 +194,20 @@ async function remove(row: ConventionFileRow): Promise<void> {
               </Select>
             </TableCell>
             <TableCell>
-              <Select :model-value="String(row.featureId)" @update:model-value="update(row, { featureId: String($event) })">
+              <Select :disabled="readOnly" :model-value="String(row.featureId)" @update:model-value="update(row, { featureId: String($event) })">
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem v-for="feature in visibleFeatures" :key="feature.id" :value="String(feature.id)">{{ feature.name }}</SelectItem></SelectContent>
               </Select>
             </TableCell>
-            <TableCell><Input :model-value="row.className" placeholder="OrderService" @update:model-value="update(row, { className: String($event) })" /></TableCell>
-            <TableCell><Input :model-value="row.fileCode" placeholder="order" @update:model-value="update(row, { fileCode: String($event) })" /></TableCell>
-            <TableCell><Input :model-value="row.name" placeholder="订单服务" @update:model-value="update(row, { name: String($event) })" /></TableCell>
+            <TableCell><Input :disabled="readOnly" :model-value="row.className" placeholder="OrderService" @update:model-value="update(row, { className: String($event) })" /></TableCell>
+            <TableCell><Input :disabled="readOnly" :model-value="row.fileCode" placeholder="order" @update:model-value="update(row, { fileCode: String($event) })" /></TableCell>
+            <TableCell><Input :disabled="readOnly" :model-value="row.name" placeholder="订单服务" @update:model-value="update(row, { name: String($event) })" /></TableCell>
             <TableCell><code>{{ calculatedPackage(row) }}</code></TableCell>
-            <TableCell><Switch :model-value="row.status === 1" @update:model-value="update(row, { status: $event ? 1 : 0 })" /></TableCell>
-            <TableCell><Input :model-value="row.description ?? ''" @update:model-value="update(row, { description: String($event) })" /></TableCell>
+            <TableCell><Switch :disabled="readOnly" :model-value="row.status === 1" @update:model-value="update(row, { status: $event ? 1 : 0 })" /></TableCell>
+            <TableCell><Input :disabled="readOnly" :model-value="row.description ?? ''" @update:model-value="update(row, { description: String($event) })" /></TableCell>
             <TableCell class="convention-file-actions">
-              <IconButton :disabled="saving.has(row.rowKey)" :icon="Save" :label="`保存${row.name || row.className || '约定文件'}`" tooltip @click="save(row)" />
-              <IconButton :icon="Trash2" :label="`删除${row.name || row.className || '约定文件'}`" tooltip variant="danger" @click="remove(row)" />
+              <IconButton :disabled="readOnly || saving.has(row.rowKey)" :icon="Save" :label="`保存${row.name || row.className || '约定文件'}`" tooltip @click="save(row)" />
+              <IconButton :disabled="readOnly" :icon="Trash2" :label="`删除${row.name || row.className || '约定文件'}`" tooltip variant="danger" @click="remove(row)" />
             </TableCell>
           </TableRow>
         </TableBody>
@@ -214,6 +220,7 @@ async function remove(row: ConventionFileRow): Promise<void> {
 .convention-file-workspace { display: grid; min-height: 0; gap: 12px; padding: 12px; }
 .convention-file-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .convention-file-toolbar div { display: grid; gap: 2px; }
+.convention-file-toolbar .convention-file-create-actions { display: flex; gap: 8px; }
 .convention-file-toolbar span { color: var(--muted-foreground); font-size: 12px; }
 .convention-file-notice { margin: 0; color: var(--muted-foreground); font-size: 13px; }
 .convention-file-table-wrap { min-width: 0; overflow: auto; border: 1px solid var(--border); }

@@ -13,6 +13,7 @@ object LowcodeFeatureServiceSourceGenerator {
         routeBindings: List<LowcodeRouteBinding>,
         dtoDefinitions: List<LsiLowcodeDtoDefinition> = emptyList(),
         includeAgentTools: Boolean = false,
+        templates: SourceTemplateCatalog = SourceTemplateCatalog.DEFAULT,
     ): List<LowcodeGeneratedFile> {
         val modelsByCode = models.associateBy(LowcodeModelMeta::modelCode)
         val contractsByCode = contracts.associateBy(LsiLowcodeContract::contractCode)
@@ -40,7 +41,7 @@ object LowcodeFeatureServiceSourceGenerator {
                             return@forEach
                         }
                         add(generateEntityService(feature, model, route))
-                        add(generateEntityServiceImplementation(feature, model, route))
+                        add(generateEntityServiceImplementation(feature, model, route, templates))
                     }
                     if (includeAgentTools) {
                         LowcodeAgentToolSourceGenerator.generate(
@@ -92,6 +93,7 @@ object LowcodeFeatureServiceSourceGenerator {
         feature: LsiLowcodeFeature,
         model: LowcodeModelMeta,
         route: LsiLowcodeRoute,
+        templates: SourceTemplateCatalog,
     ): LowcodeGeneratedFile {
         val layout = feature.packageName.generatedLayout()
         val packageName = layout.packageName(LowcodeGeneratedResourceKind.SERVICE)
@@ -105,16 +107,23 @@ object LowcodeFeatureServiceSourceGenerator {
             "${generationTargetSymbol(GenerationTargetSymbols.LOWCODE_RUNTIME_PACKAGE)}.$implementationType",
         )
         val importsSource = imports.joinToString("\n") { importName -> "import $importName" }
-        val content = """
+        val header = """
             |$SERVICE_IMPLEMENTATION_SIGNATURE_PREFIX${serviceImplementationSignature(model, route)}
             |package $packageName
             |
             |$importsSource
-            |
-            |/** ${model.name.escapeKDoc()}的元数据 CRUD 实现。 */
-            |@Single
-            |class $className : $implementationType<$entityName>(), $serviceName
-        """.trimMargin().lineSequence().joinToString("\n") { line -> line.trimEnd() } + "\n"
+        """.trimMargin()
+        val content = templates.render(
+            SourceTemplateKind.SERVICE_IMPLEMENTATION,
+            mapOf(
+                "header" to header,
+                "documentation" to "/** ${model.name.escapeKDoc()}的元数据 CRUD 实现。 */",
+                "className" to className,
+                "implementationType" to implementationType,
+                "entityName" to entityName,
+                "serviceName" to serviceName,
+            ),
+        )
         return generatedServiceFile(
             feature = feature,
             className = className,

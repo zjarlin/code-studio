@@ -32,6 +32,8 @@ import site.addzero.platform.lowcode.generator.LowcodeConstantSourceGenerator
 import site.addzero.platform.lowcode.generator.LowcodeFeatureControllerSourceGenerator
 import site.addzero.platform.lowcode.generator.LowcodeFeatureServiceSourceGenerator
 import site.addzero.platform.lowcode.generator.ConventionFileSourceGenerator
+import site.addzero.platform.lowcode.generator.SourceTemplateCatalog
+import site.addzero.platform.lowcode.generator.SourceTemplateKind
 import site.addzero.platform.lowcode.generator.STUDIO_GENERATED_MARKER
 import site.addzero.platform.lowcode.generator.generatedByStudio
 import site.addzero.platform.lowcode.generator.restrictToContributors
@@ -64,6 +66,7 @@ import kotlin.io.path.writeText
 fun packageContributorMetadata(
     @Input contributorMetadataMigrationDirectory: Path,
     @Input generationTargetProfile: Path,
+    @Input sourceTemplateDirectory: Path,
     @Input metadataSnapshot: Path,
     @Input moduleResourcesDirectory: Path,
     @Output generatedResourcesDirectory: Path,
@@ -81,6 +84,20 @@ fun packageContributorMetadata(
     val profileResource = generatedResourcesDirectory.resolve(GENERATION_TARGET_PROFILE_RESOURCE)
     profileResource.createParentDirectories()
     profileResource.writeText(GenerationTargetProfiles.encode(profile))
+    copySourceTemplates(contributor.id, sourceTemplateDirectory, generatedResourcesDirectory)
+}
+
+private fun copySourceTemplates(
+    contributorId: String,
+    sourceDirectory: Path,
+    generatedResourcesDirectory: Path,
+) {
+    val templates = SourceTemplateCatalog.read(sourceDirectory)
+    SourceTemplateKind.entries.forEach { kind ->
+        val target = generatedResourcesDirectory.resolve(kind.resourcePath(contributorId))
+        target.createParentDirectories()
+        target.writeText(templates.source(kind))
+    }
 }
 
 @OptIn(ExperimentalPathApi::class)
@@ -268,6 +285,7 @@ private fun AutoDdlSchema.forDesiredSchema(desired: AutoDdlSchema): AutoDdlSchem
 fun compileLowcodeSources(
     @Input contributorManifest: Path,
     @Input generationTargetProfile: Path,
+    @Input sourceTemplateDirectory: Path,
     @Input metadataSnapshot: Path,
     @Input sourceMetadataSnapshots: List<Path>,
     @Input contributorIndex: Path,
@@ -291,7 +309,8 @@ fun compileLowcodeSources(
         contributor = contributor,
         publishedSnapshots = contributors.publishedArtifacts.map(PublishedContributorArtifact::snapshot),
     )
-    val files = metadata.generatedFiles(contributorId, targetProfile)
+    val templates = SourceTemplateCatalog.read(sourceTemplateDirectory)
+    val files = metadata.generatedFiles(contributorId, targetProfile, templates)
     compiledSourceDirectory.deleteRecursively()
     scaffoldSourceDirectory.deleteRecursively()
     files.filter(LowcodeGeneratedFile::isCompiledSource)
@@ -363,8 +382,14 @@ fun validateLowcodeSources(
 private fun LowcodeMetadata.generatedFiles(
     contributorId: String,
     targetProfile: GenerationTargetProfile,
+    templates: SourceTemplateCatalog,
 ): List<LowcodeGeneratedFile> {
-    return LowcodeModuleCompiler.generate(this, contributorId, targetProfile = targetProfile)
+    return LowcodeModuleCompiler.generate(
+        metadata = this,
+        contributorId = contributorId,
+        targetProfile = targetProfile,
+        templates = templates,
+    )
 }
 
 /**
@@ -374,6 +399,7 @@ private fun LowcodeMetadata.generatedFiles(
 fun materializeLowcodeSources(
     @Input contributorManifest: Path,
     @Input generationTargetProfile: Path,
+    @Input sourceTemplateDirectory: Path,
     @Input metadataSnapshot: Path,
     @Input sourceDirectory: Path,
 ) {
@@ -381,7 +407,8 @@ fun materializeLowcodeSources(
     val contributorId = contributor.id
     val metadata = readMetadataSnapshot(metadataSnapshot, contributor)
     val targetProfile = readGenerationTargetProfile(generationTargetProfile)
-    val files = metadata.generatedFiles(contributorId, targetProfile)
+    val templates = SourceTemplateCatalog.read(sourceTemplateDirectory)
+    val files = metadata.generatedFiles(contributorId, targetProfile, templates)
     val sources = files.filter(LowcodeGeneratedFile::isEditableScaffold)
     synchronizeMaterializedSources(sourceDirectory, sources)
 }
