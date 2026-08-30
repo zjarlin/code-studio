@@ -1,13 +1,13 @@
 tasks:
   buildStudioUi:
     action: !site.addzero.toolchain.lowcode.buildLowcodeStudio
-      kotlinWrapper: ${module.rootDir}/../../kotlin
-      projectFile: ${module.rootDir}/../../project.yaml
-      versionCatalog: ${module.rootDir}/../../libs.versions.toml
-      webModule: ${module.rootDir}/../../apps/web
-      workbenchModule: ${module.rootDir}/../../modules/workbench
-      contractModule: ${module.rootDir}/../../modules/metadata-contract
-      generatedResourcesDirectory: ${taskOutputDir}/generated-resources
+      packageJson: ${module.rootDir}/../../ui/package.json
+      lockFile: ${module.rootDir}/../../pnpm-lock.yaml
+      indexFile: ${module.rootDir}/../../ui/index.html
+      tsConfig: ${module.rootDir}/../../ui/tsconfig.json
+      viteConfig: ${module.rootDir}/../../ui/vite.config.ts
+      sourceDirectory: ${module.rootDir}/../../ui/src
+      generatedResourcesDirectory: ${taskOutputDir}
 
 generated:
   resources:

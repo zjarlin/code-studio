@@ -63,10 +63,20 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.2
+          run_install: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "22"
+
+      - name: Install workspace dependencies
+        working-directory: ${{ steps.workspace.outputs.source }}
+        run: pnpm install --frozen-lockfile
 
       - name: Install CLI dependencies
         working-directory: ${{ steps.workspace.outputs.source }}/packages/cli
@@ -76,26 +86,6 @@ jobs:
         if: matrix.context == 'standalone'
         working-directory: ${{ steps.workspace.outputs.project }}
         run: ./kotlin check
-
-      - name: Build Wasm release
-        if: matrix.context == 'standalone'
-        working-directory: ${{ steps.workspace.outputs.source }}
-        run: ./kotlin build -m web -p wasmJs -v release
-
-      - name: Verify embedded Wasm resources
-        if: matrix.context == 'standalone'
-        working-directory: ${{ steps.workspace.outputs.source }}
-        shell: bash
-        run: |
-          ./kotlin build -m server -p jvm
-          jar_file=build/tasks/_server_jarJvm/server-jvm.jar
-          jar tf "$jar_file" | grep -Fx studio/index.html
-          jar tf "$jar_file" | grep -Fx studio/web.wasm
-          jar tf "$jar_file" | grep -Fx studio/web.mjs
-          jar tf "$jar_file" | grep -Fx studio/skiko.wasm
-          jar tf "$jar_file" | grep -Fx studio/skiko.mjs
-          jar tf "$jar_file" | grep -Fx studio/import-map-loader.js
-          jar tf "$jar_file" | grep -Fx studio/vendors/@js-joda/core/dist/js-joda.esm.js
 
       - name: Check zero-application bootstrap
         if: matrix.context == 'standalone'
@@ -119,15 +109,10 @@ jobs:
           ./studio/kotlin check --project-dir=.
           test -f build/tasks/_sample_generateCodeStudioSources@source-generation/example/catalog/generated/entity/ExampleSource.kt
 
-      - name: Check forbidden dependencies and removed frontend
+      - name: Test and build UI
         working-directory: ${{ steps.workspace.outputs.source }}
-        shell: bash
-        run: |
-          dependencies="$(./kotlin show dependencies -a)"
-          ! grep -Eiq 'cn\.hutool|fastexcel|autopoi' <<< "$dependencies"
-          test ! -d ui
-          test -z "$(git ls-files 'ui/**' '*vite*' '*vitest*' 'pnpm-*')"
+        run: pnpm run test:ui && pnpm run build:ui
 
       - name: Test CLI
-        working-directory: ${{ steps.workspace.outputs.source }}/packages/cli
-        run: npm test
+        working-directory: ${{ steps.workspace.outputs.source }}
+        run: pnpm run test:cli

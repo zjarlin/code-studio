@@ -1,6 +1,6 @@
 # Code Studio
 
-Code Studio is an application-owned metadata compiler and embedded development studio for Amper projects. It provides generated CRUD, convention files, routes, OpenAPI metadata, and a Kotlin Multiplatform Web UI without introducing a central Studio process or database.
+Code Studio is an application-owned metadata compiler and embedded development studio for Amper projects. It provides generated CRUD, convention files, routes, OpenAPI metadata, and an embedded Vue UI without introducing a central Studio process or database.
 
 Requires Node.js 22+, JDK 21, and PostgreSQL.
 
@@ -109,22 +109,24 @@ Ordinary compilation and `sync` consume the committed canonical snapshot. Only e
 
 ## Repository Development
 
-Requirements are JDK 21 and Node.js 22 or newer. Node.js is only used by the CLI package.
+Requirements are JDK 21, Node.js 22 or newer, and pnpm 10.
 
 ```shell
+pnpm install --frozen-lockfile
 npm --prefix packages/cli ci
 ./kotlin check
+pnpm run test:ui
+pnpm run build:ui
 npm --prefix packages/cli test
 ```
 
-CI runs shared/JVM tests, the Wasm release build, embedded JAR resource checks, dependency-policy scans, and CLI tests both as a standalone checkout and as a `studio/` submodule in a minimal host. Tagged `v*` releases publish the `code-studio` npm package with provenance.
+CI runs Kotlin, Vue UI, and CLI checks both as a standalone checkout and as a `studio/` submodule in a minimal host. Tagged `v*` releases publish the `code-studio` npm package with provenance.
 
 An npm trusted publisher can only be configured after the package exists. Bootstrap `v0.1.0` with an `NPM_TOKEN` repository secret, then register `zjarlin/code-studio` and `.github/workflows/release.yml` as the package's GitHub trusted publisher and delete the secret. Later tags use OIDC without a long-lived publish token.
 
 ## Layout
 
-- `apps/web`: thin Wasm browser entry using `ComposeViewport`.
-- `modules/workbench`: commonMain UI, state, navigation, browser ports, and Ktor Client transport.
+- `ui`: embedded Vue application.
 - `modules/metadata-contract`: JVM/Wasm shared API contracts and pure LSI metadata.
 - `modules`: LSI compiler, runtime contracts, embedded server, and reusable development host.
 - `build-tools`: incremental Amper plugins.

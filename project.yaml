@@ -1,6 +1,5 @@
 modules:
   - ./apps/dev-host
-  - ./apps/web
   - ./build-tools/*
   - ./modules/*
 

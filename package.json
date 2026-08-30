@@ -1,0 +1,23 @@
+{
+  "name": "code-studio-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.33.2",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "vue-demi"
+    ]
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm run build:ui",
+    "build:ui": "pnpm --dir ui build",
+    "check": "pnpm run check:kotlin && pnpm run test && pnpm run build:ui",
+    "check:kotlin": "./kotlin check",
+    "test": "pnpm run test:ui && pnpm run test:cli",
+    "test:cli": "npm --prefix packages/cli test",
+    "test:ui": "pnpm --dir ui test"
+  }
+}
