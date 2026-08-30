@@ -29,6 +29,11 @@ import site.addzero.studio.contract.QueryCommand
 import site.addzero.studio.contract.QueryLogic
 import site.addzero.studio.contract.RelationCommand
 import site.addzero.studio.contract.RelationKind
+import site.addzero.studio.workbench.components.editor.FormRow
+import site.addzero.studio.workbench.components.editor.LabeledField
+import site.addzero.studio.workbench.components.editor.Section
+import site.addzero.studio.workbench.components.table.DataColumn
+import site.addzero.studio.workbench.components.table.DataTable
 
 private enum class ModelSection { MODEL, FIELDS, RELATIONS, QUERIES, API }
 
@@ -87,7 +92,15 @@ private fun ModelIdentityEditor(command: ModelCommand, onChange: (ModelCommand) 
 @Composable
 private fun FieldEditor(command: ModelCommand, onChange: (ModelCommand) -> Unit) {
     var selected by remember(command.id) { mutableIntStateOf(-1) }
-    val columns = remember { listOf("fieldCode", "label", "kotlinType", "dbColumn", "required") }
+    val columns = remember {
+        listOf(
+            DataColumn("fieldCode", "字段", value = FieldCommand::fieldCode),
+            DataColumn("label", "名称", value = FieldCommand::label),
+            DataColumn("kotlinType", "Kotlin 类型", value = FieldCommand::kotlinType),
+            DataColumn("dbColumn", "数据库列", value = FieldCommand::dbColumn),
+            DataColumn("required", "必填", width = 90f) { field -> if (field.required) "是" else "否" },
+        )
+    }
     Section("字段") {
         Button(
             onClick = {
@@ -105,10 +118,9 @@ private fun FieldEditor(command: ModelCommand, onChange: (ModelCommand) -> Unit)
             Icon(Icons.Outlined.Add, contentDescription = null)
             Text("新增字段")
         }
-        MetadataTable(
+        DataTable(
             data = command.fields,
-            columns = columns.mapIndexed { index, key -> MetadataColumn(key, key.fieldLabel, if (index == 4) 90 else 150) },
-            cell = FieldCommand::cell,
+            columns = columns,
             actions = { _, index ->
                 IconButton(onClick = { selected = index }) {
                     Icon(Icons.Outlined.Edit, contentDescription = "编辑字段")
@@ -281,25 +293,6 @@ private fun updateOperation(
         customOperations = route.customOperations.mapIndexed { i, value -> if (i == index) operation else value },
     )))
 }
-
-private fun FieldCommand.cell(column: String): String = when (column) {
-    "fieldCode" -> fieldCode
-    "label" -> label
-    "kotlinType" -> kotlinType
-    "dbColumn" -> dbColumn
-    "required" -> if (required) "是" else "否"
-    else -> ""
-}
-
-private val String.fieldLabel: String
-    get() = when (this) {
-        "fieldCode" -> "字段"
-        "label" -> "名称"
-        "kotlinType" -> "Kotlin 类型"
-        "dbColumn" -> "数据库列"
-        "required" -> "必填"
-        else -> this
-    }
 
 private val ModelSection.label: String
     get() = when (this) {

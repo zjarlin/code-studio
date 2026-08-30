@@ -148,6 +148,27 @@ export function renderPublishedCatalog(source, platformVersion) {
   return result;
 }
 
+export function mergeVersionCatalogDefaults(source, defaultsSource) {
+  const catalog = parseVersionCatalog(source);
+  const defaults = parseVersionCatalog(defaultsSource);
+  let result = source;
+
+  for (const [key, value] of Object.entries(defaults.versions ?? {})) {
+    if (catalog.versions?.[key] === undefined) {
+      result = setTomlEntry(result, "versions", key, renderTomlValue(value), false);
+    }
+  }
+  for (const [key, value] of Object.entries(defaults.libraries ?? {})) {
+    const existing = catalog.libraries?.[key];
+    if (existing === undefined) {
+      result = setTomlEntry(result, "libraries", key, renderTomlValue(value), false);
+      continue;
+    }
+    assertCatalogLibraryModule(existing, value, key);
+  }
+  return result;
+}
+
 export function assertPublishedCatalog(source, platformVersion) {
   const rendered = renderPublishedCatalog(source, platformVersion);
   if (rendered !== source) {
@@ -268,6 +289,49 @@ function assertCatalogLibrary(libraries, alias, expectedModule, expectedVersionR
   if (module !== expectedModule || versionRef !== expectedVersionRef) {
     throw new Error(`catalog alias ${alias} conflicts with ${expectedModule}`);
   }
+}
+
+function parseVersionCatalog(source) {
+  try {
+    return parseToml(source);
+  } catch (error) {
+    throw new Error(`libs.versions.toml is not valid TOML: ${error.message}`);
+  }
+}
+
+function assertCatalogLibraryModule(existing, expected, alias) {
+  const existingModule = typeof existing === "string" ? existing : existing.module;
+  const expectedModule = typeof expected === "string" ? expected : expected.module;
+  if (existingModule !== expectedModule) {
+    throw new Error(`catalog alias ${alias} conflicts with ${expectedModule}`);
+  }
+}
+
+function renderTomlValue(value) {
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(renderTomlValue).join(", ")}]`;
+  }
+  if (value && typeof value === "object") {
+    const entries = flattenTomlEntries(value);
+    return `{ ${entries.join(", ")} }`;
+  }
+  throw new Error("catalog contains an unsupported TOML value");
+}
+
+function flattenTomlEntries(value, prefix = "") {
+  return Object.entries(value).flatMap(([key, entry]) => {
+    const path = `${prefix}${key}`;
+    if (entry && typeof entry === "object" && !Array.isArray(entry)) {
+      return flattenTomlEntries(entry, `${path}.`);
+    }
+    return `${path} = ${renderTomlValue(entry)}`;
+  });
 }
 
 function setTomlEntry(source, section, key, value, replace) {

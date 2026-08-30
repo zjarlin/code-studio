@@ -274,6 +274,27 @@ test("init preserves existing YAML and is idempotent", () => {
   );
 });
 
+test("init adds missing Studio catalog entries without replacing host versions", () => {
+  const workspace = temporaryDirectory("catalog-defaults");
+  const repository = createStudioRepository();
+  writeFileSync(path.join(workspace, "project.yaml"), "modules: []\nplugins: []\n");
+  writeFileSync(
+    path.join(workspace, "libs.versions.toml"),
+    "# keep this comment\n[versions]\nkotlin = \"2.4.0\"\n\n[libraries]\nexample = { module = \"example:library\" } # keep this entry\n",
+  );
+  git(workspace, "init", "-q", "-b", "main");
+
+  const result = run(workspace, "init", "--yes", "--repo", repository);
+
+  assertSuccess(result);
+  const catalog = readFileSync(path.join(workspace, "libs.versions.toml"), "utf8");
+  assert.match(catalog, /^# keep this comment/m);
+  assert.match(catalog, /^kotlin = "2\.4\.0"$/m);
+  assert.match(catalog, /example = .*# keep this entry/);
+  assert.match(catalog, /^compose = "1\.12\.0-beta03"$/m);
+  assert.match(catalog, /^kotlinx-serialization-json = \{ module = "org\.jetbrains\.kotlinx:kotlinx-serialization-json", version\.ref = "serialization" \}$/m);
+});
+
 test("init dry-run leaves an empty directory untouched", () => {
   const workspace = temporaryDirectory("dry-run");
   const result = run(workspace, "init", "--yes", "--dry-run", "--skip-submodule");

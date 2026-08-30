@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import site.addzero.studio.contract.ConstantCommand
 import site.addzero.studio.contract.ConstantItemCommand
+import site.addzero.studio.workbench.components.editor.FormRow
+import site.addzero.studio.workbench.components.editor.LabeledField
+import site.addzero.studio.workbench.components.editor.Section
 
 @Composable
 internal fun ConstantEditor(command: ConstantCommand, onChange: (ConstantCommand) -> Unit) {

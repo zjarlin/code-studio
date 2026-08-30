@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import site.addzero.studio.contract.PreviewFile
+import site.addzero.studio.workbench.components.editor.EditorFrame
 
 @Composable
 fun LibraryWorkspace(state: LibraryWorkspaceState = koinInject()) {

@@ -8,6 +8,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import site.addzero.studio.contract.LibraryCommand
 import site.addzero.studio.contract.LibraryFeatureCommand
+import site.addzero.studio.workbench.components.editor.FormRow
+import site.addzero.studio.workbench.components.editor.LabeledField
+import site.addzero.studio.workbench.components.editor.Section
 
 @Composable
 internal fun LibraryEditor(command: LibraryCommand, onChange: (LibraryCommand) -> Unit) {

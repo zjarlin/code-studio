@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import site.addzero.studio.contract.ConventionFileCommand
 import site.addzero.studio.contract.ConventionFileKind
+import site.addzero.studio.workbench.components.editor.FormRow
+import site.addzero.studio.workbench.components.editor.LabeledField
+import site.addzero.studio.workbench.components.editor.Section
 
 @Composable
 internal fun ConventionFileEditor(

@@ -24,6 +24,7 @@ dependencies:
   - $libs.compose.material3
   - $libs.compose.icons
   - $libs.compose.resources
+  - $libs.compose.native.component.table
 
 test-dependencies:
   - $libs.kotlinx.coroutines.test

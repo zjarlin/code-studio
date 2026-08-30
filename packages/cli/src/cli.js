@@ -10,6 +10,7 @@ import {
   publishedContributorCoordinates,
   publishedContributors,
   publishedDependencies,
+  mergeVersionCatalogDefaults,
   renderInfrastructureConfig,
   renderPublishedCatalog,
   resolveInfrastructureConfig,
@@ -193,17 +194,16 @@ async function initialize(positionals, values, context, version) {
 
   const studioCatalog = path.join(root, "studio", "libs.versions.toml");
   const rootCatalog = path.join(root, "libs.versions.toml");
-  let catalog = existsSync(rootCatalog)
-    ? await readFile(rootCatalog, "utf8")
-    : existsSync(studioCatalog)
-      ? await readFile(studioCatalog, "utf8")
-      : "";
+  const rootCatalogExists = existsSync(rootCatalog);
+  const rootCatalogSource = rootCatalogExists ? await readFile(rootCatalog, "utf8") : "";
+  const studioCatalogSource = existsSync(studioCatalog) ? await readFile(studioCatalog, "utf8") : "";
+  let catalog = rootCatalogExists
+    ? mergeVersionCatalogDefaults(rootCatalogSource, studioCatalogSource)
+    : studioCatalogSource;
   if (infrastructure.mode === "published") {
     catalog = renderPublishedCatalog(catalog, infrastructure.platformVersion);
   }
-  if (!existsSync(rootCatalog) || infrastructure.mode === "published") {
-    await writeIfChanged(rootCatalog, catalog, values["dry-run"], context.output);
-  }
+  await writeIfChanged(rootCatalog, catalog, values["dry-run"], context.output);
   const studioWrapper = path.join(root, "studio", "kotlin");
   const rootWrapper = path.join(root, "kotlin");
   if (!existsSync(rootWrapper) && existsSync(studioWrapper)) {
@@ -572,13 +572,19 @@ async function upgrade(values, context, version) {
   const root = findWorkspace(context.cwd);
   const resolvedInfrastructure = resolveInfrastructureConfig(root, values.infra, values["platform-version"]);
   const infrastructure = resolvedInfrastructure.config;
-  const catalogFile = path.join(root, "libs.versions.toml");
-  const catalogSource = existsSync(catalogFile) ? await readFile(catalogFile, "utf8") : "";
-  const catalog = infrastructure.mode === "published"
-    ? renderPublishedCatalog(catalogSource, infrastructure.platformVersion)
-    : undefined;
   const repository = values.repo ?? context.env.CODE_STUDIO_REPOSITORY_URL ?? DEFAULT_REPOSITORY;
   alignStudio(root, repository, version, values["dry-run"], context.output);
+  const catalogFile = path.join(root, "libs.versions.toml");
+  const catalogExists = existsSync(catalogFile);
+  const catalogSource = catalogExists ? await readFile(catalogFile, "utf8") : "";
+  const studioCatalogFile = path.join(root, "studio", "libs.versions.toml");
+  const studioCatalogSource = existsSync(studioCatalogFile) ? await readFile(studioCatalogFile, "utf8") : "";
+  let catalog = catalogExists
+    ? mergeVersionCatalogDefaults(catalogSource, studioCatalogSource)
+    : studioCatalogSource;
+  if (infrastructure.mode === "published") {
+    catalog = renderPublishedCatalog(catalog, infrastructure.platformVersion);
+  }
   if (resolvedInfrastructure.initialized) {
     await writeIfChanged(
       path.join(root, INFRASTRUCTURE_FILE),
@@ -587,9 +593,7 @@ async function upgrade(values, context, version) {
       context.output,
     );
   }
-  if (catalog !== undefined) {
-    await writeIfChanged(catalogFile, catalog, values["dry-run"], context.output);
-  }
+  await writeIfChanged(catalogFile, catalog, values["dry-run"], context.output);
   context.output(`studio aligned to v${version}`);
 }
 

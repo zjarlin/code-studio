@@ -26,6 +26,11 @@ import site.addzero.studio.contract.DtoFieldCommand
 import site.addzero.studio.contract.DtoKind
 import site.addzero.studio.contract.DtoNullability
 import site.addzero.studio.contract.DtoSelectionMode
+import site.addzero.studio.workbench.components.editor.FormRow
+import site.addzero.studio.workbench.components.editor.LabeledField
+import site.addzero.studio.workbench.components.editor.Section
+import site.addzero.studio.workbench.components.table.DataColumn
+import site.addzero.studio.workbench.components.table.DataTable
 
 @Composable
 internal fun DtoEditor(command: DtoCommand, onChange: (DtoCommand) -> Unit) {
@@ -71,7 +76,14 @@ internal fun DtoEditor(command: DtoCommand, onChange: (DtoCommand) -> Unit) {
 @Composable
 private fun DtoFields(command: DtoCommand, onChange: (DtoCommand) -> Unit) {
     var selected by remember(command.id) { mutableIntStateOf(-1) }
-    val columns = remember { listOf("name", "sourcePath", "nullability", "description") }
+    val columns = remember {
+        listOf(
+            DataColumn("name", "名称", width = 160f, value = DtoFieldCommand::name),
+            DataColumn("sourcePath", "源路径", width = 160f, value = DtoFieldCommand::sourcePath),
+            DataColumn("nullability", "可空性", width = 160f) { field -> field.nullability.name },
+            DataColumn("description", "说明", width = 160f) { field -> field.description.orEmpty() },
+        )
+    }
     Section("字段") {
         Button(onClick = {
             val fields = command.fields + DtoFieldCommand(name = "", sourcePath = "")
@@ -81,16 +93,9 @@ private fun DtoFields(command: DtoCommand, onChange: (DtoCommand) -> Unit) {
             Icon(Icons.Outlined.Add, contentDescription = null)
             Text("新增字段")
         }
-        MetadataTable(
+        DataTable(
             data = command.fields,
-            columns = columns.map { MetadataColumn(it, it, width = 160) },
-            cell = { field, column -> when (column) {
-                "name" -> field.name
-                "sourcePath" -> field.sourcePath
-                "nullability" -> field.nullability.name
-                "description" -> field.description.orEmpty()
-                else -> ""
-            } },
+            columns = columns,
             actions = { _, index ->
                 IconButton(onClick = { selected = index }) {
                     Icon(Icons.Outlined.Edit, contentDescription = "编辑 DTO 字段")

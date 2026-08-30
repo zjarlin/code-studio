@@ -1,4 +1,4 @@
-package site.addzero.studio.workbench.library
+package site.addzero.studio.workbench.components.editor
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
