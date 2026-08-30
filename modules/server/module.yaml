@@ -10,6 +10,7 @@ plugins:
     enabled: true
 
 dependencies:
+  - ../metadata-contract: exported
   - ../runtime: exported
   - $libs.flyway.core
   - $libs.flyway.postgresql: runtime-only

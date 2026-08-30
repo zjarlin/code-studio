@@ -6,6 +6,7 @@ apply:
   - ../../build-config/common-jvm.module-template.yaml
 
 dependencies:
+  - ../metadata-contract: exported
   - ../constant-compiler: exported
   - ../dto-compiler: exported
   - ../validation-compiler: exported

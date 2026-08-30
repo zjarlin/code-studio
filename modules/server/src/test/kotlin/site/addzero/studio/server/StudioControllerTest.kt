@@ -51,7 +51,18 @@ class StudioControllerTest {
         assertEquals(HttpStatusCode.OK, rootResponse.status)
         assertEquals(HttpStatusCode.OK, trailingSlashResponse.status)
         assertEquals(HttpStatusCode.OK, assetResponse.status)
-        assertTrue(rootResponse.body<String>().contains("id=\"app\""))
+        assertTrue(rootResponse.body<String>().contains("import-map-loader.js"))
+        assertTrue(rootResponse.body<String>().indexOf("import-map-loader.js") < rootResponse.body<String>().indexOf("web.mjs"))
+        listOf(
+            "web.wasm",
+            "web.mjs",
+            "skiko.wasm",
+            "skiko.mjs",
+            "import-map-loader.js",
+            "vendors/@js-joda/core/dist/js-joda.esm.js",
+        ).forEach { fileName ->
+            assertTrue(javaClass.classLoader.getResource("studio/$fileName") != null, "server 主制品缺少 $fileName")
+        }
         assertEquals(
             setOf(
                 "contributorId",
@@ -207,7 +218,9 @@ class StudioControllerTest {
             "server 主制品缺少 Studio UI"
         }.readText()
         return requireNotNull(
-            Regex("(?:src|href)=\"(/studio/[^\"]+\\.(?:js|css))\"").find(index)?.groupValues?.get(1),
+            Regex("(?:src|href)=\"([^\"]+\\.(?:mjs|css))\"").find(index)?.groupValues?.get(1)?.let {
+                "/studio/$it"
+            },
         ) {
             "Studio UI index 没有引用构建资源"
         }

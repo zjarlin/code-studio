@@ -1,0 +1,36 @@
+product: wasm-js/app
+
+description: Studio Wasm 浏览器启动入口。
+
+apply:
+  - ../../build-config/common-kmp.module-template.yaml
+
+dependencies:
+  - ../../modules/workbench
+  - bom: $libs.koin.bom
+  - $libs.koin.core
+  - $libs.koin.annotations
+  - $libs.kotlinx.coroutines.core
+  - $libs.kotlinx.serialization.json
+  - $libs.ktor.client.core
+  - $libs.ktor.client.js
+  - $libs.compose.ui
+  - $libs.compose.runtime
+
+settings:
+  kotlin:
+    allWarningsAsErrors: false
+    compilerPlugins:
+      - id: io.insert-koin.compiler.plugin
+        dependency: io.insert-koin:koin-compiler-plugin:1.0.1
+        options:
+          compileSafety: "false"
+          debugLogs: "false"
+          skipDefaultValues: "true"
+          unsafeDslChecks: "true"
+          userLogs: "true"
+  compose:
+    enabled: true
+    version: 1.12.0-beta03
+    resources:
+      packageName: site.addzero.studio.web.generated.resources

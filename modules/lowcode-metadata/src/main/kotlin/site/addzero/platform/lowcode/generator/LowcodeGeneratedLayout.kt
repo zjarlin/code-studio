@@ -17,7 +17,9 @@ enum class LowcodeScaffoldResourceKind(
     val packageSuffix: String,
 ) {
     CONTROLLER("controller"),
+    SERVICE("service"),
     SERVICE_IMPLEMENTATION("service.impl"),
+    SCHEDULED_JOB("job"),
 }
 
 /**

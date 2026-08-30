@@ -50,6 +50,7 @@ data class LowcodeMetadata(
     val dtoDefinitions: List<LsiLowcodeDtoDefinition>,
     val routeBindings: List<LowcodeRouteBinding>,
     val contracts: List<LsiLowcodeContract>,
+    val conventionFiles: List<LsiConventionFile> = emptyList(),
     val features: List<LsiLowcodeFeature> = emptyList(),
     val dictionaries: List<LowcodeDictionaryMeta> = emptyList(),
     val constantGroups: List<LowcodeConstantGroupMeta> = emptyList(),
@@ -60,6 +61,16 @@ data class LowcodeMetadata(
         }
         require(contracts.map(LsiLowcodeContract::contractCode).distinct().size == contracts.size) {
             "低代码数据库包含重复业务契约编码"
+        }
+        require(conventionFiles.map { file ->
+            Triple(file.contributorId, file.packageName, file.kind to file.fileCode)
+        }.distinct().size == conventionFiles.size) {
+            "低代码数据库包含重复约定文件编码"
+        }
+        require(conventionFiles.map { file ->
+            Triple(file.contributorId, file.packageName, file.className)
+        }.distinct().size == conventionFiles.size) {
+            "低代码数据库包含重复约定文件类名"
         }
         require(dtoDefinitions.map(LsiLowcodeDtoDefinition::dtoCode).distinct().size == dtoDefinitions.size) {
             "低代码数据库包含重复 DTO 编码"
@@ -152,6 +163,13 @@ data class LowcodeMetadata(
                 }
             }
         }
+        conventionFiles.forEach { file ->
+            require(features.any { feature ->
+                feature.packageName == file.packageName && feature.contributorId == file.contributorId
+            }) {
+                "约定文件 ${file.fileCode} 没有归属到有效功能目录: ${file.packageName}"
+            }
+        }
         constantGroups.forEach { group ->
             require(features.any { feature ->
                 feature.packageName == group.featurePackageName && feature.contributorId == group.contributorId
@@ -203,6 +221,7 @@ object LowcodeMetadataDatabaseReader {
                 )
             }
             val contracts = connection.readContracts()
+            val conventionFiles = connection.readConventionFiles()
             val dtoDefinitions = connection.readDtoDefinitions()
             val dictionaries = connection.readDictionaries()
             val constantGroups = connection.readConstantGroups()
@@ -222,6 +241,7 @@ object LowcodeMetadataDatabaseReader {
                 dtoDefinitions = dtoDefinitions,
                 routeBindings = routeBindings,
                 contracts = contracts,
+                conventionFiles = conventionFiles,
                 features = features,
                 dictionaries = dictionaries,
                 constantGroups = constantGroups,
@@ -387,6 +407,23 @@ object LowcodeMetadataDatabaseReader {
                         contributorId = row.getString("contributor_id"),
                         operations = LowcodeMetadataJson.readOperations(row.getString("operations")),
                         agentExposure = LowcodeMetadataJson.readAgentExposure(row.getString("agent_exposure")),
+                    )
+                }
+            }
+        }
+
+    private fun Connection.readConventionFiles(): List<LsiConventionFile> =
+        prepareStatement(CONVENTION_FILES_SQL).use { statement ->
+            statement.executeQuery().use { rows ->
+                rows.mapRows { row ->
+                    LsiConventionFile(
+                        fileCode = row.getString("file_code"),
+                        name = row.getString("name"),
+                        className = row.getString("class_name"),
+                        kind = LsiConventionFileKind.valueOf(row.getString("kind")),
+                        packageName = row.getString("package_name"),
+                        contributorId = row.getString("contributor_id"),
+                        description = row.getString("description"),
                     )
                 }
             }
@@ -703,6 +740,18 @@ private const val CONTRACTS_SQL = """
     INNER JOIN lowcode_definition definition ON definition.id = library.id
     WHERE contract.status = 1
     ORDER BY contract.contract_code
+"""
+
+private const val CONVENTION_FILES_SQL = """
+    SELECT file.file_code, file.name, file.class_name, file.kind, file.description,
+           (library.spec ->> 'packagePrefix') || '.' || feature.feature_code AS package_name,
+           definition.code AS contributor_id
+    FROM convention_file file
+    INNER JOIN library_feature feature ON feature.id = file.feature_id
+    INNER JOIN library_definition library ON library.id = feature.library_id
+    INNER JOIN lowcode_definition definition ON definition.id = library.id
+    WHERE file.status = 1
+    ORDER BY definition.code, feature.feature_code, file.kind, file.file_code
 """
 
 private const val DTOS_SQL = """

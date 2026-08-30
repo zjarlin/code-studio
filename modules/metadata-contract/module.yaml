@@ -1,0 +1,15 @@
+product:
+  type: kmp/lib
+  platforms: [jvm, wasmJs]
+
+description: Studio JVM/Wasm 共用 API 契约与纯 LSI 元数据。
+
+apply:
+  - ../../build-config/common-kmp.module-template.yaml
+
+dependencies:
+  - $libs.kotlinx.serialization.json
+
+settings:
+  publishing:
+    enabled: false

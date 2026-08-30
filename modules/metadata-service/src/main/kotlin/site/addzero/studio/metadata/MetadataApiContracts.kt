@@ -2,19 +2,8 @@ package site.addzero.studio.metadata
 
 import io.ktor.http.HttpStatusCode
 
-/** Studio UI 使用的稳定响应包络。 */
-data class CommonResult<T>(
-    val code: Int,
-    val msg: String,
-    val data: T?,
-)
-
-/** 元数据命令校验结果。 */
-data class MetadataValidationResult(
-    val valid: Boolean,
-    val errors: List<String>,
-    val warnings: List<String> = emptyList(),
-)
+typealias CommonResult<T> = site.addzero.studio.contract.CommonResult<T>
+typealias MetadataValidationResult = site.addzero.studio.contract.MetadataValidationResult
 
 internal data class MetadataHttpResponse(
     val status: HttpStatusCode,

@@ -31,6 +31,7 @@ import site.addzero.platform.lowcode.generator.LowcodeDictionaryEnumSourceGenera
 import site.addzero.platform.lowcode.generator.LowcodeConstantSourceGenerator
 import site.addzero.platform.lowcode.generator.LowcodeFeatureControllerSourceGenerator
 import site.addzero.platform.lowcode.generator.LowcodeFeatureServiceSourceGenerator
+import site.addzero.platform.lowcode.generator.ConventionFileSourceGenerator
 import site.addzero.platform.lowcode.generator.STUDIO_GENERATED_MARKER
 import site.addzero.platform.lowcode.generator.generatedByStudio
 import site.addzero.platform.lowcode.generator.restrictToContributors
@@ -367,7 +368,7 @@ private fun LowcodeMetadata.generatedFiles(
 }
 
 /**
- * 显式同步当前 contributor 可编辑的 Controller 和 ServiceImpl。
+ * 显式同步当前 contributor 可编辑的 Controller、ServiceImpl 和约定文件。
  */
 @TaskAction
 fun materializeLowcodeSources(
@@ -444,6 +445,19 @@ internal fun mergeCompilationMetadata(catalogs: List<LowcodeMetadata>): LowcodeM
     contracts = catalogs.flatMap(LowcodeMetadata::contracts)
         .mergeExactBy({ contract -> contract.contractCode }, "业务契约")
         .sortedBy { contract -> contract.contractCode },
+    conventionFiles = catalogs.flatMap(LowcodeMetadata::conventionFiles)
+        .mergeExactBy(
+            { file -> Triple(file.contributorId, file.packageName, file.kind to file.fileCode) },
+            "约定文件",
+        )
+        .sortedWith(
+            compareBy(
+                { file -> file.contributorId },
+                { file -> file.packageName },
+                { file -> file.kind },
+                { file -> file.fileCode },
+            ),
+        ),
     features = catalogs.flatMap(LowcodeMetadata::features)
         .mergeExactBy({ feature -> feature.contributorId to feature.featureCode }, "功能")
         .sortedWith(compareBy({ feature -> feature.contributorId }, { feature -> feature.featureCode })),
@@ -894,6 +908,8 @@ private fun readEditableScaffolds(sourceRoot: Path): List<LowcodeGeneratedFile> 
                 content.controllerSignature().isNotEmpty() -> LowcodeGeneratedFileKind.CONTROLLER_SCAFFOLD
                 content.serviceImplementationSignature().isNotEmpty() ->
                     LowcodeGeneratedFileKind.SERVICE_IMPLEMENTATION_SCAFFOLD
+                content.conventionFileSignature().isNotEmpty() ->
+                    LowcodeGeneratedFileKind.CONVENTION_FILE_SCAFFOLD
                 else -> error("无法识别可编辑脚手架: $path")
             }
             LowcodeGeneratedFile(
@@ -990,6 +1006,18 @@ private fun validateMaterializedSources(
         "Service 实现元数据签名已变更，请运行 codeStudioSync 并人工合并：" +
             serviceSignatureMismatches.sorted().joinToString(separator = "\n", prefix = "\n")
     }
+    val conventionFileSignatureMismatches = expectedByPath.mapNotNull { (path, file) ->
+        if (file.kind != LowcodeGeneratedFileKind.CONVENTION_FILE_SCAFFOLD || !path.exists()) {
+            return@mapNotNull null
+        }
+        val expectedSignature = file.content.conventionFileSignature()
+        val actualSignature = path.readText().conventionFileSignature()
+        path.takeIf { actualSignature != expectedSignature }
+    }
+    check(conventionFileSignatureMismatches.isEmpty()) {
+        "约定文件元数据签名已变更，请人工合并后更新签名，或删除文件后重新生成：" +
+            conventionFileSignatureMismatches.sorted().joinToString(separator = "\n", prefix = "\n")
+    }
     return expectedByPath.keys
 }
 
@@ -1012,6 +1040,11 @@ private fun synchronizeMaterializedSources(
     check(staleGeneratedServiceImplementations.isEmpty()) {
         "存在已失效但可能含人工修改的低代码 Service 实现，请人工迁移到新包或确认后删除：" +
             staleGeneratedServiceImplementations.sorted().joinToString(separator = "\n", prefix = "\n")
+    }
+    val staleConventionFiles = stale.filter(Path::isEditableConventionFile)
+    check(staleConventionFiles.isEmpty()) {
+        "存在已失效但可能含人工修改的约定文件，请人工确认后删除：" +
+            staleConventionFiles.sorted().joinToString(separator = "\n", prefix = "\n")
     }
     val handwrittenControllerCollisions = expectedByPath.mapNotNull { (path, file) ->
         val generatesController = file.kind == LowcodeGeneratedFileKind.CONTROLLER_SCAFFOLD ||
@@ -1067,6 +1100,9 @@ private fun synchronizeMaterializedSources(
         if (file.kind == LowcodeGeneratedFileKind.SERVICE_IMPLEMENTATION_SCAFFOLD && path.exists()) {
             return@forEach
         }
+        if (file.kind == LowcodeGeneratedFileKind.CONVENTION_FILE_SCAFFOLD && path.exists()) {
+            return@forEach
+        }
         path.createParentDirectories()
         path.writeText(file.content)
     }
@@ -1110,6 +1146,11 @@ private fun String.serviceImplementationSignature(): String = lineSequence()
     }
     .orEmpty()
 
+private fun String.conventionFileSignature(): String = lineSequence()
+    .take(GENERATED_MARKER_LINE_LIMIT)
+    .firstOrNull { line -> line.startsWith(ConventionFileSourceGenerator.SIGNATURE_PREFIX) }
+    .orEmpty()
+
 private fun Path.hasStudioGeneratedMarker(): Boolean =
     readText().lineSequence().take(GENERATED_MARKER_LINE_LIMIT).any { line ->
         STUDIO_GENERATED_MARKER in line
@@ -1123,7 +1164,9 @@ private fun editableLowcodeSourceFiles(sourceRoot: Path): Sequence<Path> {
         .filter { file -> file.isFile && file.extension == "kt" }
         .map { file -> file.toPath() }
         .filter { path ->
-            path.isEditableLowcodeController() || path.isEditableLowcodeServiceImplementation()
+            path.isEditableLowcodeController() ||
+                path.isEditableLowcodeServiceImplementation() ||
+                path.isEditableConventionFile()
         }
 }
 
@@ -1155,6 +1198,9 @@ private fun Path.isHandwrittenLowcodeController(): Boolean =
 private fun Path.isEditableLowcodeServiceImplementation(): Boolean =
     readText().serviceImplementationSignature().isNotEmpty()
 
+private fun Path.isEditableConventionFile(): Boolean =
+    readText().conventionFileSignature().isNotEmpty()
+
 private fun Path.relativeToParentGeneratedDirectory(): List<String> {
     val segments = map(Path::toString)
     val generatedIndex = segments.indexOf("generated")
@@ -1166,7 +1212,8 @@ private fun LowcodeGeneratedFile.sourcePath(sourceRoot: Path): Path =
 
 private fun LowcodeGeneratedFile.isEditableScaffold(): Boolean =
     kind == LowcodeGeneratedFileKind.CONTROLLER_SCAFFOLD ||
-        kind == LowcodeGeneratedFileKind.SERVICE_IMPLEMENTATION_SCAFFOLD
+        kind == LowcodeGeneratedFileKind.SERVICE_IMPLEMENTATION_SCAFFOLD ||
+        kind == LowcodeGeneratedFileKind.CONVENTION_FILE_SCAFFOLD
 
 private fun LowcodeGeneratedFile.isCompiledSource(): Boolean =
     extensionName == "kt" && !isEditableScaffold()

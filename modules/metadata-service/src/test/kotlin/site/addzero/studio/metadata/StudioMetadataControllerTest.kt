@@ -113,15 +113,27 @@ class StudioMetadataControllerTest {
                 assertEquals("CatalogView", client.get("/studio/api/lowcode/dto/detail?id=$dtoId").result()["data"]["className"].asString())
                 assertEquals(1, client.postJson("/studio/api/lowcode/dto/list", "{}").result()["data"].size())
 
-                val contractCommand = contractCommand(featureId)
-                assertValid(client, "/studio/api/lowcode/contract/validate", contractCommand)
-                val contractId = client.postJson(
-                    "/studio/api/lowcode/contract/add",
-                    contractCommand,
+                val serviceConvention = conventionFileCommand(featureId, "catalogApplication", "CatalogApplicationService", "SERVICE")
+                assertValid(client, "/studio/api/lowcode/convention-file/validate", serviceConvention)
+                val serviceConventionId = client.postJson(
+                    "/studio/api/lowcode/convention-file/add",
+                    serviceConvention,
                 ).result()["data"].asLong()
-                val contractDetail = client.get("/studio/api/lowcode/contract/detail?id=$contractId").result()
-                assertEquals("CatalogService", contractDetail["data"]["className"].asString())
-                assertEquals(1, client.postJson("/studio/api/lowcode/contract/list", "{}").result()["data"].size())
+                val jobConvention = conventionFileCommand(featureId, "refreshCatalog", "RefreshCatalogJob", "SCHEDULED_JOB")
+                assertValid(client, "/studio/api/lowcode/convention-file/validate", jobConvention)
+                val jobConventionId = client.postJson(
+                    "/studio/api/lowcode/convention-file/add",
+                    jobConvention,
+                ).result()["data"].asLong()
+                val conventionFiles = client.postJson(
+                    "/studio/api/lowcode/convention-file/list",
+                    "{}",
+                ).result()["data"]
+                assertEquals(2, conventionFiles.size())
+                val jobDetail = client.get(
+                    "/studio/api/lowcode/convention-file/detail?id=$jobConventionId",
+                ).result()["data"]
+                assertEquals("example.editable.catalog.job", jobDetail["packageName"].asString())
 
                 val constantCommand = constantCommand(featureId)
                 assertValid(client, "/studio/api/lowcode/constant/validate", constantCommand)
@@ -148,12 +160,6 @@ class StudioMetadataControllerTest {
                 assertTrue(dtoPreview["files"].any { file -> file["filePath"].asString().endsWith("CatalogView.kt") })
                 assertArchive(client.get("/studio/api/lowcode/dto/download?id=$dtoId"))
 
-                val contractPreviewResult = client.get("/studio/api/lowcode/contract/preview?id=$contractId").result()
-                assertEquals(0, contractPreviewResult["code"].asInt(), contractPreviewResult.toString())
-                val contractPreview = contractPreviewResult["data"]
-                assertTrue(contractPreview["files"].size() > 0)
-                assertArchive(client.get("/studio/api/lowcode/contract/download?id=$contractId"))
-
                 val libraryPreviewResult = client.get(
                     "/studio/api/lowcode/library/preview?id=${fixture.editableLibraryId}&featureId=$featureId",
                 ).result()
@@ -161,6 +167,12 @@ class StudioMetadataControllerTest {
                 val libraryPreview = libraryPreviewResult["data"]
                 assertTrue(libraryPreview["files"].size() > 0)
                 assertTrue(libraryPreview["files"].none { file -> "code.studio.target" in file["content"].asString() })
+                assertTrue(libraryPreview["files"].any { file ->
+                    file["filePath"].asString().endsWith("/service/CatalogApplicationService.kt")
+                })
+                assertTrue(libraryPreview["files"].any { file ->
+                    file["filePath"].asString().endsWith("/job/RefreshCatalogJob.kt")
+                })
 
                 val reuseCommand = dtoCommand(featureId).deepCopy() as tools.jackson.databind.node.ObjectNode
                 reuseCommand.put("id", dtoId)
@@ -174,7 +186,8 @@ class StudioMetadataControllerTest {
                 assertTrue(reuseAnalysis["candidates"].size() > 0)
 
                 assertSuccessfulDelete(client, "/studio/api/lowcode/constant", constantId)
-                assertSuccessfulDelete(client, "/studio/api/lowcode/contract", contractId)
+                assertSuccessfulDelete(client, "/studio/api/lowcode/convention-file", serviceConventionId)
+                assertSuccessfulDelete(client, "/studio/api/lowcode/convention-file", jobConventionId)
                 assertSuccessfulDelete(client, "/studio/api/lowcode/dto", dtoId)
                 assertSuccessfulDelete(client, "/studio/api/lowcode/model", modelId)
                 val featureDelete = client.delete(
@@ -358,33 +371,6 @@ class StudioMetadataControllerTest {
         """.trimIndent(),
     )
 
-    private fun contractCommand(featureId: Long): JsonNode = mapper.readTree(
-        """
-        {
-          "featureId": $featureId,
-          "contractCode": "catalog",
-          "name": "Catalog Service",
-          "className": "CatalogService",
-          "path": "/catalog",
-          "status": 1,
-          "version": 1,
-          "description": "Catalog operations",
-          "operations": [{
-            "operationCode": "findCatalog",
-            "name": "Find Catalog",
-            "path": "/catalog/find",
-            "method": "GET",
-            "transport": "HTTP",
-            "authenticated": false,
-            "callContext": false,
-            "parameters": [],
-            "responseEnvelope": true
-          }],
-          "agentExposure": {"operations": {}}
-        }
-        """.trimIndent(),
-    )
-
     private fun constantCommand(featureId: Long): JsonNode = mapper.readTree(
         """
         {
@@ -398,6 +384,25 @@ class StudioMetadataControllerTest {
             "value": "true",
             "description": "Whether catalog is enabled"
           }]
+        }
+        """.trimIndent(),
+    )
+
+    private fun conventionFileCommand(
+        featureId: Long,
+        fileCode: String,
+        className: String,
+        kind: String,
+    ): JsonNode = mapper.readTree(
+        """
+        {
+          "featureId": $featureId,
+          "fileCode": "$fileCode",
+          "name": "$className",
+          "className": "$className",
+          "kind": "$kind",
+          "status": 1,
+          "description": null
         }
         """.trimIndent(),
     )

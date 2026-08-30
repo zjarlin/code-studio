@@ -48,5 +48,13 @@ class LowcodeGeneratedLayoutTest {
                 "StatsServiceImpl",
             ),
         )
+        assertEquals(
+            "example.feature.stats.service",
+            layout.scaffoldPackageName(LowcodeScaffoldResourceKind.SERVICE),
+        )
+        assertEquals(
+            "src/main/kotlin/example/feature/stats/job/RefreshStatsJob.kt",
+            layout.relativeScaffoldSourcePath(LowcodeScaffoldResourceKind.SCHEDULED_JOB, "RefreshStatsJob"),
+        )
     }
 }

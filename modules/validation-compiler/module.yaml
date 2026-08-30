@@ -2,3 +2,6 @@ product: jvm/lib
 
 apply:
   - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../metadata-contract: exported

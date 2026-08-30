@@ -190,6 +190,39 @@ class LowcodeModuleCompilerTest {
         assertFalse(withAgent.any { file -> "site.addzero.biz" in file.content })
     }
 
+    @Test
+    fun `定时任务约定文件使用目标运行时的调度契约`() {
+        val contributorId = "example.library"
+        val packageName = "example.cleanup"
+        val metadata = LowcodeMetadata(
+            models = emptyList(),
+            dtoDefinitions = emptyList(),
+            routeBindings = emptyList(),
+            contracts = emptyList(),
+            conventionFiles = listOf(
+                LsiConventionFile(
+                    fileCode = "cleanup",
+                    name = "清理任务",
+                    className = "CleanupJob",
+                    kind = LsiConventionFileKind.SCHEDULED_JOB,
+                    packageName = packageName,
+                    contributorId = contributorId,
+                ),
+            ),
+            features = listOf(feature("cleanup", packageName, contributorId)),
+        )
+        val profile = GenerationTargetProfile(
+            id = "application",
+            symbols = mapOf(GenerationTargetSymbols.CORE_RUNTIME_PACKAGE to "example.runtime.core"),
+        )
+
+        val file = LowcodeModuleCompiler.generate(metadata, contributorId, targetProfile = profile)
+            .single { candidate -> candidate.fileName == "CleanupJob" }
+
+        assertTrue(file.content.contains("import example.runtime.core.ScheduledJob"))
+        assertFalse(file.content.contains("code.studio.target"))
+    }
+
     private fun feature(code: String, packageName: String, contributorId: String) = LsiLowcodeFeature(
         featureCode = code,
         name = code,

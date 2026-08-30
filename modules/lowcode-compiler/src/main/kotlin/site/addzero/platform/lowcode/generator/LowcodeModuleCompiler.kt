@@ -65,6 +65,11 @@ object LowcodeModuleCompiler {
                 ),
             )
             addAll(
+                ConventionFileSourceGenerator.generate(
+                    metadata.conventionFiles.filter { file -> file.contributorId == contributorId },
+                ),
+            )
+            addAll(
                 LowcodeFeatureReadmeGenerator.generate(
                     features = moduleFeatures,
                     models = metadata.models,

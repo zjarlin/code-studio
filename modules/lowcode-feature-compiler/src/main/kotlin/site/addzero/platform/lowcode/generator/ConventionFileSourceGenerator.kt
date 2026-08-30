@@ -1,0 +1,91 @@
+package site.addzero.platform.lowcode.generator
+
+import java.security.MessageDigest
+
+/** 把最小约定元数据生成为可编辑的业务源码。 */
+object ConventionFileSourceGenerator {
+    const val SIGNATURE_PREFIX = "// 约定文件脚手架签名: "
+
+    fun generate(files: List<LsiConventionFile>): List<LowcodeGeneratedFile> = files
+        .sortedWith(compareBy(LsiConventionFile::packageName, LsiConventionFile::kind, LsiConventionFile::fileCode))
+        .map(::generate)
+
+    private fun generate(file: LsiConventionFile): LowcodeGeneratedFile = when (file.kind) {
+        LsiConventionFileKind.SERVICE -> generateService(file)
+        LsiConventionFileKind.SCHEDULED_JOB -> generateScheduledJob(file)
+    }
+
+    private fun generateService(file: LsiConventionFile): LowcodeGeneratedFile {
+        val packageName = file.packageName(LowcodeScaffoldResourceKind.SERVICE)
+        val content = """
+            |${signature(file)}
+            |package $packageName
+            |
+            |import org.koin.core.annotation.Single
+            |
+            |${file.kdoc()}
+            |@Single
+            |class ${file.className}
+        """.trimMargin() + "\n"
+        return file.generatedFile(packageName, LowcodeScaffoldResourceKind.SERVICE, content)
+    }
+
+    private fun generateScheduledJob(file: LsiConventionFile): LowcodeGeneratedFile {
+        val packageName = file.packageName(LowcodeScaffoldResourceKind.SCHEDULED_JOB)
+        val content = """
+            |${signature(file)}
+            |package $packageName
+            |
+            |import org.koin.core.annotation.Single
+            |import ${generationTargetSymbol(GenerationTargetSymbols.CORE_RUNTIME_PACKAGE)}.ScheduledJob
+            |
+            |${file.kdoc()}
+            |@Single
+            |class ${file.className} : ScheduledJob {
+            |    override val schedule: String = "0 0 0 * * * 480o"
+            |
+            |    override suspend fun execute() = Unit
+            |}
+        """.trimMargin() + "\n"
+        return file.generatedFile(packageName, LowcodeScaffoldResourceKind.SCHEDULED_JOB, content)
+    }
+
+    private fun LsiConventionFile.generatedFile(
+        packageName: String,
+        resourceKind: LowcodeScaffoldResourceKind,
+        content: String,
+    ): LowcodeGeneratedFile {
+        return LowcodeGeneratedFile(
+            packageName = packageName,
+            fileName = className,
+            relativePath = this.packageName.generatedLayout().relativeScaffoldSourcePath(resourceKind, className),
+            content = generatedByStudio(content),
+            kind = LowcodeGeneratedFileKind.CONVENTION_FILE_SCAFFOLD,
+        )
+    }
+
+    private fun LsiConventionFile.packageName(kind: LowcodeScaffoldResourceKind): String =
+        packageName.generatedLayout().scaffoldPackageName(kind)
+
+    private fun LsiConventionFile.kdoc(): String {
+        val lines = listOf(name) + description.orEmpty().lineSequence().filter(String::isNotBlank).toList()
+        return if (lines.size == 1) {
+            "/** ${lines.single().escapeKDoc()}。 */"
+        } else {
+            lines.joinToString(separator = "\n * ", prefix = "/**\n * ", postfix = "\n */") { line ->
+                line.escapeKDoc()
+            }
+        }
+    }
+
+    private fun signature(file: LsiConventionFile): String {
+        val value = listOf(file.contributorId, file.packageName, file.kind.name, file.fileCode, file.className)
+            .joinToString("|")
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(value.toByteArray())
+            .joinToString("") { byte -> "%02x".format(byte) }
+        return "$SIGNATURE_PREFIX$digest"
+    }
+
+    private fun String.escapeKDoc(): String = replace("*/", "* /")
+}

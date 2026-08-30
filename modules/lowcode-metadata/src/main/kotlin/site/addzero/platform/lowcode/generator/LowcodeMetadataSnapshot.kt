@@ -63,6 +63,14 @@ private fun LowcodeMetadata.canonical(): LowcodeMetadata = copy(
             agentExposure = contract.agentExposure.copy(operations = contract.agentExposure.operations.toSortedMap()),
         )
     },
+    conventionFiles = conventionFiles.sortedWith(
+        compareBy(
+            LsiConventionFile::contributorId,
+            LsiConventionFile::packageName,
+            LsiConventionFile::kind,
+            LsiConventionFile::fileCode,
+        ),
+    ),
     features = features.sortedWith(compareBy(LsiLowcodeFeature::contributorId, LsiLowcodeFeature::featureCode)).map { feature ->
         feature.copy(
             modelCodes = feature.modelCodes.sorted(),
@@ -127,6 +135,7 @@ fun LowcodeMetadata.restrictToContributors(contributorIds: Set<String>): Lowcode
         dtoDefinitions = dtoDefinitions.filter { dto -> dto.contributorId in contributorIds },
         routeBindings = routeBindings.filter { binding -> binding.contributorId in contributorIds },
         contracts = contracts.filter { contract -> contract.contributorId in contributorIds },
+        conventionFiles = conventionFiles.filter { file -> file.contributorId in contributorIds },
         features = features.filter { feature -> feature.contributorId in contributorIds },
         dictionaries = dictionaries.filter { dictionary ->
             dictionary.ownerModelCode in selectedModelCodes || dictionary.dictionaryCode in usedDictionaryCodes

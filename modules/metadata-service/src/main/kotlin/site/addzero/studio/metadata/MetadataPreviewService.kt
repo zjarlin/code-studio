@@ -41,12 +41,6 @@ internal data class DtoMetadataPreview(
     val files: List<MetadataPreviewFile>,
 )
 
-internal data class ContractMetadataPreview(
-    val contractId: Long,
-    val contractCode: String,
-    val files: List<MetadataPreviewFile>,
-)
-
 internal data class LibraryMetadataPreview(
     val libraryId: Long,
     val featureId: Long?,
@@ -88,16 +82,6 @@ internal class MetadataPreviewService(
             val files = LowcodeDtoSourceGenerator.generateDefinitions(listOf(definition), metadata.models) +
                 LowcodeDtoSourceGenerator.generateDefinitionValidations(listOf(definition), metadata.models)
             DtoMetadataPreview(id, dtoCode, files.toPreviewFiles())
-        }
-    }
-
-    suspend fun contract(id: Long): ContractMetadataPreview {
-        val contractCode = store.read { contractDetail(id).requiredText("contractCode") }
-        return store.compile { metadata ->
-            val contract = metadata.contracts.singleOrNull { candidate -> candidate.contractCode == contractCode }
-                ?: badRequest("Service 契约已停用，不能生成预览: $contractCode")
-            val files = LowcodeSourceCompiler.generate(contract, metadata.models, metadata.dtoDefinitions)
-            ContractMetadataPreview(id, contractCode, files.toPreviewFiles())
         }
     }
 

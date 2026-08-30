@@ -4,3 +4,6 @@ description: 从中性 DTO LSI 确定性生成 Kotlin data class，并分析跨�
 
 apply:
   - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../metadata-contract: exported

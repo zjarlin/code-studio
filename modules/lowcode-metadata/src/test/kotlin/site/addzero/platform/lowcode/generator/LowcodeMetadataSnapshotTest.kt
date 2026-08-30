@@ -33,6 +33,10 @@ class LowcodeMetadataSnapshotTest {
             dtoDefinitions = emptyList(),
             routeBindings = emptyList(),
             contracts = emptyList(),
+            conventionFiles = listOf(
+                conventionFile("z", "ZService", "example.z", "example.library"),
+                conventionFile("a", "AService", "example.a", "example.foundation"),
+            ),
             features = listOf(
                 feature("z", "example.z", "example.library"),
                 feature("a", "example.a", "example.foundation"),
@@ -49,6 +53,7 @@ class LowcodeMetadataSnapshotTest {
         val contributorIds = encoded.substringAfter("\"contributorIds\"").substringBefore("\"metadata\"")
         assertTrue(contributorIds.indexOf("example.foundation") < contributorIds.indexOf("example.library"))
         assertTrue(encoded.indexOf("\"featureCode\" : \"a\"") < encoded.indexOf("\"featureCode\" : \"z\""))
+        assertTrue(encoded.indexOf("\"fileCode\" : \"a\"") < encoded.indexOf("\"fileCode\" : \"z\""))
     }
 
     @Test
@@ -58,6 +63,10 @@ class LowcodeMetadataSnapshotTest {
             dtoDefinitions = emptyList(),
             routeBindings = emptyList(),
             contracts = emptyList(),
+            conventionFiles = listOf(
+                conventionFile("application", "ApplicationService", "example.application", "example.application"),
+                conventionFile("unrelated", "UnrelatedService", "example.unrelated", "example.unrelated"),
+            ),
             features = listOf(
                 feature("application", "example.application", "example.application"),
                 feature("foundation", "example.foundation", "example.foundation"),
@@ -73,11 +82,26 @@ class LowcodeMetadataSnapshotTest {
             setOf("example.application", "example.foundation"),
             restricted.features.map(LsiLowcodeFeature::contributorId).toSet(),
         )
+        assertEquals(listOf("application"), restricted.conventionFiles.map(LsiConventionFile::fileCode))
     }
 
     private fun feature(code: String, packageName: String, contributorId: String) = LsiLowcodeFeature(
         featureCode = code,
         name = code,
+        packageName = packageName,
+        contributorId = contributorId,
+    )
+
+    private fun conventionFile(
+        code: String,
+        className: String,
+        packageName: String,
+        contributorId: String,
+    ) = LsiConventionFile(
+        fileCode = code,
+        name = code,
+        className = className,
+        kind = LsiConventionFileKind.SERVICE,
         packageName = packageName,
         contributorId = contributorId,
     )

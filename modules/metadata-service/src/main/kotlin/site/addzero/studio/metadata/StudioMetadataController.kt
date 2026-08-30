@@ -17,6 +17,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import kotlinx.coroutines.CancellationException
+import site.addzero.studio.contract.ConstantCommand
+import site.addzero.studio.contract.ConstantListCommand
+import site.addzero.studio.contract.ConventionFileCommand
+import site.addzero.studio.contract.DtoCommand
+import site.addzero.studio.contract.LibraryCommand
+import site.addzero.studio.contract.LibraryFeatureCommand
+import site.addzero.studio.contract.ModelCommand
+import site.addzero.studio.contract.ModelPageCommand
 import site.addzero.studio.server.StudioApiController
 import site.addzero.studio.runtime.GenerationTargetProfile
 import tools.jackson.databind.JsonNode
@@ -38,7 +46,7 @@ class StudioMetadataController(
             installLibraryFeatureEndpoints()
             installModelEndpoints()
             installDtoEndpoints()
-            installContractEndpoints()
+            installConventionFileEndpoints()
             installConstantEndpoints()
         }
     }
@@ -55,20 +63,22 @@ class StudioMetadataController(
                 call.respondMetadata { store.read { libraryDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateLibrary(command) } }
+                val command = call.receive<LibraryCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateLibrary(node) } }
             }
             post("/add") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveLibrary(command) } }
+                val command = call.receive<LibraryCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveLibrary(node) } }
             }
             put("/update") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveLibrary(command) } }
+                val command = call.receive<LibraryCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveLibrary(node) } }
             }
             delete("/delete") {
-                val request = call.receive<JsonNode>()
-                val ids = request.requiredIds()
+                val ids = call.receive<List<Long>>()
                 call.respondMetadata { store.write { deleteLibraries(ids) } }
             }
             get("/preview") {
@@ -92,16 +102,19 @@ class StudioMetadataController(
                 call.respondMetadata { store.read { libraryFeatureDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateLibraryFeature(command) } }
+                val command = call.receive<LibraryFeatureCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateLibraryFeature(node) } }
             }
             post("/create") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveLibraryFeature(command) } }
+                val command = call.receive<LibraryFeatureCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveLibraryFeature(node) } }
             }
             put("/update") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveLibraryFeature(command) } }
+                val command = call.receive<LibraryFeatureCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveLibraryFeature(node) } }
             }
             delete("/delete") {
                 val id = call.queryId()
@@ -113,28 +126,31 @@ class StudioMetadataController(
     private fun Route.installModelEndpoints() {
         route("/model") {
             post("/page") {
-                val request = call.receive<JsonNode>()
-                call.respondMetadata { store.read { modelPage(request) } }
+                val request = call.receive<ModelPageCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(request)
+                call.respondMetadata { store.read { modelPage(node) } }
             }
             get("/detail") {
                 val id = call.queryId()
                 call.respondMetadata { store.read { modelDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateModel(command) } }
+                val command = call.receive<ModelCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateModel(node) } }
             }
             post("/add") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveModel(command) } }
+                val command = call.receive<ModelCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveModel(node) } }
             }
             put("/update") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveModel(command) } }
+                val command = call.receive<ModelCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveModel(node) } }
             }
             delete {
-                val request = call.receive<JsonNode>()
-                val ids = request.requiredIds()
+                val ids = call.receive<List<Long>>()
                 call.respondMetadata { store.write { deleteModels(ids) } }
             }
             get("/preview") {
@@ -158,28 +174,31 @@ class StudioMetadataController(
                 call.respondMetadata { store.read { dtoDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateDto(command) } }
+                val command = call.receive<DtoCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateDto(node) } }
             }
             post("/add") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveDto(command) } }
+                val command = call.receive<DtoCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveDto(node) } }
             }
             put("/update") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveDto(command) } }
+                val command = call.receive<DtoCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveDto(node) } }
             }
             delete {
-                val request = call.receive<JsonNode>()
-                val ids = request.requiredIds()
+                val ids = call.receive<List<Long>>()
                 call.respondMetadata { store.write { deleteDtos(ids) } }
             }
             get("/validation-rules") {
                 call.respondMetadata { dtoValidationRules() }
             }
             post("/reuse-analysis") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { previews.analyzeDtoReuse(command) }
+                val command = call.receive<DtoCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { previews.analyzeDtoReuse(node) }
             }
             get("/preview") {
                 val id = call.queryId()
@@ -192,39 +211,33 @@ class StudioMetadataController(
         }
     }
 
-    private fun Route.installContractEndpoints() {
-        route("/contract") {
+    private fun Route.installConventionFileEndpoints() {
+        route("/convention-file") {
             post("/list") {
-                call.respondMetadata { store.read { contractList() } }
+                call.respondMetadata { store.read { conventionFileList() } }
             }
             get("/detail") {
                 val id = call.queryId()
-                call.respondMetadata { store.read { contractDetail(id) } }
+                call.respondMetadata { store.read { conventionFileDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateContract(command) } }
+                val command = call.receive<ConventionFileCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateConventionFile(node) } }
             }
             post("/add") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveContract(command) } }
+                val command = call.receive<ConventionFileCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveConventionFile(node) } }
             }
             put("/update") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveContract(command) } }
+                val command = call.receive<ConventionFileCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveConventionFile(node) } }
             }
             delete {
-                val request = call.receive<JsonNode>()
-                val ids = request.requiredIds()
-                call.respondMetadata { store.write { deleteContracts(ids) } }
-            }
-            get("/preview") {
-                val id = call.queryId()
-                call.respondMetadata { previews.contract(id) }
-            }
-            get("/download") {
-                val id = call.queryId()
-                call.respondMetadataArchive("lowcode-contract-$id.zip") { previews.contract(id).files }
+                val ids = call.receive<List<Long>>()
+                call.respondMetadata { store.write { deleteConventionFiles(ids) } }
             }
         }
     }
@@ -232,24 +245,26 @@ class StudioMetadataController(
     private fun Route.installConstantEndpoints() {
         route("/constant") {
             post("/list") {
-                val request = call.receive<JsonNode>()
-                call.respondMetadata { store.read { constantList(request) } }
+                val request = call.receive<ConstantListCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(request)
+                call.respondMetadata { store.read { constantList(node) } }
             }
             get("/detail") {
                 val id = call.queryId()
                 call.respondMetadata { store.read { constantDetail(id) } }
             }
             post("/validate") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.read { validateConstant(command) } }
+                val command = call.receive<ConstantCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.read { validateConstant(node) } }
             }
             post("/save") {
-                val command = call.receive<JsonNode>()
-                call.respondMetadata { store.write { saveConstant(command) } }
+                val command = call.receive<ConstantCommand>()
+                val node = store.mapper.valueToTree<JsonNode>(command)
+                call.respondMetadata { store.write { saveConstant(node) } }
             }
             delete {
-                val request = call.receive<JsonNode>()
-                val ids = request.requiredIds()
+                val ids = call.receive<List<Long>>()
                 call.respondMetadata { store.write { deleteConstants(ids) } }
             }
         }

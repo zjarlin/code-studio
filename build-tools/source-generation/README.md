@@ -19,7 +19,7 @@ Profile 的稳定语义键为 `runtime.persistence-model-package`、`runtime.low
 }
 ```
 
-`codeStudioSync` 是唯一写入宿主 Kotlin 源码树的入口，只用于首次创建可编辑 Controller 和 ServiceImpl：
+`codeStudioSync` 是唯一写入宿主 Kotlin 源码树的入口，只用于首次创建可编辑 Controller、ServiceImpl 和约定文件：
 
 ```shell
 ./kotlin task ':module:codeStudioSync'

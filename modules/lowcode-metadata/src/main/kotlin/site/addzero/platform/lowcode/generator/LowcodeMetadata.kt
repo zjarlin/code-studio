@@ -798,6 +798,8 @@ enum class LowcodeGeneratedFileKind {
     CONTROLLER_SCAFFOLD,
     /** 首次生成后允许承载业务逻辑，后续生成只校验契约签名，不覆盖源码。 */
     SERVICE_IMPLEMENTATION_SCAFFOLD,
+    /** 首次生成后完全由 IDE 中的业务源码维护。 */
+    CONVENTION_FILE_SCAFFOLD,
     CONTRACT_CONTROLLER,
     DOCUMENTATION,
     RUNTIME_METADATA,
