@@ -33,8 +33,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,14 +50,14 @@ import org.koin.compose.koinInject
 import site.addzero.studio.contract.StudioWorkspace
 import site.addzero.studio.workbench.agent.AgentWorkspace
 import site.addzero.studio.workbench.api.ApiWorkspace
+import site.addzero.studio.workbench.components.theme.WorkbenchTheme
 import site.addzero.studio.workbench.library.LibraryWorkspace
 
 @Composable
 fun WorkbenchApp() {
     val state = koinInject<WorkbenchState>()
     LaunchedEffect(Unit) { state.initialize() }
-    val colors = if (state.darkTheme) darkColorScheme() else lightColorScheme()
-    MaterialTheme(colorScheme = colors) {
+    WorkbenchTheme(darkTheme = state.darkTheme) {
         Surface(modifier = Modifier.fillMaxSize()) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val compact = maxWidth < 760.dp
