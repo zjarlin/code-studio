@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { LowcodeDtoResourceSummary, LowcodeModelSummary, LsiLibraryDefinition } from '@/types'
+import type { ConventionFileSummary, LowcodeDtoResourceSummary, LowcodeModelSummary, LsiLibraryDefinition } from '@/types'
 
 import {
   createLibraryResourceIndex,
@@ -112,6 +112,18 @@ const thingDtos: LowcodeDtoResourceSummary[] = [
   version: 1,
 }))
 
+const conventionFile: ConventionFileSummary = {
+  id: 61,
+  featureId: 51,
+  fileCode: 'catalogSync',
+  name: '目录同步任务',
+  className: 'CatalogSyncJob',
+  kind: 'SCHEDULED_JOB',
+  status: 1,
+  packageName: 'com.example.application.catalog.thing.job',
+  contributorId: 'catalog',
+}
+
 describe('library resource index', () => {
   it('uses feature ids and indexes existing REST paths', () => {
     const entries = createLibraryResourceIndex([library], [model], [], [])
@@ -138,5 +150,18 @@ describe('library resource index', () => {
       expect.objectContaining({ libraryId: 5, tab: 'dtos', resourceKey: 'dto:catalogSchemaPropertySpec' }),
       expect.objectContaining({ libraryId: 5, tab: 'dtos', resourceKey: 'dto:catalogSchemaEventSpec' }),
     ]))
+  })
+
+  it('indexes Service and scheduled job convention files without operations', () => {
+    const entries = createLibraryResourceIndex([catalogLibrary], [], [], [conventionFile])
+
+    expect(libraryResourceCounts(entries).services).toBe(1)
+    expect(searchLibraryResources(entries, 'CatalogSyncJob')).toEqual([
+      expect.objectContaining({
+        tab: 'services',
+        resourceKey: 'convention-file:61',
+        detail: '定时任务 · CatalogSyncJob',
+      }),
+    ])
   })
 })

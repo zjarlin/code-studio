@@ -16,19 +16,17 @@ import { Switch } from '@/components/generated/shadcn/switch'
 import { Table, TableBody, TableCell, TableEmpty, TableHeader, TableRow } from '@/components/generated/shadcn/table'
 import { LowcodeApi } from '@/lowcode-api'
 import { databaseIdentifierToPascalCase, toResourceCodeFromClassName } from '@/lib/identifier'
-import type { JsonObject, LowcodeApiContractSummary, LowcodeDtoResourceDraft, LowcodeDtoResourceSummary, LowcodeModelDraft, LowcodeModelSummary, LsiLibraryFeature, LsiLibrarySpec } from '@/types'
+import type { JsonObject, LowcodeDtoResourceDraft, LowcodeDtoResourceSummary, LowcodeModelDraft, LowcodeModelSummary, LsiLibraryFeature, LsiLibrarySpec } from '@/types'
 
-import { normalizeContractDraft } from '../contracts/contract-draft'
 import { applyDtoClassName, applyDtoKind, normalizeDtoResource } from '../dto-studio/dto-draft'
 import { applyModelTableName, normalizeModelDraft } from '../model-studio/model-draft'
 import { featurePackageName } from './library-draft'
 import { resourceBelongsToFeatureScope } from './library-resource-index'
 
-const ContractStudio = defineAsyncComponent(() => import('../contracts/ContractStudio.vue'))
 const DtoStudio = defineAsyncComponent(() => import('../dto-studio/DtoStudio.vue'))
 const ModelStudio = defineAsyncComponent(() => import('../model-studio/ModelStudio.vue'))
 
-export type LibraryResourceTab = 'models' | 'dtos' | 'services'
+export type LibraryResourceTab = 'models' | 'dtos'
 
 interface ResourceRow extends Record<string, unknown> {
   rowKey: string
@@ -63,7 +61,6 @@ const emit = defineEmits<{ changed: [] }>()
 const api = new LowcodeApi()
 const models = ref<LowcodeModelSummary[]>([])
 const dtos = shallowRef<LowcodeDtoResourceSummary[]>([])
-const services = ref<LowcodeApiContractSummary[]>([])
 const rows = ref<ResourceRow[]>([])
 const draftModels = shallowRef(new Map<string, LowcodeModelDraft>())
 const dirty = ref(new Set<string>())
@@ -79,7 +76,7 @@ const loading = ref(false)
 const modelPageSize = 10
 let localSequence = 0
 
-const resourceLabel = computed(() => ({ models: '模型', dtos: 'DTO', services: 'Service' })[props.resource])
+const resourceLabel = computed(() => ({ models: '模型', dtos: 'DTO' })[props.resource])
 const contributorId = computed(() => props.librarySpec.contributorId)
 const selectedFeature = computed(() => props.features.find((feature) => String(feature.id) === String(props.selectedFeatureId)))
 const creationContext = computed(() => selectedFeature.value ? {
@@ -211,13 +208,11 @@ async function refresh(): Promise<void> {
   loading.value = true
   notice.value = ''
   try {
-    const modelsRequest = props.resource === 'services' ? Promise.resolve([]) : loadModels()
+    const modelsRequest = loadModels()
     const dtosRequest = props.resource === 'dtos' ? api.dtos() : Promise.resolve([])
-    const servicesRequest = props.resource === 'services' ? api.contracts() : Promise.resolve([])
-    const [allModels, allDtos, allServices] = await Promise.all([modelsRequest, dtosRequest, servicesRequest])
+    const [allModels, allDtos] = await Promise.all([modelsRequest, dtosRequest])
     models.value = allModels.filter((item) => owns(item.featureId))
     dtos.value = allDtos.filter((item) => owns(item.featureId))
-    services.value = allServices.filter((item) => owns(item.featureId))
     rows.value = currentRows()
     draftModels.value = new Map()
     dirty.value = new Set()
@@ -266,7 +261,7 @@ function currentRows(): ResourceRow[] {
     detailLabel: `${item.fields?.length ?? 0} 属性 · ${item.relations?.length ?? 0} 关联`,
     fieldSummary: '',
   }))
-  if (props.resource === 'dtos') return dtos.value.map((item) => ({
+  return dtos.value.map((item) => ({
     rowKey: `dto:${item.id}`, id: item.id, featureId: String(item.featureId),
     code: item.dtoCode, name: item.name, description: item.description ?? null,
     packageName: item.packageName, contributorId: item.contributorId ?? contributorId.value,
@@ -274,14 +269,6 @@ function currentRows(): ResourceRow[] {
     sourceModelCode: item.sourceModel?.modelCode ?? null, selectionMode: item.selectionMode,
     enabled: item.status === 1, version: item.version, detailLabel: `${item.fields.length} 字段`,
     fieldSummary: item.fields.map((field) => field.name).join(', '), modelType: '',
-  }))
-  return services.value.map((item) => ({
-    rowKey: `service:${item.id}`, id: item.id, featureId: String(item.featureId),
-    code: item.contractCode, name: item.name, description: item.description ?? null,
-    packageName: item.packageName, contributorId: item.contributorId ?? contributorId.value,
-    className: item.className, tableName: '', kind: '', visibility: '', sourceModelCode: null,
-    selectionMode: '', enabled: item.status === 1, version: item.version,
-    detailLabel: `${item.operations?.length ?? 0} 操作`, fieldSummary: '', modelType: '',
   }))
 }
 
@@ -367,12 +354,6 @@ async function save(row: ResourceRow): Promise<void> {
       const validation = await api.validateDto(command)
       if (!validation.valid) throw new Error(validation.errors.join('；'))
       await api.saveDto(command)
-    } else if (row.id != null) {
-      const command = normalizeContractDraft(await api.contractDetail(row.id))
-      Object.assign(command, { featureId: row.featureId, name: row.name, description: row.description?.trim() || null, status: row.enabled ? 1 : 0 })
-      const validation = await api.validateContract(command)
-      if (!validation.valid) throw new Error(validation.errors.join('；'))
-      await api.saveContract(command)
     }
     notice.value = `${row.name || row.code}已保存`
     await refresh()
@@ -636,8 +617,7 @@ function dtoColumnClass(key: string): string {
       <DialogScrollContent class="library-resource-dialog">
         <DialogHeader><DialogTitle>配置{{ resourceLabel }}</DialogTitle><DialogDescription>{{ resource === 'models' ? '配置字段、查询、关联、继承、路由和生成结果。' : '配置对象和集合元数据。' }}</DialogDescription></DialogHeader>
         <ModelStudio v-if="resource === 'models'" :key="`model:${activeCode}`" :creation-context="editorCreationContext" embedded :initial-model-code="activeCode" :show-identity-configuration="false" @deleted="saved" @saved="saved" />
-        <DtoStudio v-else-if="resource === 'dtos'" :key="`dto:${activeCode}:${editorRequest}`" :create-request="editorRequest" :creation-context="editorCreationContext" :initial-dto-code="activeCode" @deleted="saved" @saved="saved" />
-        <ContractStudio v-else :key="`service:${activeCode}:${editorRequest}`" :create-request="editorRequest" :creation-context="editorCreationContext" embedded :initial-contract-code="activeCode" @deleted="saved" @saved="saved" />
+        <DtoStudio v-else :key="`dto:${activeCode}:${editorRequest}`" :create-request="editorRequest" :creation-context="editorCreationContext" :initial-dto-code="activeCode" @deleted="saved" @saved="saved" />
       </DialogScrollContent>
     </Dialog>
   </section>

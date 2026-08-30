@@ -149,6 +149,25 @@ export interface LowcodeApiContractSummary {
   operations?: LowcodeApiOperationSummary[]
 }
 
+export type ConventionFileKind = 'SERVICE' | 'SCHEDULED_JOB'
+
+export interface ConventionFileCommand {
+  id?: number | string
+  featureId: number | string
+  fileCode: string
+  name: string
+  className: string
+  kind: ConventionFileKind
+  status: number
+  description?: string | null
+}
+
+export interface ConventionFileSummary extends ConventionFileCommand {
+  id: number | string
+  packageName: string
+  contributorId: string
+}
+
 export interface AgentDefinitionSummary {
   id: number | string
   agentCode: string

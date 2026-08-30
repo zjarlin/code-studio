@@ -1,5 +1,5 @@
 import type {
-  LowcodeApiContractSummary,
+  ConventionFileSummary,
   LowcodeDtoResourceSummary,
   LowcodeModelDraft,
   LowcodeModelSummary,
@@ -33,7 +33,7 @@ export function createLibraryResourceIndex(
   libraries: LsiLibraryDefinition[],
   models: LowcodeModelSummary[],
   dtos: LowcodeDtoResourceSummary[],
-  services: LowcodeApiContractSummary[],
+  services: ConventionFileSummary[],
   modelDetails: LowcodeModelDraft[] = [],
 ): LibraryIndexedResource[] {
   const entries: LibraryIndexedResource[] = []
@@ -116,16 +116,20 @@ function appendDto(
     [dto.dtoCode, dto.name, dto.description, dto.packageName, dto.className, ...dtoReferenceSearchValues(dto, models)])
 }
 
-function appendService(entries: LibraryIndexedResource[], library: LsiLibraryDefinition, service: LowcodeApiContractSummary): void {
+function appendService(entries: LibraryIndexedResource[], library: LsiLibraryDefinition, service: ConventionFileSummary): void {
   const feature = resourceFeature(library, service.featureId)
   if (!feature) return
-  append(entries, library, feature, 'services', `service:${service.contractCode}`, service.name, service.path,
-    [service.contractCode, service.name, service.description, service.packageName, service.className, service.path])
-  service.operations?.forEach((operation) => append(
-    entries, library, feature, 'services', `service:${service.contractCode}`, operation.name,
-    `${operation.method} ${operation.path}`,
-    [operation.operationCode, operation.name, operation.description, operation.path, operation.method, service.contractCode],
-  ))
+  const kindLabel = service.kind === 'SERVICE' ? 'Service' : '定时任务'
+  append(
+    entries,
+    library,
+    feature,
+    'services',
+    `convention-file:${service.id}`,
+    service.name,
+    `${kindLabel} · ${service.className}`,
+    [service.fileCode, service.name, service.description, service.packageName, service.className, kindLabel],
+  )
 }
 
 function appendQueries(entries: LibraryIndexedResource[], library: LsiLibraryDefinition, model: LowcodeModelDraft): void {

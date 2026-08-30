@@ -12,6 +12,8 @@ import type {
   MetadataTablePatchResult,
   AgentUiMessage,
   CommonResult,
+  ConventionFileCommand,
+  ConventionFileSummary,
   JsonObject,
   LowcodeApiContractDraft,
   LowcodeApiContractSummary,
@@ -110,6 +112,36 @@ export class LowcodeApi {
     return this.request('/studio/api/lowcode/contract/list', {
       method: 'POST',
       body: '{}',
+    })
+  }
+
+  async conventionFiles(): Promise<ConventionFileSummary[]> {
+    return this.request('/studio/api/lowcode/convention-file/list', {
+      method: 'POST',
+      body: '{}',
+    })
+  }
+
+  async validateConventionFile(command: ConventionFileCommand): Promise<LowcodeValidationResult> {
+    return this.request('/studio/api/lowcode/convention-file/validate', {
+      method: 'POST',
+      body: JSON.stringify(command),
+    })
+  }
+
+  async saveConventionFile(command: ConventionFileCommand): Promise<number | string | boolean> {
+    return this.request(command.id
+      ? '/studio/api/lowcode/convention-file/update'
+      : '/studio/api/lowcode/convention-file/add', {
+      method: command.id ? 'PUT' : 'POST',
+      body: JSON.stringify(command),
+    })
+  }
+
+  async deleteConventionFile(id: number | string): Promise<boolean> {
+    return this.request('/studio/api/lowcode/convention-file', {
+      method: 'DELETE',
+      body: JSON.stringify([id]),
     })
   }
 

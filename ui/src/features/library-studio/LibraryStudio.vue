@@ -25,6 +25,7 @@ import type {
 } from '@/types'
 
 import ConstantWorkspace from '../constants/ConstantWorkspace.vue'
+import ConventionFileWorkspace from '../convention-files/ConventionFileWorkspace.vue'
 import LibraryFeatureTable from './LibraryFeatureTable.vue'
 import LibraryPreview from './LibraryPreview.vue'
 import LibraryQueryTable from './LibraryQueryTable.vue'
@@ -73,7 +74,7 @@ const resourceTabs: ResourceTabDefinition[] = [
   { value: 'models', label: '模型', icon: Database },
   { value: 'queries', label: '查询', icon: GitBranch },
   { value: 'dtos', label: 'DTO', icon: Braces },
-  { value: 'services', label: 'Service', icon: FileCode2 },
+  { value: 'services', label: '约定文件', icon: FileCode2 },
   { value: 'constants', label: '常量', icon: Code },
 ]
 
@@ -474,7 +475,7 @@ async function run(action: () => Promise<unknown>): Promise<void> {
         <TabsContent v-if="activeTab === 'models'" value="models" class="library-tab-content"><LibraryResourceWorkspace resource="models" :create-request="createRequests.models" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'queries'" value="queries" class="library-tab-content"><LibraryQueryTable :create-request="createRequests.queries" :features="features" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'dtos'" value="dtos" class="library-tab-content"><LibraryResourceWorkspace resource="dtos" :create-request="createRequests.dtos" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
-        <TabsContent v-if="activeTab === 'services'" value="services" class="library-tab-content"><LibraryResourceWorkspace resource="services" :create-request="createRequests.services" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
+        <TabsContent v-if="activeTab === 'services'" value="services" class="library-tab-content"><ConventionFileWorkspace :create-request="createRequests.services" :features="features" :library-spec="draft.spec" :selected-feature-id="selectedFeatureId" @changed="refreshResources" /></TabsContent>
         <TabsContent v-if="activeTab === 'constants'" value="constants" class="library-tab-content">
           <ConstantWorkspace v-if="constantFeatures.length" :create-request="createRequests.constants" :features="constantFeatures" :selected-feature-code="selectedFeature?.featureCode" @count-change="handleConstantCount" />
           <div v-else class="feature-workbench-empty"><Code /><strong>请先创建功能目录</strong></div>

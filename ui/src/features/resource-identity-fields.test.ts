@@ -1,12 +1,10 @@
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import { describe, expect, it, vi } from 'vitest'
 
-import ContractStudio from './contracts/ContractStudio.vue'
 import DtoStudio from './dto-studio/DtoStudio.vue'
 
 vi.mock('@/lowcode-api', () => ({
   LowcodeApi: class {
-    contracts = vi.fn().mockResolvedValue([])
     dtos = vi.fn().mockResolvedValue([])
     models = vi.fn().mockResolvedValue([])
   },
@@ -28,17 +26,5 @@ describe('resource identity fields', () => {
     await fieldInput(wrapper, '类名')?.setValue('MaintenanceStatisticsOutput')
 
     expect(wrapper.get('.workspace-title span').text()).toBe('MaintenanceStatisticsOutput')
-  })
-
-  it('hides the Service code and derives it from the Kotlin interface', async () => {
-    const wrapper = shallowMount(ContractStudio)
-    await flushPromises()
-
-    expect(wrapper.text()).not.toContain('唯一标识')
-
-    await fieldInput(wrapper, '领域 Service 接口')?.setValue('OrderSummaryService')
-
-    expect(wrapper.get('.workspace-title span').text()).toBe('OrderSummaryService')
-    expect(fieldInput(wrapper, '基础路径')?.element.value).toBe('/order-summary')
   })
 })

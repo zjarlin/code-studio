@@ -2,7 +2,7 @@ import { computed, ref, shallowRef } from 'vue'
 
 import { LowcodeApi } from '@/lowcode-api'
 import type {
-  LowcodeApiContractSummary,
+  ConventionFileSummary,
   LowcodeDtoResourceSummary,
   LowcodeModelDraft,
   LowcodeModelSummary,
@@ -31,7 +31,7 @@ export function useLibraryResourceCatalog(api = new LowcodeApi()) {
   const libraries = ref<LsiLibraryDefinition[]>([])
   const models = ref<LowcodeModelSummary[]>([])
   const dtos = shallowRef<LowcodeDtoResourceSummary[]>([])
-  const services = ref<LowcodeApiContractSummary[]>([])
+  const conventionFiles = ref<ConventionFileSummary[]>([])
   const modelDetails = shallowRef(new Map<string, LowcodeModelDraft>())
   const constantCounts = shallowRef(new Map<string, number>())
 
@@ -39,7 +39,7 @@ export function useLibraryResourceCatalog(api = new LowcodeApi()) {
     libraries.value,
     models.value,
     dtos.value,
-    services.value,
+    conventionFiles.value,
     [...modelDetails.value.values()],
   ))
 
@@ -48,7 +48,7 @@ export function useLibraryResourceCatalog(api = new LowcodeApi()) {
       api.libraries(),
       api.models(),
       api.dtos(),
-      api.contracts(),
+      api.conventionFiles(),
     ])
     const features = await Promise.all(libraryValues.map((library) => api.libraryFeatures(library.id)))
     libraries.value = libraryValues
@@ -56,7 +56,7 @@ export function useLibraryResourceCatalog(api = new LowcodeApi()) {
       .sort((left, right) => left.code.localeCompare(right.code))
     models.value = modelValues
     dtos.value = dtoValues
-    services.value = serviceValues
+    conventionFiles.value = serviceValues
   }
 
   async function loadLibraryContext(

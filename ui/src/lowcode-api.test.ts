@@ -123,7 +123,7 @@ describe('low-code API client', () => {
     expect(payload.routeConfig).toEqual({ path: '/inspection/task' })
   })
 
-  it('removes computed locations from DTO and Service writes', async () => {
+  it('removes computed locations from DTO writes', async () => {
     const fetchMock = vi.fn().mockImplementation(async () =>
       new Response(JSON.stringify({ code: 0, msg: '', data: 7 })))
     vi.stubGlobal('fetch', fetchMock)
@@ -134,15 +134,7 @@ describe('low-code API client', () => {
       packageName: 'example.inspection.task',
       contributorId: 'example.catalog',
     } as Parameters<LowcodeApi['saveDto']>[0]
-    const service = {
-      featureId: 18,
-      contractCode: 'inspectionTask',
-      packageName: 'example.inspection.task',
-      contributorId: 'example.catalog',
-    } as Parameters<LowcodeApi['saveContract']>[0]
-
     await api.saveDto(dto)
-    await api.saveContract(service)
 
     for (const call of fetchMock.mock.calls) {
       const payload = JSON.parse(String(call[1]?.body))
@@ -150,6 +142,48 @@ describe('low-code API client', () => {
       expect(payload).not.toHaveProperty('packageName')
       expect(payload).not.toHaveProperty('contributorId')
     }
+  })
+
+  it('uses convention file routes without method input or output metadata', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        code: 0,
+        msg: '',
+        data: [{
+          id: 8,
+          featureId: 18,
+          fileCode: 'inspection',
+          name: '巡检服务',
+          className: 'InspectionService',
+          kind: 'SERVICE',
+          status: 1,
+          packageName: 'example.inspection.service',
+          contributorId: 'example.catalog',
+        }],
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 0, msg: '', data: true })))
+    vi.stubGlobal('fetch', fetchMock)
+    const api = new LowcodeApi()
+
+    const files = await api.conventionFiles()
+    await api.saveConventionFile({
+      id: 8,
+      featureId: 18,
+      fileCode: 'inspection',
+      name: '巡检服务',
+      className: 'InspectionService',
+      kind: 'SERVICE',
+      status: 1,
+    })
+
+    expect(files).toHaveLength(1)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/studio/api/lowcode/convention-file/list', expect.objectContaining({
+      method: 'POST',
+    }))
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/studio/api/lowcode/convention-file/update', expect.objectContaining({
+      method: 'PUT',
+      body: expect.not.stringContaining('operations'),
+    }))
   })
 
   it('loads upstream agent models and persists a conversation selection', async () => {
