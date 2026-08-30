@@ -54,7 +54,7 @@ data class TransientPropertyCommand(
     val propertyCode: String,
     val label: String,
     val kotlinType: String,
-    val kind: TransientKind,
+    val kind: TransientKind = TransientKind.DRAFT,
     val resolverValueType: String? = null,
     val nullable: Boolean = false,
     val description: String? = null,

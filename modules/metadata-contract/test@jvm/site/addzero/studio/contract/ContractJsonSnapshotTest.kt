@@ -31,6 +31,15 @@ class ContractJsonSnapshotTest {
     }
 
     @Test
+    fun `旧瞬态属性缺省类型时按草稿处理`() {
+        val property = json.decodeFromString<TransientPropertyCommand>(
+            """{"propertyCode":"displayName","label":"显示名称","kotlinType":"kotlin.String"}""",
+        )
+
+        assertEquals(TransientKind.DRAFT, property.kind)
+    }
+
+    @Test
     fun `公共包络与分页字段保持稳定`() {
         assertEquals(
             """{"code":403,"msg":"Forbidden","data":null}""",
