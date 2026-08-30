@@ -100,7 +100,7 @@ vi.mock('@/lowcode-api', () => ({
     libraryFeatures = vi.fn().mockResolvedValue(library.features)
     models = vi.fn().mockResolvedValue([model])
     dtos = vi.fn().mockResolvedValue([])
-    contracts = vi.fn().mockResolvedValue([])
+    conventionFiles = vi.fn().mockResolvedValue([])
     detail = vi.fn().mockResolvedValue(modelDetail)
   },
 }))
