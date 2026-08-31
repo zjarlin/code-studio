@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type CSSProperties } from 'react'
 
 import { DataTable, type DataColumn } from '@/components/data-table'
 import { authenticatedFetch } from '@/lib/access-context'
+import { useAccessContextGeneration } from '@/lib/access-context-sync'
 
 import type { ReportBlockSpec, ReportDatasetResults, ReportDocument, ReportMetricBlock, ReportTableBlock } from './models'
 import { resolveJsonPointer, rowsFromResult } from './runner'
@@ -104,8 +105,9 @@ function ReportTable({ block, result }: Readonly<{ block: ReportTableBlock; resu
 }
 
 function AuthenticatedReportImage({ alt, source }: Readonly<{ alt: string; source: string }>) {
-  const [url, setUrl] = useState<string>()
-  const [error, setError] = useState<string>()
+  const generation = useAccessContextGeneration()
+  const [loaded, setLoaded] = useState<{ generation: number; source: string; url: string }>()
+  const [failure, setFailure] = useState<{ generation: number; source: string; message: string }>()
   useEffect(() => {
     const controller = new AbortController()
     let objectUrl: string | undefined
@@ -117,9 +119,11 @@ function AuthenticatedReportImage({ alt, source }: Readonly<{ alt: string; sourc
         const response = await authenticatedFetch(target, { signal: controller.signal })
         if (!response.ok) throw new Error(`图片请求失败：HTTP ${response.status}`)
         objectUrl = URL.createObjectURL(await response.blob())
-        setUrl(objectUrl)
+        setLoaded({ generation, source, url: objectUrl })
       } catch (cause) {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : '图片请求失败')
+        if (!controller.signal.aborted) {
+          setFailure({ generation, source, message: cause instanceof Error ? cause.message : '图片请求失败' })
+        }
       }
     }
     void load()
@@ -127,7 +131,9 @@ function AuthenticatedReportImage({ alt, source }: Readonly<{ alt: string; sourc
       controller.abort()
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [source])
+  }, [generation, source])
+  const error = failure?.generation === generation && failure.source === source ? failure.message : undefined
+  const url = loaded?.generation === generation && loaded.source === source ? loaded.url : undefined
   if (error) return <div className="report-block-empty" role="alert">{error}</div>
   return url
     ? <img className="report-image" alt={alt} src={url} />

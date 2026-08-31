@@ -153,7 +153,7 @@ async function fetchOpenApiDocument(): Promise<OpenApiDocument> {
     : new URL('/', window.location.origin)
   if (base.origin !== window.location.origin) throw new Error('报表数据源必须与管理后台同源')
   const path = config.openApiPath.trim() || '/v3/api-docs'
-  const response = await authenticatedFetch(new URL(path, base), { headers: { Accept: 'application/json' } })
+  const response = await authenticatedFetch(new URL(path.replace(/^\/+/, ''), base), { headers: { Accept: 'application/json' } })
   if (!response.ok) throw new Error(`读取 OpenAPI 失败：HTTP ${response.status}`)
   const document = await parseJson(response, 'OpenAPI 文档') as OpenApiDocument
   if (!document.openapi || !isObject(document.paths)) throw new Error('OpenAPI 文档格式无效')

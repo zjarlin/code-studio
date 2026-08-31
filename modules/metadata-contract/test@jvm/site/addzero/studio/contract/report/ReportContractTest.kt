@@ -46,9 +46,16 @@ class ReportContractTest {
             kind = ReportBindingKind.LITERAL,
             literal = JsonPrimitive(200),
         )
+        val nullLiteral = ReportParameterBinding(
+            kind = ReportBindingKind.LITERAL,
+            literal = null,
+        )
 
         assertEquals("startDate", parameter.parameterKey)
         assertEquals("200", literal.literal.toString())
+        val encodedNull = json.encodeToString(nullLiteral)
+        assertEquals(nullLiteral, json.decodeFromString<ReportParameterBinding>(encodedNull))
+        assertTrue("\"literal\":null" in encodedNull)
         assertFailsWith<IllegalArgumentException> {
             ReportParameterBinding(ReportBindingKind.PARAMETER, parameterKey = "startDate", literal = JsonPrimitive(1))
         }

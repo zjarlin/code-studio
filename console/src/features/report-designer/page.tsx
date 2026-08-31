@@ -12,7 +12,7 @@ import {
   deleteReport,
   fetchReport,
   fetchReports,
-  publishReport,
+  saveAndPublishReport,
   unpublishReport,
   updateReport,
 } from '@/features/reports/api'
@@ -95,18 +95,23 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
     onError: (error) => setIssue(error.message),
   })
   const publish = useMutation({
-    mutationFn: async () => {
-      const errors = validateReportForPublish(history.present)
+    mutationFn: async (input: { document: ReportDocument; reportKey: string; revision: number; saveRequired: boolean }) => {
+      const keyError = validateReportKey(input.reportKey)
+      if (keyError) throw new Error(keyError)
+      const errors = validateReportForPublish(input.document)
       if (errors.length) throw new Error(errors.join('；'))
-      const saved = dirty || revision === 0
-        ? await saveDraft.mutateAsync({ document: history.present, reportKey: reportKey.trim(), revision })
-        : { reportKey, revision, document: history.present, publishedRevision }
-      return publishReport(saved.reportKey, saved.revision)
+      return saveAndPublishReport(input)
     },
-    onSuccess: (publication) => {
-      setPublishedRevision(publication.publishedRevision)
+    onSuccess: (saved, input) => {
+      baseline.current = input.document
+      setRevision(saved.revision)
+      setPublishedRevision(saved.publishedRevision)
+      setReportKey(saved.reportKey)
       setIssue(undefined)
+      queryClient.setQueryData(['report', saved.reportKey], saved)
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['published-reports'] })
+      navigate({ search: { reportKey: saved.reportKey, mode: 'edit' }, replace: true, ignoreBlocker: true })
     },
     onError: (error) => setIssue(error.message),
   })
@@ -115,6 +120,10 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
     onSuccess: () => {
       setPublishedRevision(null)
       setIssue(undefined)
+      queryClient.setQueryData<ReportView>(['report', reportKey], (current) =>
+        current ? { ...current, publishedRevision: null } : current,
+      )
+      queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['published-reports'] })
     },
     onError: (error) => setIssue(error.message),
@@ -132,6 +141,7 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
   const switchReport = (nextReportKey: string) => {
     navigate({ search: { reportKey: nextReportKey || 'new', mode: 'edit' } })
   }
+  const canEdit = editable && !saveDraft.isPending && !publish.isPending
   if (mode === 'preview') {
     return <DesignerPreview document={history.present} onBack={() => navigate({ search: { reportKey: reportKey || 'new', mode: 'edit' }, ignoreBlocker: true })} />
   }
@@ -149,11 +159,11 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
           <small>{dirty ? '未保存' : publishedRevision === revision ? '已发布' : publishedRevision ? '有未发布修改' : '草稿'}</small>
         </div>
         <div className="designer-command-actions">
-          <CatalogIconAction disabled={!history.past.length || !editable} elementKey="studio.report-designer.undo" onClick={() => dispatch({ type: 'undo' })} />
-          <CatalogIconAction disabled={!history.future.length || !editable} elementKey="studio.report-designer.redo" onClick={() => dispatch({ type: 'redo' })} />
+          <CatalogIconAction disabled={!history.past.length || !canEdit} elementKey="studio.report-designer.undo" onClick={() => dispatch({ type: 'undo' })} />
+          <CatalogIconAction disabled={!history.future.length || !canEdit} elementKey="studio.report-designer.redo" onClick={() => dispatch({ type: 'redo' })} />
           <CatalogAction elementKey="studio.report-designer.preview" onClick={() => navigate({ search: { reportKey: reportKey || 'new', mode: 'preview' }, ignoreBlocker: true })} />
           <CatalogAction
-            disabled={saveDraft.isPending || !editable}
+            disabled={!canEdit}
             elementKey={reportKey ? 'studio.report-designer.save' : 'studio.report-designer.create'}
             onClick={() => saveDraft.mutate({ document: history.present, reportKey: reportKey.trim(), revision })}
             variant="primary"
@@ -161,7 +171,12 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
           <CatalogAction
             disabled={publish.isPending || ((dirty || revision === 0) && !editable)}
             elementKey="studio.report-designer.publish"
-            onClick={() => publish.mutate()}
+            onClick={() => publish.mutate({
+              document: history.present,
+              reportKey: reportKey.trim(),
+              revision,
+              saveRequired: dirty || revision === 0,
+            })}
           />
           {publishedRevision ? <CatalogAction disabled={unpublish.isPending} elementKey="studio.report-designer.unpublish" onClick={() => unpublish.mutate()} variant="ghost" /> : null}
           {revision > 0 ? <CatalogIconAction disabled={remove.isPending} elementKey="studio.report-designer.delete" onClick={() => window.confirm('确定删除当前报表吗？') && remove.mutate()} /> : null}
@@ -169,7 +184,7 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
       </header>
       {issue ? <div className="designer-issue" role="alert">{issue}</div> : null}
       <QueryState error={null} pending={false}>
-        <DesignerWorkbench dispatch={dispatch} document={history.present} editable={editable} persisted={revision > 0} reportKey={reportKey} setReportKey={setReportKey} />
+        <DesignerWorkbench dispatch={dispatch} document={history.present} editable={canEdit} persisted={revision > 0} reportKey={reportKey} setReportKey={setReportKey} />
       </QueryState>
     </div>
   )

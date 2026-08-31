@@ -46,6 +46,30 @@ export function publishReport(reportKey: string, expectedRevision: number): Prom
   })
 }
 
+export async function saveAndPublishReport(input: Readonly<{
+  reportKey: string
+  revision: number
+  document: ReportDocument
+  saveRequired: boolean
+}>): Promise<ReportView> {
+  const saved = input.saveRequired
+    ? input.revision > 0
+      ? await updateReport(input.reportKey, input.revision, input.document)
+      : await createReport(input.reportKey, input.document)
+    : {
+        reportKey: input.reportKey,
+        revision: input.revision,
+        document: input.document,
+        publishedRevision: null,
+      }
+  const publication = await publishReport(saved.reportKey, saved.revision)
+  return {
+    ...saved,
+    document: publication.document,
+    publishedRevision: publication.publishedRevision,
+  }
+}
+
 export function unpublishReport(reportKey: string): Promise<boolean> {
   return requestData(`${reportPath(REPORTS_ENDPOINT, reportKey)}/publication`, { method: 'DELETE' })
 }

@@ -112,7 +112,7 @@
     "description": "发布当前修订供有权限的用户查看",
     "icon": "send",
     "order": 40,
-    "permissions": ["POST:/console/api/reports/**/publication"],
+    "permissions": ["POST:/console/api/reports/*/publication"],
     "enabled": true
   },
   {
@@ -125,7 +125,7 @@
     "description": "撤回当前发布快照",
     "icon": "archive-restore",
     "order": 50,
-    "permissions": ["DELETE:/console/api/reports/**/publication"],
+    "permissions": ["DELETE:/console/api/reports/*/publication"],
     "enabled": true
   },
   {

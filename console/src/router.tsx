@@ -26,8 +26,7 @@ export function getRouter() {
     scrollRestoration: true,
     Wrap: ({ children }) => (
       <QueryClientProvider client={queryClient}>
-        <AccessContextQuerySync />
-        {children}
+        <AccessContextQuerySync>{children}</AccessContextQuerySync>
       </QueryClientProvider>
     ),
   })

@@ -38,7 +38,7 @@ data class ReportParameterBinding(
                 require(parameterKey == null) {
                     "LITERAL 绑定不能声明 parameterKey"
                 }
-                require(literal is JsonPrimitive) {
+                require(literal == null || literal is JsonPrimitive) {
                     "LITERAL 绑定只允许 JSON 字符串、数字、布尔值或 null"
                 }
             }

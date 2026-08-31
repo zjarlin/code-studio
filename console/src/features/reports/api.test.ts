@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { fetchPublishedReports, fetchReports } from './api'
+import { fetchPublishedReports, fetchReports, saveAndPublishReport } from './api'
+import { emptyReportDocument } from './models'
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -19,5 +20,34 @@ describe('report API paths', () => {
       '/console/api/reports?pageNo=1&pageSize=200',
       '/console/api/published-reports?pageNo=1&pageSize=200',
     ])
+  })
+
+  it('saves a new draft before publishing and returns the published cache state', async () => {
+    const document = emptyReportDocument('销售报表')
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({
+        code: 0,
+        msg: '',
+        data: { reportKey: 'sales', revision: 1, document, publishedRevision: null },
+      }))
+      .mockResolvedValueOnce(Response.json({
+        code: 0,
+        msg: '',
+        data: { reportKey: 'sales', publishedRevision: 1, document },
+      }))
+    vi.stubGlobal('fetch', fetcher)
+
+    const saved = await saveAndPublishReport({
+      reportKey: 'sales',
+      revision: 0,
+      document,
+      saveRequired: true,
+    })
+
+    expect(fetcher.mock.calls.map(([path, init]) => [String(path), init?.method])).toEqual([
+      ['/console/api/reports', 'POST'],
+      ['/console/api/reports/sales/publication', 'POST'],
+    ])
+    expect(saved.publishedRevision).toBe(1)
   })
 })
