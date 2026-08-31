@@ -150,6 +150,15 @@ class StudioController(
                 consoleApiControllers.forEach { controller ->
                     controller.install(this)
                 }
+                route("{path...}") {
+                    handle {
+                        val response = CommonResult<Nothing>(
+                            code = HttpStatusCode.NotFound.value,
+                            msg = "Not Found",
+                        )
+                        call.respond(HttpStatusCode.NotFound, response)
+                    }
+                }
             }
             get("{path...}") {
                 respondConsoleResource(call)
@@ -185,10 +194,6 @@ private suspend fun respondConsoleResource(call: ApplicationCall) {
     call.respondResource(resource)
 }
 
-private data class StudioErrorResponse(
-    val error: String,
-)
-
 private const val STUDIO_PATH = "/studio/"
 private const val CONSOLE_PATH = "/console"
 private const val CONSOLE_INDEX_RESOURCE = "console/index.html"
@@ -207,7 +212,10 @@ private val StudioAccess = createRouteScopedPlugin(
         val request = call.toAccessRequest()
         val allowed = policy.isAllowed(request)
         if (!allowed) {
-            val response = StudioErrorResponse("Forbidden")
+            val response = CommonResult<Nothing>(
+                code = HttpStatusCode.Forbidden.value,
+                msg = "Forbidden",
+            )
             call.respond(HttpStatusCode.Forbidden, response)
         }
     }

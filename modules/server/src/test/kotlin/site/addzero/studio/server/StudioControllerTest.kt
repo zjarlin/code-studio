@@ -120,6 +120,7 @@ class StudioControllerTest {
         val apiResponse = client.post("/studio/api/write")
         val consoleResponse = client.get("/console")
         val catalogResponse = client.get("/console/api/catalog")
+        val unknownConsoleApiResponse = client.get("/console/api/missing")
 
         assertEquals(HttpStatusCode.Forbidden, rootResponse.status)
         assertEquals(HttpStatusCode.Forbidden, configResponse.status)
@@ -127,6 +128,7 @@ class StudioControllerTest {
         assertEquals(HttpStatusCode.Forbidden, apiResponse.status)
         assertEquals(HttpStatusCode.OK, consoleResponse.status)
         assertEquals(HttpStatusCode.Forbidden, catalogResponse.status)
+        assertEquals(HttpStatusCode.Forbidden, unknownConsoleApiResponse.status)
         assertFalse(apiInvoked)
     }
 
@@ -239,6 +241,7 @@ class StudioControllerTest {
         assertTrue(rootResponse.body<String>().contains("/console/assets/"))
         assertEquals(rootResponse.body<String>(), deepLinkResponse.body<String>())
         assertEquals(HttpStatusCode.NotFound, missingApiResponse.status)
+        assertEquals(404, objectMapper.readTree(missingApiResponse.body<String>())["code"].asInt())
         assertEquals(HttpStatusCode.NotFound, missingAssetResponse.status)
     }
 

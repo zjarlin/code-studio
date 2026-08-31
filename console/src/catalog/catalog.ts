@@ -1,5 +1,7 @@
 import type { CatalogEntry, CatalogIndex, CatalogKind, CommonResult } from './types'
 
+import { authenticatedFetch } from '@/lib/access-context'
+
 const CATALOG_KINDS = new Set<CatalogKind>(['SCENE', 'ROUTE', 'ELEMENT'])
 const conventionModules = import.meta.glob<unknown>('../**/catalog.convention.json', {
   eager: true,
@@ -12,7 +14,7 @@ const defaultEntries = Object.entries(conventionModules)
 export const CATALOG_ENDPOINT = '/console/api/catalog'
 
 export async function loadCatalog(
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = authenticatedFetch,
   fallback: unknown = import.meta.env.DEV ? defaultEntries : undefined,
 ): Promise<CatalogIndex> {
   try {

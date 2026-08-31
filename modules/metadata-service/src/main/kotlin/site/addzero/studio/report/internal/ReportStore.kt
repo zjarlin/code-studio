@@ -8,19 +8,19 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import javax.sql.DataSource
 
-internal class ReportJdbcStore(
+internal class ReportStore(
     private val dataSource: DataSource,
-    private val schema: String,
+    private val schemaName: String,
 ) {
     init {
-        require(POSTGRESQL_SCHEMA.matches(schema)) {
-            "报表 schema 不是安全的 PostgreSQL 标识符: $schema"
+        require(POSTGRESQL_SCHEMA.matches(schemaName)) {
+            "报表 schema 不是安全的 PostgreSQL 标识符: $schemaName"
         }
     }
 
     suspend fun create(reportKey: String, draftDocument: String): ReportRecord = write { connection ->
         val sql = """
-            INSERT INTO $schema.report_definition (report_key, draft_document)
+            INSERT INTO $schemaName.report_definition (report_key, draft_document)
             VALUES (?, CAST(? AS JSONB))
             RETURNING report_key, revision, draft_document, published_revision, published_document
         """.trimIndent()
@@ -36,10 +36,10 @@ internal class ReportJdbcStore(
 
     suspend fun page(pageNo: Int, pageSize: Int): PageResult<ReportRecord> = read { connection ->
         requirePage(pageNo, pageSize)
-        val total = connection.count("SELECT count(*) FROM $schema.report_definition")
+        val total = connection.count("SELECT count(*) FROM $schemaName.report_definition")
         val sql = """
             SELECT report_key, revision, draft_document, published_revision, published_document
-            FROM $schema.report_definition
+            FROM $schemaName.report_definition
             ORDER BY report_key
             LIMIT ? OFFSET ?
         """.trimIndent()
@@ -63,7 +63,7 @@ internal class ReportJdbcStore(
         draftDocument: String,
     ): ReportRecord = write { connection ->
         val sql = """
-            UPDATE $schema.report_definition
+            UPDATE $schemaName.report_definition
             SET revision = revision + 1, draft_document = CAST(? AS JSONB)
             WHERE report_key = ? AND revision = ?
             RETURNING report_key, revision, draft_document, published_revision, published_document
@@ -80,11 +80,15 @@ internal class ReportJdbcStore(
     }
 
     suspend fun delete(reportKey: String): Boolean = write { connection ->
-        val sql = "DELETE FROM $schema.report_definition WHERE report_key = ?"
-        connection.prepareStatement(sql).use { statement ->
+        val sql = "DELETE FROM $schemaName.report_definition WHERE report_key = ?"
+        val deleted = connection.prepareStatement(sql).use { statement ->
             statement.setString(1, reportKey)
             statement.executeUpdate() == 1
         }
+        if (!deleted) {
+            reportNotFound(reportKey)
+        }
+        true
     }
 
     suspend fun publish(
@@ -98,7 +102,7 @@ internal class ReportJdbcStore(
             return@write current
         }
         val sql = """
-            UPDATE $schema.report_definition
+            UPDATE $schemaName.report_definition
             SET published_revision = revision, published_document = CAST(? AS JSONB)
             WHERE report_key = ?
             RETURNING report_key, revision, draft_document, published_revision, published_document
@@ -115,7 +119,7 @@ internal class ReportJdbcStore(
 
     suspend fun withdraw(reportKey: String): Boolean = write { connection ->
         val sql = """
-            UPDATE $schema.report_definition
+            UPDATE $schemaName.report_definition
             SET published_revision = NULL, published_document = NULL
             WHERE report_key = ? AND published_revision IS NOT NULL
         """.trimIndent()
@@ -135,10 +139,10 @@ internal class ReportJdbcStore(
     suspend fun publishedPage(pageNo: Int, pageSize: Int): PageResult<ReportRecord> = read { connection ->
         requirePage(pageNo, pageSize)
         val where = "published_revision IS NOT NULL"
-        val total = connection.count("SELECT count(*) FROM $schema.report_definition WHERE $where")
+        val total = connection.count("SELECT count(*) FROM $schemaName.report_definition WHERE $where")
         val sql = """
             SELECT report_key, revision, draft_document, published_revision, published_document
-            FROM $schema.report_definition
+            FROM $schemaName.report_definition
             WHERE $where
             ORDER BY report_key
             LIMIT ? OFFSET ?
@@ -186,7 +190,7 @@ internal class ReportJdbcStore(
     private fun Connection.find(reportKey: String): ReportRecord? {
         val sql = """
             SELECT report_key, revision, draft_document, published_revision, published_document
-            FROM $schema.report_definition
+            FROM $schemaName.report_definition
             WHERE report_key = ?
         """.trimIndent()
         return prepareStatement(sql).use { statement ->
@@ -200,7 +204,7 @@ internal class ReportJdbcStore(
     private fun Connection.lock(reportKey: String): ReportRecord? {
         val sql = """
             SELECT report_key, revision, draft_document, published_revision, published_document
-            FROM $schema.report_definition
+            FROM $schemaName.report_definition
             WHERE report_key = ?
             FOR UPDATE
         """.trimIndent()
@@ -268,7 +272,10 @@ private fun Throwable.toReportException(): Throwable {
     }
     return when (sqlState) {
         "23505" -> ReportRequestException(io.ktor.http.HttpStatusCode.Conflict, "报表键已存在")
-        "23514", "22P02" -> ReportRequestException(io.ktor.http.HttpStatusCode.BadRequest, "报表数据不符合约束")
+        "23514", "22P02" -> ReportRequestException(
+            io.ktor.http.HttpStatusCode.BadRequest,
+            "报表数据不符合约束",
+        )
         else -> this
     }
 }

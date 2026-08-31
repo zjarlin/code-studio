@@ -21,6 +21,12 @@
   stroke-width: 1.9;
 }
 
+.button-icon {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+}
+
 .button:hover:not(:disabled) {
   background: #f7f8fa;
   border-color: #bcc2ce;

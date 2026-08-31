@@ -1,7 +1,9 @@
 import type { CommonResult } from '@/catalog/types'
 
+import { authenticatedFetch } from './access-context'
+
 export async function requestData<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
+  const response = await authenticatedFetch(path, {
     ...init,
     headers: {
       Accept: 'application/json',

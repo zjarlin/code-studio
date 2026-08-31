@@ -11,3 +11,6 @@ plugins:
 
 dependencies:
   - ../modules/lowcode-metadata
+
+test-dependencies:
+  - ../modules/lowcode-contract-migration-compiler

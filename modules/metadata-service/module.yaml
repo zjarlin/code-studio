@@ -14,6 +14,7 @@ dependencies:
   - $libs.jackson.databind
   - $libs.jackson.module.kotlin
   - $libs.kotlinx.coroutines.core
+  - $libs.kotlinx.serialization.json
   - $libs.ktor.server.core
 
 test-dependencies:

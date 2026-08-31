@@ -9,10 +9,12 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
 import site.addzero.studio.metadata.StudioMetadataController
+import site.addzero.studio.report.generated.controller.ReportController
 import site.addzero.studio.runtime.GenerationTargetProfiles
 import site.addzero.studio.runtime.MetadataContributors
 import site.addzero.studio.runtime.StudioAccessPolicy
 import site.addzero.studio.runtime.StudioConfig
+import site.addzero.studio.runtime.StudioPermissionPolicy
 import site.addzero.studio.server.DEFAULT_STUDIO_SCHEMA
 import site.addzero.studio.server.installStudio
 import java.nio.file.Path
@@ -78,6 +80,7 @@ private fun runDevelopmentHost(
                 editableContributorId = contributorId,
                 targetProfile = config.targetProfile,
             )
+            val reportController = ReportController(dataSource, schema)
             installStudio(
                 dataSource = dataSource,
                 config = studioConfig,
@@ -85,6 +88,8 @@ private fun runDevelopmentHost(
                 classLoader = classLoader,
                 metadataSchema = schema,
                 apiControllers = listOf(metadataController),
+                permissionPolicy = StudioPermissionPolicy { _, _ -> true },
+                consoleApiControllers = listOf(reportController),
             )
         }.start(wait = true)
     }

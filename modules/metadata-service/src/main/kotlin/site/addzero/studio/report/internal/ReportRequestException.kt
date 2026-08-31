@@ -16,3 +16,5 @@ internal fun reportNotFound(reportKey: String): Nothing =
 internal fun reportConflict(message: String): Nothing =
     throw ReportRequestException(HttpStatusCode.Conflict, message)
 
+internal fun reportUnprocessable(message: String): Nothing =
+    throw ReportRequestException(HttpStatusCode.UnprocessableEntity, message)

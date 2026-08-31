@@ -29,6 +29,8 @@ internal const val EDITABLE_ID = "editable-library"
 private const val DEPENDENCY_ID = "dependency-library"
 
 internal data class PostgresFixture(
+    val dataSource: DataSource,
+    val schema: String,
     val dependencyLibraryId: Long,
     val dependencyFeatureId: Long,
     val editableLibraryId: Long,
@@ -56,6 +58,8 @@ internal fun withPostgresFixture(resources: Path, block: (PostgresFixture) -> Un
             StudioMigrator(dataSource, classLoader, schema).migrate(listOf(dependency, editable))
             insertAnalysisSnapshot(dataSource, schema)
             val fixture = PostgresFixture(
+                dataSource = dataSource,
+                schema = schema,
                 dependencyLibraryId = definitionId(dataSource, schema, DEPENDENCY_ID),
                 dependencyFeatureId = featureId(dataSource, schema, DEPENDENCY_ID),
                 editableLibraryId = definitionId(dataSource, schema, EDITABLE_ID),

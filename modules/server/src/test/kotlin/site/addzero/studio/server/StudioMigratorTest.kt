@@ -132,6 +132,8 @@ class StudioMigratorTest {
         assertTrue(reportSql.contains("report_definition"))
         assertTrue(reportSql.contains("draft_document JSONB NOT NULL"))
         assertTrue(reportSql.contains("published_document JSONB"))
+        assertEquals(1, Regex("CREATE TABLE").findAll(reportSql).count())
+        assertFalse(reportSql.contains("report_publication"))
         assertFalse(reportSql.contains("tenant_id"))
         assertFalse(reportSql.contains("owner"))
         assertFalse(reportSql.contains("create_time"))
@@ -168,7 +170,7 @@ private val CORE_MIGRATIONS = listOf(
     "V3__create_contract_catalog.sql",
     "V4__create_convention_file_catalog.sql",
     "V5__create_catalog_overrides.sql",
-    "V6__create_report_catalog.sql",
+    "V6__create_report_definition.sql",
 )
 
 internal class UnconnectedDataSource : DataSource {

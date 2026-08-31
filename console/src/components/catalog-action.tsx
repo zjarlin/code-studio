@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import { forwardRef, type ButtonHTMLAttributes } from 'react'
 
 import { useCatalog } from '@/catalog/context'
 
@@ -10,14 +10,17 @@ interface CatalogActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
   variant?: 'primary' | 'outline' | 'ghost'
 }
 
-export function CatalogAction({ elementKey, variant, ...props }: CatalogActionProps) {
+export const CatalogAction = forwardRef<HTMLButtonElement, CatalogActionProps>(function CatalogAction(
+  { elementKey, variant, ...props },
+  ref,
+) {
   const element = useCatalog().elementsByKey.get(elementKey)
   if (!element) return null
 
   return (
-    <Button title={element.description ?? element.name} variant={variant} {...props}>
+    <Button ref={ref} title={element.description ?? element.name} variant={variant} {...props}>
       <CatalogIcon name={element.icon} />
       <span>{element.name}</span>
     </Button>
   )
-}
+})

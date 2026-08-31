@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter } from '@tanstack/react-router'
 
+import { AccessContextQuerySync } from './lib/access-context-sync'
 import { routeTree } from './routeTree.gen'
 
 export interface RouterContext {
@@ -24,7 +25,10 @@ export function getRouter() {
     routeTree,
     scrollRestoration: true,
     Wrap: ({ children }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <AccessContextQuerySync />
+        {children}
+      </QueryClientProvider>
     ),
   })
 }

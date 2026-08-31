@@ -1,0 +1,293 @@
+.report-viewer-page {
+  min-height: 100%;
+}
+
+.report-runbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.report-parameters {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.report-parameters label {
+  display: flex;
+  min-width: 150px;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 620;
+}
+
+.report-parameters input,
+.report-parameters select {
+  min-height: 31px;
+  padding: 5px 8px;
+  color: var(--foreground);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+
+.report-sheet {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  overflow: auto;
+}
+
+.report-paper {
+  padding: var(--report-margin);
+  color: #172033;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgb(25 35 55 / 10%);
+}
+
+.report-sheet-portrait .report-paper {
+  width: min(210mm, 100%);
+  min-height: 297mm;
+}
+
+.report-sheet-landscape .report-paper {
+  width: min(297mm, 100%);
+  min-height: 210mm;
+}
+
+.report-paper-heading {
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e3e6eb;
+}
+
+.report-paper-heading h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 690;
+  line-height: 1.35;
+}
+
+.report-paper-heading p {
+  margin: 5px 0 0;
+  color: #687084;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.report-grid-row,
+.report-grid-editor-row {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.report-grid-row {
+  margin-bottom: 12px;
+}
+
+.report-output {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.report-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.report-metric {
+  display: flex;
+  min-height: 82px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 13px 15px;
+  background: #f7f9fc;
+  border-left: 3px solid var(--primary);
+}
+
+.report-metric span {
+  color: #687084;
+  font-size: 10px;
+  font-weight: 620;
+}
+
+.report-metric strong {
+  margin-top: 7px;
+  overflow: hidden;
+  font-size: 22px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-chart {
+  width: 100%;
+  height: 260px;
+}
+
+.report-image {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+}
+
+.report-block-empty {
+  display: grid;
+  min-height: 100px;
+  place-items: center;
+  color: #8990a0;
+  font-size: 11px;
+  background: #f7f8fa;
+}
+
+.report-block-error {
+  min-height: 70px;
+  padding: 12px;
+  color: var(--danger);
+  font-size: 10px;
+  line-height: 1.5;
+  background: #fff6f6;
+  border: 1px solid #f0d4d6;
+}
+
+.report-output-table .table-scroll {
+  height: auto;
+  max-height: 420px;
+}
+
+.report-output-table .data-table {
+  min-width: 100%;
+}
+
+.inspector-action {
+  width: 100%;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .report-paper {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .report-sheet-portrait .report-paper {
+    aspect-ratio: 210 / 297;
+  }
+
+  .report-sheet-landscape .report-paper {
+    aspect-ratio: 297 / 210;
+  }
+
+  .report-runbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media print {
+  @page report-portrait {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  @page report-landscape {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  html,
+  body {
+    min-width: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .topbar,
+  .sidebar,
+  .no-print,
+  .page-header {
+    display: none !important;
+  }
+
+  .admin-shell,
+  .page,
+  .page-frame,
+  .designer-preview,
+  .report-sheet {
+    display: block;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  .report-paper {
+    padding: var(--report-margin);
+    break-after: page;
+    box-shadow: none;
+    print-color-adjust: exact;
+  }
+
+  .report-grid-row,
+  .report-output,
+  .report-metric,
+  .report-chart,
+  .report-image {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-grid-row-table,
+  .report-output-table {
+    display: block;
+    overflow: visible;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .report-output-table .table-scroll {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .report-output-table thead {
+    display: table-header-group;
+  }
+
+  .report-output-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-sheet-portrait .report-paper {
+    page: report-portrait;
+    width: 210mm;
+    min-height: 297mm;
+  }
+
+  .report-sheet-landscape .report-paper {
+    page: report-landscape;
+    width: 297mm;
+    min-height: 210mm;
+  }
+}

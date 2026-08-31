@@ -11,8 +11,8 @@ export const Route = createFileRoute('/$')({
 })
 
 export interface ConsoleSearch {
-  reportId?: string
-  mode?: 'preview' | 'view'
+  reportKey?: string
+  mode?: 'edit' | 'preview'
 }
 
 function CatalogPage() {
@@ -30,9 +30,9 @@ function CatalogPage() {
 }
 
 function parseConsoleSearch(search: Record<string, unknown>): ConsoleSearch {
-  const reportId = typeof search.reportId === 'string' && search.reportId.trim()
-    ? search.reportId.trim()
+  const reportKey = typeof search.reportKey === 'string' && search.reportKey.trim()
+    ? search.reportKey.trim()
     : undefined
-  const mode = search.mode === 'preview' || search.mode === 'view' ? search.mode : undefined
-  return { reportId, mode }
+  const mode = search.mode === 'edit' || search.mode === 'preview' ? search.mode : undefined
+  return { reportKey, mode }
 }

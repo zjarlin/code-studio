@@ -48,12 +48,14 @@ describe('catalog contract', () => {
 
     const catalog = await loadCatalog(fetcher)
 
-    expect(catalog.scenes.map(({ routeKey }) => routeKey)).toEqual(['studio', 'agent'])
+    expect(catalog.scenes.map(({ routeKey }) => routeKey)).toEqual(['studio', 'agent', 'reports'])
     expect(catalog.routes.map(({ routeKey }) => routeKey)).toEqual([
       'studio.library',
       'studio.api-docs',
+      'studio.report-designer',
       'agent.chat',
       'agent.settings',
+      'reports.library',
     ])
     expect(catalog.elementsByKey.has('studio.library.create')).toBe(true)
     expect(catalog.elementsByKey.has('agent.settings.save')).toBe(true)
