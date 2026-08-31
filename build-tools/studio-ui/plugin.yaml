@@ -1,12 +1,17 @@
 tasks:
   buildStudioUi:
     action: !site.addzero.toolchain.lowcode.buildLowcodeStudio
-      packageJson: ${module.rootDir}/../../ui/package.json
+      studioPackageJson: ${module.rootDir}/../../ui/package.json
+      consolePackageJson: ${module.rootDir}/../../console/package.json
       lockFile: ${module.rootDir}/../../pnpm-lock.yaml
-      indexFile: ${module.rootDir}/../../ui/index.html
-      tsConfig: ${module.rootDir}/../../ui/tsconfig.json
-      viteConfig: ${module.rootDir}/../../ui/vite.config.ts
-      sourceDirectory: ${module.rootDir}/../../ui/src
+      studioIndexFile: ${module.rootDir}/../../ui/index.html
+      studioTsConfig: ${module.rootDir}/../../ui/tsconfig.json
+      studioViteConfig: ${module.rootDir}/../../ui/vite.config.ts
+      studioSourceDirectory: ${module.rootDir}/../../ui/src
+      studioPublicDirectory: ${module.rootDir}/../../ui/public
+      consoleTsConfig: ${module.rootDir}/../../console/tsconfig.json
+      consoleViteConfig: ${module.rootDir}/../../console/vite.config.ts
+      consoleSourceDirectory: ${module.rootDir}/../../console/src
       generatedResourcesDirectory: ${taskOutputDir}
 
 generated:

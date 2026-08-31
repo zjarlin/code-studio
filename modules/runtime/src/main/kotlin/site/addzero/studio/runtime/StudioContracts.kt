@@ -47,6 +47,11 @@ fun interface StudioAccessPolicy {
     suspend fun isAllowed(request: StudioAccessRequest): Boolean
 }
 
+/** 由宿主使用已有授权语义判定目录权限。 */
+fun interface StudioPermissionPolicy {
+    suspend fun isGranted(request: StudioAccessRequest, permission: String): Boolean
+}
+
 /** 单应用 Studio 宿主配置。 */
 data class StudioConfig(
     val contributorId: String,

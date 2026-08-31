@@ -1,0 +1,27 @@
+[
+  {
+    "routeKey": "agent.settings",
+    "path": "/console/agent/settings",
+    "parentKey": "agent",
+    "kind": "ROUTE",
+    "name": "模型设置",
+    "description": "配置模型服务连接",
+    "icon": "settings",
+    "order": 20,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "agent.settings",
+    "elementKey": "agent.settings.save",
+    "path": null,
+    "parentKey": "agent.settings",
+    "kind": "ELEMENT",
+    "name": "保存设置",
+    "description": "保存模型服务连接",
+    "icon": "save",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  }
+]

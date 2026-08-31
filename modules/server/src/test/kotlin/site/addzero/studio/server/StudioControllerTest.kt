@@ -19,6 +19,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import site.addzero.studio.contract.LsiCatalogEntry
+import site.addzero.studio.contract.LsiCatalogEntryKind
+import site.addzero.studio.server.catalog.StudioCatalogProvider
 import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_FORMAT_VERSION
 import site.addzero.studio.runtime.MetadataContributor
 import site.addzero.studio.runtime.StudioAccessPolicy
@@ -51,18 +54,8 @@ class StudioControllerTest {
         assertEquals(HttpStatusCode.OK, rootResponse.status)
         assertEquals(HttpStatusCode.OK, trailingSlashResponse.status)
         assertEquals(HttpStatusCode.OK, assetResponse.status)
-        assertTrue(rootResponse.body<String>().contains("import-map-loader.js"))
-        assertTrue(rootResponse.body<String>().indexOf("import-map-loader.js") < rootResponse.body<String>().indexOf("web.mjs"))
-        listOf(
-            "web.wasm",
-            "web.mjs",
-            "skiko.wasm",
-            "skiko.mjs",
-            "import-map-loader.js",
-            "vendors/@js-joda/core/dist/js-joda.esm.js",
-        ).forEach { fileName ->
-            assertTrue(javaClass.classLoader.getResource("studio/$fileName") != null, "server 主制品缺少 $fileName")
-        }
+        assertTrue(rootResponse.body<String>().contains("/studio/assets/"))
+        assertTrue(javaClass.classLoader.getResource("studio/favicon.svg") != null)
         assertEquals(
             setOf(
                 "contributorId",
@@ -97,7 +90,7 @@ class StudioControllerTest {
     }
 
     @Test
-    fun `访问策略统一保护配置 API 和静态资源`() = testApplication {
+    fun `访问策略保护 API 但允许加载 Console 静态壳`() = testApplication {
         var apiInvoked = false
         val assetPath = studioAssetPath()
         application {
@@ -125,11 +118,15 @@ class StudioControllerTest {
         val configResponse = client.get("/studio/config")
         val assetResponse = client.get(assetPath)
         val apiResponse = client.post("/studio/api/write")
+        val consoleResponse = client.get("/console")
+        val catalogResponse = client.get("/console/api/catalog")
 
         assertEquals(HttpStatusCode.Forbidden, rootResponse.status)
         assertEquals(HttpStatusCode.Forbidden, configResponse.status)
         assertEquals(HttpStatusCode.Forbidden, assetResponse.status)
         assertEquals(HttpStatusCode.Forbidden, apiResponse.status)
+        assertEquals(HttpStatusCode.OK, consoleResponse.status)
+        assertEquals(HttpStatusCode.Forbidden, catalogResponse.status)
         assertFalse(apiInvoked)
     }
 
@@ -157,6 +154,95 @@ class StudioControllerTest {
     }
 
     @Test
+    fun `Console Controller 安装在受保护的 Console API 边界`() = testApplication {
+        application {
+            install(ContentNegotiation) {
+                jackson()
+            }
+            routing {
+                val apiController = StudioApiController { route ->
+                    route.get("/ping") {
+                        val response = mapOf("status" to "ok")
+                        call.respond(response)
+                    }
+                }
+                controller(
+                    enabled = true,
+                    consoleApiControllers = listOf(apiController),
+                ).install(this)
+            }
+        }
+
+        val response = client.get("/console/api/ping")
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals("ok", objectMapper.readTree(response.body<String>())["status"].asString())
+    }
+
+    @Test
+    fun `Console 目录 API 返回统一包络和约定元数据`() = testApplication {
+        var requestPath: String? = null
+        application {
+            install(ContentNegotiation) {
+                jackson()
+            }
+            routing {
+                val catalogProvider = StudioCatalogProvider { request ->
+                    requestPath = request.path
+                    listOf(
+                        LsiCatalogEntry(
+                            routeKey = "studio",
+                            path = "/console/studio/library",
+                            kind = LsiCatalogEntryKind.SCENE,
+                            name = "Studio",
+                        ),
+                    )
+                }
+                controller(enabled = true, catalogProvider = catalogProvider).install(this)
+            }
+        }
+
+        val response = client.get("/console/api/catalog")
+        val body = objectMapper.readTree(response.body<String>())
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertEquals(0, body["code"].asInt())
+        assertEquals("", body["msg"].asString())
+        assertEquals("studio", body["data"][0]["routeKey"].asString())
+        assertEquals("SCENE", body["data"][0]["kind"].asString())
+        assertEquals("/console/api/catalog", requestPath)
+    }
+
+    @Test
+    fun `Console 服务单页资源且不吞掉未知 API`() = testApplication {
+        val assetPath = consoleAssetPath()
+        application {
+            install(ContentNegotiation) {
+                jackson()
+            }
+            routing {
+                controller(enabled = true).install(this)
+            }
+        }
+
+        val rootResponse = client.get("/console")
+        val trailingSlashResponse = client.get("/console/")
+        val deepLinkResponse = client.get("/console/studio/api-docs")
+        val assetResponse = client.get(assetPath)
+        val missingApiResponse = client.get("/console/api/missing")
+        val missingAssetResponse = client.get("/console/assets/missing.js")
+
+        assertEquals(HttpStatusCode.OK, rootResponse.status)
+        assertEquals(HttpStatusCode.OK, trailingSlashResponse.status)
+        assertEquals(HttpStatusCode.OK, deepLinkResponse.status)
+        assertEquals(HttpStatusCode.OK, assetResponse.status)
+        assertTrue(rootResponse.body<String>().contains("/console/assets/"))
+        assertEquals(rootResponse.body<String>(), deepLinkResponse.body<String>())
+        assertEquals(HttpStatusCode.NotFound, missingApiResponse.status)
+        assertEquals(HttpStatusCode.NotFound, missingAssetResponse.status)
+    }
+
+    @Test
     fun `使用真实监听信息生成浏览器可访问的 Studio 地址`() {
         assertEquals(
             "http://localhost:49000/studio/",
@@ -177,6 +263,8 @@ class StudioControllerTest {
         enabled: Boolean,
         accessPolicy: StudioAccessPolicy = StudioAccessPolicy { true },
         apiControllers: List<StudioApiController> = emptyList(),
+        catalogProvider: StudioCatalogProvider = StudioCatalogProvider.EMPTY,
+        consoleApiControllers: List<StudioApiController> = emptyList(),
     ): StudioController = StudioController(
         config = config(enabled),
         accessPolicy = accessPolicy,
@@ -185,6 +273,8 @@ class StudioControllerTest {
             contributor("example-app", requires = listOf("example-library")),
         ),
         apiControllers = apiControllers,
+        catalogProvider = catalogProvider,
+        consoleApiControllers = consoleApiControllers,
     )
 
     private fun config(enabled: Boolean): StudioConfig = StudioConfig(
@@ -219,10 +309,23 @@ class StudioControllerTest {
         }.readText()
         return requireNotNull(
             Regex("(?:src|href)=\"([^\"]+\\.(?:mjs|css))\"").find(index)?.groupValues?.get(1)?.let {
-                "/studio/$it"
+                if (it.startsWith("/studio/")) it else "/studio/${it.trimStart('/')}"
             },
         ) {
             "Studio UI index 没有引用构建资源"
+        }
+    }
+
+    private fun consoleAssetPath(): String {
+        val index = requireNotNull(javaClass.classLoader.getResource("console/index.html")) {
+            "server 主制品缺少 Console UI"
+        }.readText()
+        return requireNotNull(
+            Regex("(?:src|href)=\\\"([^\\\"]+\\.(?:js|css))\\\"").find(index)?.groupValues?.get(1)?.let {
+                if (it.startsWith("/console/")) it else "/console/${it.trimStart('/')}"
+            },
+        ) {
+            "Console UI index 没有引用构建资源"
         }
     }
 }

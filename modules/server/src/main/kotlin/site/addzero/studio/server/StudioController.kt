@@ -18,11 +18,17 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.launch
+import site.addzero.studio.contract.CommonResult
+import site.addzero.studio.server.catalog.CatalogResources
+import site.addzero.studio.server.catalog.JdbcCatalogOverrideReader
+import site.addzero.studio.server.catalog.StudioCatalogProvider
+import site.addzero.studio.server.catalog.StudioCatalogService
 import site.addzero.studio.runtime.MetadataContributor
 import site.addzero.studio.runtime.MetadataContributors
 import site.addzero.studio.runtime.StudioAccessPolicy
 import site.addzero.studio.runtime.StudioAccessRequest
 import site.addzero.studio.runtime.StudioConfig
+import site.addzero.studio.runtime.StudioPermissionPolicy
 import java.net.URI
 import javax.sql.DataSource
 
@@ -34,6 +40,8 @@ fun Application.installStudio(
     classLoader: ClassLoader = environment.classLoader,
     metadataSchema: String = DEFAULT_STUDIO_SCHEMA,
     apiControllers: List<StudioApiController> = emptyList(),
+    permissionPolicy: StudioPermissionPolicy = StudioPermissionPolicy { _, _ -> false },
+    consoleApiControllers: List<StudioApiController> = emptyList(),
 ) {
     if (!config.enabled) {
         return
@@ -43,8 +51,20 @@ fun Application.installStudio(
         "Studio 宿主未声明元数据贡献: ${config.contributorId}"
     }
     StudioMigrator(dataSource, classLoader, metadataSchema).migrate(contributors)
+    val catalogProvider = StudioCatalogService(
+        baseEntries = CatalogResources.load(classLoader),
+        overrideReader = JdbcCatalogOverrideReader(dataSource, metadataSchema),
+        permissionPolicy = permissionPolicy,
+    )
     routing {
-        val controller = StudioController(config, accessPolicy, contributors, apiControllers)
+        val controller = StudioController(
+            config = config,
+            accessPolicy = accessPolicy,
+            contributors = contributors,
+            apiControllers = apiControllers,
+            catalogProvider = catalogProvider,
+            consoleApiControllers = consoleApiControllers,
+        )
         controller.install(this)
     }
     launch {
@@ -72,6 +92,8 @@ class StudioController(
     private val accessPolicy: StudioAccessPolicy,
     private val contributors: List<MetadataContributor>,
     private val apiControllers: List<StudioApiController> = emptyList(),
+    private val catalogProvider: StudioCatalogProvider = StudioCatalogProvider.EMPTY,
+    private val consoleApiControllers: List<StudioApiController> = emptyList(),
 ) {
     fun install(parent: Route) {
         if (!config.enabled) {
@@ -106,7 +128,61 @@ class StudioController(
             }
             staticResources("", "studio", index = "index.html")
         }
+        parent.route("/console") {
+            get {
+                val resource = CONSOLE_INDEX_RESOURCE
+                call.respondResource(resource)
+            }
+            get("/") {
+                val resource = CONSOLE_INDEX_RESOURCE
+                call.respondResource(resource)
+            }
+            route("/api") {
+                install(StudioAccess) {
+                    policy = accessPolicy
+                }
+                get("/catalog") {
+                    val request = call.toAccessRequest()
+                    val entries = catalogProvider.entries(request)
+                    val response = CommonResult(0, "", entries)
+                    call.respond(response)
+                }
+                consoleApiControllers.forEach { controller ->
+                    controller.install(this)
+                }
+            }
+            get("{path...}") {
+                respondConsoleResource(call)
+            }
+        }
     }
+}
+
+private suspend fun respondConsoleResource(call: ApplicationCall) {
+    val relativePath = call.request.path()
+        .removePrefix(CONSOLE_PATH)
+        .trimStart('/')
+    val isApiPath = relativePath == "api" || relativePath.startsWith("api/")
+    val hasUnsafeSegment = relativePath.split('/').any { segment -> segment == "." || segment == ".." }
+    if (isApiPath || hasUnsafeSegment) {
+        call.respond(HttpStatusCode.NotFound)
+        return
+    }
+
+    val isStaticResource = relativePath.substringAfterLast('/').contains('.')
+    if (!isStaticResource) {
+        val resource = CONSOLE_INDEX_RESOURCE
+        call.respondResource(resource)
+        return
+    }
+
+    val resource = "console/$relativePath"
+    val exists = call.application.environment.classLoader.getResource(resource) != null
+    if (!exists) {
+        call.respond(HttpStatusCode.NotFound)
+        return
+    }
+    call.respondResource(resource)
 }
 
 private data class StudioErrorResponse(
@@ -114,6 +190,8 @@ private data class StudioErrorResponse(
 )
 
 private const val STUDIO_PATH = "/studio/"
+private const val CONSOLE_PATH = "/console"
+private const val CONSOLE_INDEX_RESOURCE = "console/index.html"
 private val WILDCARD_HOSTS = setOf("", "0.0.0.0", "::", "0:0:0:0:0:0:0:0")
 
 private class StudioAccessConfig {

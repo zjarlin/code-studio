@@ -1,0 +1,66 @@
+[
+  {
+    "routeKey": "studio.library",
+    "path": "/console/studio/library",
+    "parentKey": "studio",
+    "kind": "ROUTE",
+    "name": "库",
+    "description": "管理 Library 及其元数据资源",
+    "icon": "library",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.refresh",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "刷新",
+    "description": "重新读取 Library 目录",
+    "icon": "refresh-cw",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.create",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "新建库",
+    "description": "创建 Library 定义",
+    "icon": "plus",
+    "order": 20,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.create.cancel",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "取消",
+    "description": "关闭 Library 创建窗口",
+    "icon": null,
+    "order": 21,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.create.submit",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "创建",
+    "description": "提交 Library 定义",
+    "icon": "plus",
+    "order": 22,
+    "permissions": [],
+    "enabled": true
+  }
+]

@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_STUDIO_API_BASE, STUDIO_API_PROXY_PATHS, resolveStudioApiBase } from '../vite.config'
 
 describe('resolveStudioApiBase', () => {
-  it('proxies the embedded Studio surface in development', () => {
-    expect(STUDIO_API_PROXY_PATHS).toEqual(['/studio'])
+  it('proxies only Studio backend endpoints in development', () => {
+    expect(STUDIO_API_PROXY_PATHS).toEqual(['/studio/config', '/studio/api'])
   })
 
   it('uses the shared development host for standalone development', () => {

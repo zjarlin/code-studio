@@ -92,7 +92,10 @@ class StudioMigratorPostgresTest {
                 assertTrue("integration_probe" in tables)
                 assertTrue(STUDIO_CORE_HISTORY in tables)
                 assertTrue(STUDIO_METADATA_HISTORY in tables)
-                assertEquals(3, appliedMigrationCount(dataSource, schema, STUDIO_CORE_HISTORY))
+                assertTrue("catalog_route_override" in tables)
+                assertTrue("catalog_element_override" in tables)
+                assertTrue("report_definition" in tables)
+                assertEquals(6, appliedMigrationCount(dataSource, schema, STUDIO_CORE_HISTORY))
                 assertEquals(2, appliedMigrationCount(dataSource, schema, STUDIO_METADATA_HISTORY))
                 assertEquals(
                     setOf("integration-dependency", "integration-test"),

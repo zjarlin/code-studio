@@ -7,6 +7,7 @@ import site.addzero.platform.lowcode.generator.LsiConventionFileKind
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 
 class ContractJsonSnapshotTest {
     private val json = Json {
@@ -90,5 +91,85 @@ class ContractJsonSnapshotTest {
             """{"fileCode":"userService","name":"用户服务","className":"UserService","kind":"SERVICE","packageName":"example.user","contributorId":"example-app","description":null}""",
             json.encodeToString(lsi),
         )
+    }
+
+    @Test
+    fun `目录约定使用稳定键并确定性排序`() {
+        val contribution = listOf(
+            LsiCatalogEntry(
+                routeKey = "studio.library",
+                elementKey = "studio.library.create",
+                parentKey = "studio.library",
+                kind = LsiCatalogEntryKind.ELEMENT,
+                name = "新建",
+                permissions = listOf("POST:/studio/library/**", "GET:/studio/library/**"),
+            ),
+            LsiCatalogEntry(
+                routeKey = "studio.library",
+                path = "/console/studio/library",
+                parentKey = "studio",
+                kind = LsiCatalogEntryKind.ROUTE,
+                name = "库",
+            ),
+            LsiCatalogEntry(
+                routeKey = "studio",
+                path = "/console/studio/library",
+                kind = LsiCatalogEntryKind.SCENE,
+                name = "Studio",
+            ),
+        )
+
+        val encoded = CatalogContributions.encode(contribution)
+        val decoded = CatalogContributions.decode(encoded)
+        val entries = CatalogContributions.resolve(listOf(decoded))
+
+        assertEquals(listOf("studio", "studio.library", "studio.library.create"), entries.map(LsiCatalogEntry::key))
+        assertEquals(
+            listOf("GET:/studio/library/**", "POST:/studio/library/**"),
+            entries.last().permissions,
+        )
+        assertEquals(encoded, CatalogContributions.encode(decoded))
+    }
+
+    @Test
+    fun `目录约定拒绝孤立元素和无效父场景`() {
+        val orphan = listOf(
+            LsiCatalogEntry(
+                routeKey = "studio.library",
+                elementKey = "studio.library.create",
+                parentKey = "studio.library",
+                kind = LsiCatalogEntryKind.ELEMENT,
+                name = "新建",
+            ),
+        )
+        assertFailsWith<IllegalArgumentException> {
+            CatalogContributions.resolve(listOf(orphan))
+        }
+
+        val invalidParent = listOf(
+            LsiCatalogEntry(
+                routeKey = "studio",
+                path = "/console/studio/library",
+                kind = LsiCatalogEntryKind.SCENE,
+                name = "Studio",
+            ),
+            LsiCatalogEntry(
+                routeKey = "studio.library",
+                path = "/console/studio/library",
+                parentKey = "studio.api-docs",
+                kind = LsiCatalogEntryKind.ROUTE,
+                name = "库",
+            ),
+            LsiCatalogEntry(
+                routeKey = "studio.api-docs",
+                path = "/console/studio/api-docs",
+                parentKey = "studio",
+                kind = LsiCatalogEntryKind.ROUTE,
+                name = "API 文档",
+            ),
+        )
+        assertFailsWith<IllegalArgumentException> {
+            CatalogContributions.resolve(listOf(invalidParent))
+        }
     }
 }

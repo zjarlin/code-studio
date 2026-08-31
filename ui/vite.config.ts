@@ -6,7 +6,7 @@ import { loadEnv } from 'vite'
 import { defineConfig } from 'vitest/config'
 
 export const DEFAULT_STUDIO_API_BASE = 'http://127.0.0.1:8080'
-export const STUDIO_API_PROXY_PATHS = ['/studio'] as const
+export const STUDIO_API_PROXY_PATHS = ['/studio/config', '/studio/api'] as const
 
 export function resolveStudioApiBase(configuredApiBase: string, mode: string) {
   const apiBase = configuredApiBase || DEFAULT_STUDIO_API_BASE

@@ -1,0 +1,72 @@
+.dialog-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(23 32 51 / 34%);
+}
+
+.dialog {
+  width: min(430px, 100%);
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  box-shadow: 0 18px 48px rgb(31 39 60 / 16%);
+}
+
+.dialog h2 {
+  margin-top: 0;
+}
+
+.dialog form,
+.settings-pane form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.dialog label,
+.settings-pane label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #4d566a;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dialog input,
+.dialog select,
+.settings-pane input {
+  width: 100%;
+  min-height: 34px;
+}
+
+.dialog footer,
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.settings-pane {
+  width: min(680px, 100%);
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.settings-pane form {
+  margin-top: 0;
+}
+
+.settings-pane small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 400;
+}

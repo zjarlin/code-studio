@@ -1,0 +1,38 @@
+[
+  {
+    "routeKey": "studio",
+    "path": "/console/studio/library",
+    "parentKey": null,
+    "kind": "SCENE",
+    "name": "Studio",
+    "description": "元数据与服务工作台",
+    "icon": "blocks",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "agent",
+    "path": "/console/agent/chat",
+    "parentKey": null,
+    "kind": "SCENE",
+    "name": "智能体",
+    "description": "对话与模型配置",
+    "icon": "bot",
+    "order": 20,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "reports",
+    "path": "/console/reports/library",
+    "parentKey": null,
+    "kind": "SCENE",
+    "name": "报表",
+    "description": "查看已发布报表",
+    "icon": "chart-no-axes-combined",
+    "order": 30,
+    "permissions": [],
+    "enabled": true
+  }
+]

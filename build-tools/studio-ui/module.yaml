@@ -5,3 +5,6 @@ apply:
 
 pluginInfo:
   id: studio-ui
+
+dependencies:
+  - ../../modules/metadata-contract

@@ -1,0 +1,53 @@
+[
+  {
+    "routeKey": "agent.chat",
+    "path": "/console/agent/chat",
+    "parentKey": "agent",
+    "kind": "ROUTE",
+    "name": "对话",
+    "description": "管理智能体对话",
+    "icon": "messages-square",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "agent.chat",
+    "elementKey": "agent.chat.create",
+    "path": null,
+    "parentKey": "agent.chat",
+    "kind": "ELEMENT",
+    "name": "新建对话",
+    "description": "创建智能体对话",
+    "icon": "message-square-plus",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "agent.chat",
+    "elementKey": "agent.chat.create.cancel",
+    "path": null,
+    "parentKey": "agent.chat",
+    "kind": "ELEMENT",
+    "name": "取消",
+    "description": "关闭对话创建窗口",
+    "icon": null,
+    "order": 11,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "agent.chat",
+    "elementKey": "agent.chat.create.submit",
+    "path": null,
+    "parentKey": "agent.chat",
+    "kind": "ELEMENT",
+    "name": "创建",
+    "description": "提交新对话",
+    "icon": "message-square-plus",
+    "order": 12,
+    "permissions": [],
+    "enabled": true
+  }
+]

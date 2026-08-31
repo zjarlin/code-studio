@@ -1,0 +1,27 @@
+[
+  {
+    "routeKey": "studio.api-docs",
+    "path": "/console/studio/api-docs",
+    "parentKey": "studio",
+    "kind": "ROUTE",
+    "name": "API 文档",
+    "description": "浏览宿主 OpenAPI 契约",
+    "icon": "book-open",
+    "order": 20,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.api-docs",
+    "elementKey": "studio.api-docs.refresh",
+    "path": null,
+    "parentKey": "studio.api-docs",
+    "kind": "ELEMENT",
+    "name": "刷新",
+    "description": "重新读取 OpenAPI 文档",
+    "icon": "refresh-cw",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  }
+]
