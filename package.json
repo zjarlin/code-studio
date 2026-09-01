@@ -17,9 +17,10 @@
     "build:ui": "pnpm --dir ui build",
     "check": "pnpm run check:kotlin && pnpm run test && pnpm run build",
     "check:kotlin": "./kotlin check",
-    "test": "pnpm run test:ui && pnpm run test:console && pnpm run test:cli",
+    "test": "pnpm run test:openapi-workbench && pnpm run test:ui && pnpm run test:console && pnpm run test:cli",
     "test:cli": "npm --prefix packages/cli test",
     "test:console": "pnpm --dir console test",
+    "test:openapi-workbench": "pnpm --dir packages/openapi-workbench test",
     "test:ui": "pnpm --dir ui test"
   }
 }

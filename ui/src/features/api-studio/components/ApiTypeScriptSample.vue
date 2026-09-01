@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { computed, reactive, watch } from 'vue'
 
+import { DEFAULT_API_CODE_PREFERENCES, generateTypeScriptRequest } from '@platform/openapi-workbench'
+import type {
+  ApiCodeClient,
+  ApiCodeImportStyle,
+  ApiCodePreferences,
+  ApiDocument,
+  ApiOperation,
+} from '@platform/openapi-workbench'
+
 import CodeBlock from '@/components/composed/code-block/CodeBlock.vue'
 import { Field, FieldGroup, FieldLabel } from '@/components/generated/shadcn/field'
 import { Input } from '@/components/generated/shadcn/input'
@@ -13,15 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/generated/shadcn/select'
-
-import { DEFAULT_API_CODE_PREFERENCES, generateTypeScriptRequest } from '../typescript-codegen'
-import type {
-  ApiCodeClient,
-  ApiCodeImportStyle,
-  ApiCodePreferences,
-  ApiDocument,
-  ApiOperation,
-} from '../types'
 
 const STORAGE_KEY = 'api-studio.typescript-code-preferences'
 

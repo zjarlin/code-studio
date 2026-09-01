@@ -8,16 +8,23 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
+import org.koin.core.annotation.KoinApplication
+import org.koin.ktor.ext.getKoin
+import org.koin.ktor.plugin.Koin
+import org.koin.plugin.module.dsl.withConfiguration
 import site.addzero.studio.metadata.StudioMetadataController
-import site.addzero.studio.report.generated.controller.ReportController
 import site.addzero.studio.runtime.GenerationTargetProfiles
 import site.addzero.studio.runtime.MetadataContributors
 import site.addzero.studio.runtime.StudioAccessPolicy
 import site.addzero.studio.runtime.StudioConfig
 import site.addzero.studio.runtime.StudioPermissionPolicy
 import site.addzero.studio.server.DEFAULT_STUDIO_SCHEMA
+import site.addzero.studio.server.StudioFeature
 import site.addzero.studio.server.installStudio
 import java.nio.file.Path
+
+@KoinApplication
+class DevelopmentHostGraph
 
 /** 运行应用初始壳的开发 Studio 宿主。 */
 fun runApplicationDevelopmentHost() {
@@ -67,6 +74,9 @@ private fun runDevelopmentHost(
             host = "127.0.0.1",
             port = config.port,
         ) {
+            install(Koin) {
+                withConfiguration<DevelopmentHostGraph>()
+            }
             install(ContentNegotiation) {
                 jackson()
             }
@@ -80,7 +90,7 @@ private fun runDevelopmentHost(
                 editableContributorId = contributorId,
                 targetProfile = config.targetProfile,
             )
-            val reportController = ReportController(dataSource, schema)
+            val features = getKoin().getAll<StudioFeature>()
             installStudio(
                 dataSource = dataSource,
                 config = studioConfig,
@@ -89,7 +99,7 @@ private fun runDevelopmentHost(
                 metadataSchema = schema,
                 apiControllers = listOf(metadataController),
                 permissionPolicy = StudioPermissionPolicy { _, _ -> true },
-                consoleApiControllers = listOf(reportController),
+                features = features,
             )
         }.start(wait = true)
     }

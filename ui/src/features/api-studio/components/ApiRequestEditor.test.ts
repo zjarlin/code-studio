@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import ApiRequestEditor from './ApiRequestEditor.vue'
-import type { ApiOperation } from '../types'
+import type { ApiOperation } from '@platform/openapi-workbench'
 
 const operation: ApiOperation = {
   id: 'uploadFile',
@@ -32,6 +32,7 @@ const operation: ApiOperation = {
   lowcodeContract: false,
   transport: 'HTTP',
   metadataIssues: [],
+  security: [],
 }
 
 describe('ApiRequestEditor', () => {

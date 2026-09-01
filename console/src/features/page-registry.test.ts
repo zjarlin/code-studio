@@ -10,6 +10,7 @@ describe('catalog page registry', () => {
     expect(resolvePage('agent.settings')).toBeDefined()
     expect(resolvePage('reports.library')).toBeDefined()
     expect(resolvePage('studio.report-designer')).toBeDefined()
+    expect(resolvePage('studio.spreadsheet-templates')).toBeDefined()
     expect(resolvePage('not.registered')).toBeUndefined()
   })
 })

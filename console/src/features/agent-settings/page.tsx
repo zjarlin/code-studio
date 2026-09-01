@@ -1,23 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { getAgentSettings, updateAgentSettings } from '@generated/openapi/client'
+import type { AgentProviderSettingsCommand } from '@generated/openapi/models'
 
-import { CatalogAction } from '@/components/catalog-action'
-import { PageHeader } from '@/components/page-header'
-import { QueryState } from '@/components/query-state'
+import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
+import { PageHeader } from '@/components/composed/page-header/page-header'
+import { QueryState } from '@/components/composed/query-state/query-state'
 import type { CatalogPageProps } from '@/features/page-registry'
-
-import { fetchAgentSettings, updateAgentSettings } from './api'
+import { applicationRequestOptions } from '@/lib/application-client'
 
 export default function AgentSettingsPage({ route }: CatalogPageProps) {
   const queryClient = useQueryClient()
-  const settings = useQuery({ queryKey: ['agent-settings'], queryFn: fetchAgentSettings })
+  const settings = useQuery({
+    queryKey: ['agent-settings'],
+    queryFn: async () => getAgentSettings(await applicationRequestOptions()),
+  })
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
   useEffect(() => {
     if (settings.data) setBaseUrl(settings.data.baseUrl)
   }, [settings.data])
   const save = useMutation({
-    mutationFn: updateAgentSettings,
+    mutationFn: async (command: AgentProviderSettingsCommand) =>
+      updateAgentSettings(command, await applicationRequestOptions()),
     onSuccess: (result) => {
       queryClient.setQueryData(['agent-settings'], result)
       setApiKey('')

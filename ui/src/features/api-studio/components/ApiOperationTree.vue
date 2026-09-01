@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiGroup, ApiOperation } from '../types'
+import type { ApiGroup, ApiOperation } from '@platform/openapi-workbench'
 
 defineProps<{
   groups: ApiGroup[]

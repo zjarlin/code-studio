@@ -42,6 +42,8 @@ fun Application.installStudio(
     apiControllers: List<StudioApiController> = emptyList(),
     permissionPolicy: StudioPermissionPolicy = StudioPermissionPolicy { _, _ -> false },
     consoleApiControllers: List<StudioApiController> = emptyList(),
+    schemaMigrations: List<StudioSchemaMigration> = emptyList(),
+    features: List<StudioFeature> = emptyList(),
 ) {
     if (!config.enabled) {
         return
@@ -51,30 +53,38 @@ fun Application.installStudio(
         "Studio 宿主未声明元数据贡献: ${config.contributorId}"
     }
     StudioMigrator(dataSource, classLoader, metadataSchema).migrate(contributors)
+    val featureContext = StudioFeatureContext(dataSource, metadataSchema, classLoader)
+    val featureContributions = features.map { feature -> feature.contribute(featureContext) }
+    val contributedMigrations = featureContributions.flatMap(StudioFeatureContribution::schemaMigrations)
+    (schemaMigrations + contributedMigrations).forEach(StudioSchemaMigration::migrate)
     val catalogProvider = StudioCatalogService(
         baseEntries = CatalogResources.load(classLoader),
         overrideReader = JdbcCatalogOverrideReader(dataSource, metadataSchema),
         permissionPolicy = permissionPolicy,
     )
     routing {
+        featureContributions
+            .flatMap(StudioFeatureContribution::rootControllers)
+            .forEach { controller -> controller.install(this) }
         val controller = StudioController(
             config = config,
             accessPolicy = accessPolicy,
             contributors = contributors,
             apiControllers = apiControllers,
             catalogProvider = catalogProvider,
-            consoleApiControllers = consoleApiControllers,
+            consoleApiControllers = consoleApiControllers + featureContributions
+                .flatMap(StudioFeatureContribution::consoleApiControllers),
         )
         controller.install(this)
     }
     launch {
         engine.resolvedConnectors()
-            .mapNotNull { connector -> connector.studioUrl(rootPath) }
-            .forEach { url -> log.info("Code Studio 管理页面: $url") }
+            .mapNotNull { connector -> connector.consoleUrl(rootPath) }
+            .forEach { url -> log.info("Console 管理页面: $url") }
     }
 }
 
-internal fun EngineConnectorConfig.studioUrl(rootPath: String = ""): String? {
+internal fun EngineConnectorConfig.consoleUrl(rootPath: String = ""): String? {
     val scheme = when (type) {
         ConnectorType.HTTP -> "http"
         ConnectorType.HTTPS -> "https"
@@ -82,7 +92,7 @@ internal fun EngineConnectorConfig.studioUrl(rootPath: String = ""): String? {
     }
     val browserHost = host.takeUnless(WILDCARD_HOSTS::contains) ?: "localhost"
     val root = rootPath.trim().trim('/')
-    val path = if (root.isEmpty()) STUDIO_PATH else "/$root$STUDIO_PATH"
+    val path = if (root.isEmpty()) CONSOLE_ENTRY_PATH else "/$root$CONSOLE_ENTRY_PATH"
     return URI(scheme, null, browserHost, port, path, null, null).toString()
 }
 
@@ -141,6 +151,11 @@ class StudioController(
                 install(StudioAccess) {
                     policy = accessPolicy
                 }
+                get("/config") {
+                    val clientConfig = config.toClientConfig()
+                    val response = CommonResult(0, "", clientConfig)
+                    call.respond(response)
+                }
                 get("/catalog") {
                     val request = call.toAccessRequest()
                     val entries = catalogProvider.entries(request)
@@ -194,7 +209,7 @@ private suspend fun respondConsoleResource(call: ApplicationCall) {
     call.respondResource(resource)
 }
 
-private const val STUDIO_PATH = "/studio/"
+private const val CONSOLE_ENTRY_PATH = "/console/"
 private const val CONSOLE_PATH = "/console"
 private const val CONSOLE_INDEX_RESOURCE = "console/index.html"
 private val WILDCARD_HOSTS = setOf("", "0.0.0.0", "::", "0:0:0:0:0:0:0:0")

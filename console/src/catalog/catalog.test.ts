@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { CATALOG_ENDPOINT, createCatalogIndex, loadCatalog, parseCatalogPayload, resolveCatalogRoute } from './catalog'
 import type { CatalogEntry } from './types'
+
+afterEach(() => vi.unstubAllGlobals())
 
 describe('catalog contract', () => {
   it('unwraps CommonResult and builds sorted navigation indexes', () => {
@@ -32,27 +34,30 @@ describe('catalog contract', () => {
 
   it('uses the supplied fallback when the catalog endpoint is unavailable', async () => {
     const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error('offline'))
+    vi.stubGlobal('fetch', fetcher)
     const fallback = [
       entry({ routeKey: 'studio', path: '/console/studio/library', kind: 'SCENE', name: 'Studio' }),
       entry({ routeKey: 'studio.library', path: '/console/studio/library', parentKey: 'studio', kind: 'ROUTE', name: '库' }),
     ]
 
-    const catalog = await loadCatalog(fetcher, fallback)
+    const catalog = await loadCatalog(fallback)
 
-    expect(fetcher).toHaveBeenCalledWith(CATALOG_ENDPOINT, { headers: { Accept: 'application/json' } })
+    expect(String(fetcher.mock.calls[0]?.[0])).toBe(CATALOG_ENDPOINT)
     expect(catalog.routes[0]?.routeKey).toBe('studio.library')
   })
 
   it('scans scene and feature convention files for the development catalog', async () => {
     const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error('offline'))
+    vi.stubGlobal('fetch', fetcher)
 
-    const catalog = await loadCatalog(fetcher)
+    const catalog = await loadCatalog()
 
     expect(catalog.scenes.map(({ routeKey }) => routeKey)).toEqual(['studio', 'agent', 'reports'])
     expect(catalog.routes.map(({ routeKey }) => routeKey)).toEqual([
       'studio.library',
       'studio.api-docs',
       'studio.report-designer',
+      'studio.spreadsheet-templates',
       'agent.chat',
       'agent.settings',
       'reports.library',

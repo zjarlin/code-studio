@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useApiStudio } from './useApiStudio'
-import type { ApiDocument } from './types'
+import type { ApiDocument } from '@platform/openapi-workbench'
 
 const document: ApiDocument = {
   openapi: '3.1.0',

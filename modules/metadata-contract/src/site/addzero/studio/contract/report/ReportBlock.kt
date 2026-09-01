@@ -1,12 +1,11 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package site.addzero.studio.contract.report
 
-import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.json.JsonContentPolymorphicSerializer
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.Transient
+import kotlinx.serialization.json.JsonClassDiscriminator
 
 @Serializable
 enum class ReportBlockKind {
@@ -34,7 +33,8 @@ enum class ReportChartKind {
     PIE,
 }
 
-@Serializable(with = ReportBlockSpecSerializer::class)
+@Serializable
+@JsonClassDiscriminator("kind")
 sealed interface ReportBlockSpec {
     val key: String
     val kind: ReportBlockKind
@@ -42,11 +42,12 @@ sealed interface ReportBlockSpec {
 }
 
 @Serializable
+@SerialName("TEXT")
 data class ReportTextBlock(
     override val key: String,
     val text: String,
     override val columnSpan: Int = REPORT_GRID_COLUMNS,
-    override val kind: ReportBlockKind = ReportBlockKind.TEXT,
+    @Transient override val kind: ReportBlockKind = ReportBlockKind.TEXT,
 ) : ReportBlockSpec {
     init {
         require(kind == ReportBlockKind.TEXT)
@@ -55,6 +56,7 @@ data class ReportTextBlock(
 }
 
 @Serializable
+@SerialName("METRIC")
 data class ReportMetricBlock(
     override val key: String,
     val datasetKey: String,
@@ -62,7 +64,7 @@ data class ReportMetricBlock(
     val valuePointer: String,
     val aggregate: ReportMetricAggregate = ReportMetricAggregate.FIRST,
     override val columnSpan: Int = REPORT_GRID_COLUMNS,
-    override val kind: ReportBlockKind = ReportBlockKind.METRIC,
+    @Transient override val kind: ReportBlockKind = ReportBlockKind.METRIC,
 ) : ReportBlockSpec {
     init {
         require(kind == ReportBlockKind.METRIC)
@@ -76,13 +78,14 @@ data class ReportMetricBlock(
 }
 
 @Serializable
+@SerialName("TABLE")
 data class ReportTableBlock(
     override val key: String,
     val datasetKey: String,
     val columns: List<ReportTableColumn> = emptyList(),
     val rowLimit: Int = 20,
     override val columnSpan: Int = REPORT_GRID_COLUMNS,
-    override val kind: ReportBlockKind = ReportBlockKind.TABLE,
+    @Transient override val kind: ReportBlockKind = ReportBlockKind.TABLE,
 ) : ReportBlockSpec {
     init {
         require(kind == ReportBlockKind.TABLE)
@@ -114,6 +117,7 @@ data class ReportTableColumn(
 }
 
 @Serializable
+@SerialName("CHART")
 data class ReportChartBlock(
     override val key: String,
     val datasetKey: String,
@@ -121,7 +125,7 @@ data class ReportChartBlock(
     val categoryPointer: String,
     val valuePointer: String,
     override val columnSpan: Int = REPORT_GRID_COLUMNS,
-    override val kind: ReportBlockKind = ReportBlockKind.CHART,
+    @Transient override val kind: ReportBlockKind = ReportBlockKind.CHART,
 ) : ReportBlockSpec {
     init {
         require(kind == ReportBlockKind.CHART)
@@ -133,13 +137,14 @@ data class ReportChartBlock(
 }
 
 @Serializable
+@SerialName("IMAGE")
 data class ReportImageBlock(
     override val key: String,
     val datasetKey: String,
     val sourcePointer: String,
     val alt: String,
     override val columnSpan: Int = REPORT_GRID_COLUMNS,
-    override val kind: ReportBlockKind = ReportBlockKind.IMAGE,
+    @Transient override val kind: ReportBlockKind = ReportBlockKind.IMAGE,
 ) : ReportBlockSpec {
     init {
         require(kind == ReportBlockKind.IMAGE)
@@ -147,18 +152,6 @@ data class ReportImageBlock(
         requireReportDataBlock(datasetKey)
         requireJsonPointer(sourcePointer, "图片地址")
     }
-}
-
-internal object ReportBlockSpecSerializer : JsonContentPolymorphicSerializer<ReportBlockSpec>(ReportBlockSpec::class) {
-    override fun selectDeserializer(element: JsonElement): DeserializationStrategy<ReportBlockSpec> =
-        when (element.reportBlockKind()) {
-            ReportBlockKind.TEXT.name -> ReportTextBlock.serializer()
-            ReportBlockKind.METRIC.name -> ReportMetricBlock.serializer()
-            ReportBlockKind.TABLE.name -> ReportTableBlock.serializer()
-            ReportBlockKind.CHART.name -> ReportChartBlock.serializer()
-            ReportBlockKind.IMAGE.name -> ReportImageBlock.serializer()
-            else -> throw SerializationException("未知报表块 kind: ${element.reportBlockKind()}")
-        }
 }
 
 private fun ReportBlockSpec.requireReportBlock() {
@@ -179,7 +172,3 @@ internal fun ReportBlockSpec.datasetReference(): String? = when (this) {
     is ReportChartBlock -> datasetKey
     is ReportImageBlock -> datasetKey
 }
-
-private fun JsonElement.reportBlockKind(): String =
-    jsonObject["kind"]?.jsonPrimitive?.content
-        ?: throw SerializationException("报表块缺少 kind")

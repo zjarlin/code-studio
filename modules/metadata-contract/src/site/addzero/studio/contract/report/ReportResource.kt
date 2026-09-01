@@ -95,6 +95,20 @@ data class PublishedReportView(
     }
 }
 
+@Serializable
+data class ReportListPage(
+    val rows: List<ReportListItemView> = emptyList(),
+    val totalRowCount: Long = 0,
+    val totalPageCount: Long = 0,
+)
+
+@Serializable
+data class PublishedReportListPage(
+    val rows: List<PublishedReportListItemView> = emptyList(),
+    val totalRowCount: Long = 0,
+    val totalPageCount: Long = 0,
+)
+
 private fun requireReportView(
     reportKey: String,
     revision: Long,

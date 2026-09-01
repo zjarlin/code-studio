@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 import { useCatalog } from '@/catalog/context'
-import { toSplat } from '@/components/app-shell'
+import { toSplat } from '@/components/composed/app-shell/app-shell'
 
 export const Route = createFileRoute('/')({
   component: CatalogRedirect,

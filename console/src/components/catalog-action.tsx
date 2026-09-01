@@ -3,7 +3,7 @@ import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { useCatalog } from '@/catalog/context'
 
 import { Button } from './button'
-import { CatalogIcon } from './catalog-icon'
+import { CatalogIcon } from './composed/catalog-icon/catalog-icon'
 
 interface CatalogActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   elementKey: string

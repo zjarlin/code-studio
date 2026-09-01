@@ -1,5 +1,17 @@
 <script setup lang="ts">
 import { Download, File } from '@lucide/vue'
+import {
+  downloadApiResponseFile,
+  responseDocumentation,
+  responseSchema,
+  schemaRows,
+} from '@platform/openapi-workbench'
+import type {
+  ApiDocument,
+  ApiOperation,
+  ApiResponseState,
+  ApiSchemaRow,
+} from '@platform/openapi-workbench'
 import { computed, h, ref } from 'vue'
 
 import CodeBlock from '@/components/composed/code-block/CodeBlock.vue'
@@ -7,9 +19,6 @@ import DataTable from '@/components/composed/data-table/DataTable.vue'
 import type { DataTableColumn } from '@/components/composed/data-table/data-table'
 import { Button } from '@/components/generated/shadcn/button'
 
-import { downloadApiResponseFile } from '../api-client'
-import { responseDocumentation, responseSchema, schemaRows, type ApiSchemaRow } from '../openapi'
-import type { ApiDocument, ApiOperation, ApiResponseState } from '../types'
 import ApiTypeScriptSample from './ApiTypeScriptSample.vue'
 
 const props = defineProps<{

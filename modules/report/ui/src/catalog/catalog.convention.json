@@ -1,0 +1,14 @@
+[
+  {
+    "routeKey": "reports",
+    "path": "/report/library",
+    "parentKey": null,
+    "kind": "SCENE",
+    "name": "报表中心",
+    "description": "报表查看、设计与 Excel 模板填充",
+    "icon": "chart-no-axes-combined",
+    "order": 10,
+    "permissions": [],
+    "enabled": true
+  }
+]

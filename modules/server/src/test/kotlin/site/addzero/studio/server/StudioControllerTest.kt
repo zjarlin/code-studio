@@ -47,8 +47,10 @@ class StudioControllerTest {
         val trailingSlashResponse = client.get("/studio/")
         val assetResponse = client.get(assetPath)
         val configResponse = client.get("/studio/config")
+        val consoleConfigResponse = client.get("/console/api/config")
         val contributorResponse = client.get("/studio/api/contributors")
         val config = objectMapper.readTree(configResponse.body<String>())
+        val consoleConfig = objectMapper.readTree(consoleConfigResponse.body<String>())["data"]
         val contributors = objectMapper.readTree(contributorResponse.body<String>())
 
         assertEquals(HttpStatusCode.OK, rootResponse.status)
@@ -69,6 +71,7 @@ class StudioControllerTest {
         )
         assertEquals("example-app", config["contributorId"].asString())
         assertEquals("/example-api", config["apiBaseUrl"].asString())
+        assertEquals(config, consoleConfig)
         assertEquals(2, contributors.size())
         assertFalse(contributors[0]["editable"].asBoolean())
         assertTrue(contributors[1]["editable"].asBoolean())
@@ -120,6 +123,7 @@ class StudioControllerTest {
         val apiResponse = client.post("/studio/api/write")
         val consoleResponse = client.get("/console")
         val catalogResponse = client.get("/console/api/catalog")
+        val consoleConfigResponse = client.get("/console/api/config")
         val unknownConsoleApiResponse = client.get("/console/api/missing")
 
         assertEquals(HttpStatusCode.Forbidden, rootResponse.status)
@@ -128,6 +132,7 @@ class StudioControllerTest {
         assertEquals(HttpStatusCode.Forbidden, apiResponse.status)
         assertEquals(HttpStatusCode.OK, consoleResponse.status)
         assertEquals(HttpStatusCode.Forbidden, catalogResponse.status)
+        assertEquals(HttpStatusCode.Forbidden, consoleConfigResponse.status)
         assertEquals(HttpStatusCode.Forbidden, unknownConsoleApiResponse.status)
         assertFalse(apiInvoked)
     }
@@ -246,20 +251,20 @@ class StudioControllerTest {
     }
 
     @Test
-    fun `使用真实监听信息生成浏览器可访问的 Studio 地址`() {
+    fun `使用真实监听信息生成浏览器可访问的 Console 地址`() {
         assertEquals(
-            "http://localhost:49000/studio/",
-            connector(ConnectorType.HTTP, "0.0.0.0", 49000).studioUrl(),
+            "http://localhost:49000/console/",
+            connector(ConnectorType.HTTP, "0.0.0.0", 49000).consoleUrl(),
         )
         assertEquals(
-            "https://example.test:443/application/studio/",
-            connector(ConnectorType.HTTPS, "example.test", 443).studioUrl("/application"),
+            "https://example.test:443/application/console/",
+            connector(ConnectorType.HTTPS, "example.test", 443).consoleUrl("/application"),
         )
         assertEquals(
-            "http://[::1]:8080/studio/",
-            connector(ConnectorType.HTTP, "::1", 8080).studioUrl(),
+            "http://[::1]:8080/console/",
+            connector(ConnectorType.HTTP, "::1", 8080).consoleUrl(),
         )
-        assertEquals(null, connector(ConnectorType.UNIX, "localhost", 0).studioUrl())
+        assertEquals(null, connector(ConnectorType.UNIX, "localhost", 0).consoleUrl())
     }
 
     private fun controller(

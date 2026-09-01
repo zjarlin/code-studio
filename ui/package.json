@@ -13,6 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@platform/openapi-workbench": "workspace:*",
     "@lucide/vue": "^1.29.0",
     "@tanstack/vue-table": "^9.0.0",
     "@vueuse/core": "^14.4.0",

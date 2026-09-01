@@ -1,32 +1,1158 @@
 {
-  "openapi": "3.1.0",
+  "openapi": "3.1.1",
   "info": {
-    "title": "Development API",
+    "title": "Console Client API",
     "version": "1.0.0",
-    "description": "Built-in API for verifying the generated application runtime."
+    "description": "Generated from shared transport contracts."
   },
-  "tags": [
-    {
-      "name": "Example",
-      "description": "Built-in runnable examples."
-    }
-  ],
   "paths": {
     "/hello": {
       "get": {
         "operationId": "getHello",
-        "summary": "Hello World",
-        "description": "Returns a greeting from the generated application.",
         "tags": [
           "Example"
         ],
+        "summary": "",
         "responses": {
           "200": {
-            "description": "Greeting returned successfully.",
+            "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HelloResponse"
+                  "$ref": "#/components/schemas/ExampleHelloResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/config": {
+      "get": {
+        "operationId": "getStudioConfig",
+        "tags": [
+          "Console"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioClientConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/config": {
+      "get": {
+        "operationId": "getConsoleConfig",
+        "tags": [
+          "Console"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/StudioClientConfig"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/catalog": {
+      "get": {
+        "operationId": "getConsoleCatalog",
+        "tags": [
+          "Console"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/LsiCatalogEntry"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/page": {
+      "get": {
+        "operationId": "listLibraries",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryPage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/validate": {
+      "post": {
+        "operationId": "validateLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/add": {
+      "post": {
+        "operationId": "addLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/agent/settings": {
+      "put": {
+        "operationId": "updateAgentSettings",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentProviderSettingsCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentProviderSettingsView"
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      },
+      "get": {
+        "operationId": "getAgentSettings",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentProviderSettingsView"
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/models": {
+      "get": {
+        "operationId": "listAgentModels",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentProviderModel"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/conversations": {
+      "post": {
+        "operationId": "createAgentConversation",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentConversationCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      },
+      "get": {
+        "operationId": "listAgentConversations",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentConversationView"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/console/api/reports": {
+      "post": {
+        "operationId": "createReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportCreateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listReports",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportListPage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/reports/{reportKey}": {
+      "put": {
+        "operationId": "updateReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportUpdateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/reports/{reportKey}/publication": {
+      "post": {
+        "operationId": "publishReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportPublishCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ReportPublicationView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "unpublishReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/published-reports": {
+      "get": {
+        "operationId": "listPublishedReports",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PublishedReportListPage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/published-reports/{reportKey}": {
+      "get": {
+        "operationId": "getPublishedReport",
+        "tags": [
+          "Reports"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "reportKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PublishedReportView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/spreadsheet-templates": {
+      "post": {
+        "operationId": "importSpreadsheetTemplate",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "templateKey",
+                  "name",
+                  "file"
+                ],
+                "properties": {
+                  "templateKey": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SpreadsheetTemplateView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "listSpreadsheetTemplates",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SpreadsheetTemplateListPage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/spreadsheet-templates/{templateKey}": {
+      "put": {
+        "operationId": "updateSpreadsheetTemplate",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpreadsheetTemplateUpdateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SpreadsheetTemplateView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSpreadsheetTemplate",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "getSpreadsheetTemplate",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/SpreadsheetTemplateView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/console/api/spreadsheet-templates/{templateKey}/fill": {
+      "post": {
+        "operationId": "fillSpreadsheetTemplate",
+        "tags": [
+          "Spreadsheet Templates"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "templateKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpreadsheetTemplateFillCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Generated spreadsheet",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -37,8 +1163,9 @@
   },
   "components": {
     "schemas": {
-      "HelloResponse": {
+      "ExampleHelloResponse": {
         "type": "object",
+        "title": "ExampleHelloResponse",
         "required": [
           "message",
           "category",
@@ -47,25 +1174,1843 @@
         ],
         "properties": {
           "message": {
-            "type": "string",
-            "description": "Greeting message.",
-            "example": "Hello, world!"
+            "type": "string"
           },
           "category": {
-            "type": "string",
-            "description": "Example chart category.",
-            "example": "Example"
+            "type": "string"
           },
           "value": {
-            "type": "integer",
-            "format": "int32",
-            "description": "Example metric value.",
-            "example": 1
+            "type": "integer"
           },
           "imagePath": {
+            "type": "string"
+          }
+        }
+      },
+      "StudioClientConfig": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "StudioClientConfig",
+        "required": [
+          "contributorId",
+          "displayName",
+          "apiBaseUrl",
+          "openApiPath",
+          "editableContributorId",
+          "capabilities"
+        ],
+        "properties": {
+          "contributorId": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "apiBaseUrl": {
+            "type": "string"
+          },
+          "openApiPath": {
+            "type": "string"
+          },
+          "editableContributorId": {
+            "type": "string"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LsiCatalogEntry": {
+        "type": "object",
+        "title": "LsiCatalogEntry",
+        "required": [
+          "routeKey",
+          "kind",
+          "name"
+        ],
+        "properties": {
+          "routeKey": {
+            "type": "string"
+          },
+          "elementKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parentKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
             "type": "string",
-            "description": "Same-origin image path used by the report example.",
-            "example": "/studio/favicon.svg"
+            "enum": [
+              "SCENE",
+              "ROUTE",
+              "ELEMENT"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "order": {
+            "type": "integer"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LibraryDataScopeDescriptor": {
+        "type": "object",
+        "title": "LibraryDataScopeDescriptor",
+        "properties": {
+          "tenantScoped": {
+            "type": "boolean"
+          },
+          "userScoped": {
+            "type": "boolean"
+          },
+          "departmentScoped": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LibrarySpec": {
+        "type": "object",
+        "title": "LibrarySpec",
+        "required": [
+          "contributorId",
+          "packagePrefix",
+          "scanPackage"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contributorId": {
+            "type": "string"
+          },
+          "packagePrefix": {
+            "type": "string"
+          },
+          "scanPackage": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BUSINESS",
+              "BUILT_IN"
+            ]
+          },
+          "runtimeDependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedIdentityModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "EXTERNAL_JWT",
+                "LOCAL"
+              ]
+            }
+          },
+          "applicationSelectable": {
+            "type": "boolean"
+          },
+          "dataScope": {
+            "$ref": "#/components/schemas/LibraryDataScopeDescriptor"
+          }
+        }
+      },
+      "LibraryFeatureView": {
+        "type": "object",
+        "title": "LibraryFeatureView",
+        "required": [
+          "id",
+          "libraryId",
+          "featureCode",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "libraryId": {
+            "type": "integer"
+          },
+          "parentId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LibraryView": {
+        "type": "object",
+        "title": "LibraryView",
+        "required": [
+          "id",
+          "code",
+          "displayName",
+          "version",
+          "status",
+          "spec"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/LibrarySpec"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryFeatureView"
+            }
+          }
+        }
+      },
+      "LibraryPage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryPage",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryView"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "LibraryCommand": {
+        "type": "object",
+        "title": "LibraryCommand",
+        "required": [
+          "code",
+          "displayName",
+          "spec"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/LibrarySpec"
+          }
+        }
+      },
+      "MetadataValidationResult": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "MetadataValidationResult",
+        "required": [
+          "valid"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AgentProviderSettingsView": {
+        "type": "object",
+        "title": "AgentProviderSettingsView",
+        "required": [
+          "baseUrl",
+          "apiKeyConfigured"
+        ],
+        "properties": {
+          "baseUrl": {
+            "type": "string"
+          },
+          "apiKeyConfigured": {
+            "type": "boolean"
+          },
+          "apiKeyMasked": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AgentProviderSettingsCommand": {
+        "type": "object",
+        "title": "AgentProviderSettingsCommand",
+        "required": [
+          "baseUrl"
+        ],
+        "properties": {
+          "baseUrl": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AgentProviderModel": {
+        "type": "object",
+        "title": "AgentProviderModel",
+        "required": [
+          "id",
+          "contextWindow",
+          "contextWindowEstimated"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "contextWindow": {
+            "type": "integer"
+          },
+          "contextWindowEstimated": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentConversationView": {
+        "type": "object",
+        "title": "AgentConversationView",
+        "required": [
+          "id",
+          "externalId",
+          "title",
+          "createTime"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "modelId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createTime": {
+            "type": "string"
+          },
+          "updateTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AgentConversationCommand": {
+        "type": "object",
+        "title": "AgentConversationCommand",
+        "required": [
+          "modelId"
+        ],
+        "properties": {
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportListItemView": {
+        "type": "object",
+        "title": "ReportListItemView",
+        "required": [
+          "reportKey",
+          "revision",
+          "name"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "publishedRevision": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "ReportListPage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ReportListPage",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportListItemView"
+            }
+          },
+          "totalRowCount": {
+            "type": "integer"
+          },
+          "totalPageCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReportPageSpec": {
+        "type": "object",
+        "title": "ReportPageSpec",
+        "properties": {
+          "orientation": {
+            "type": "string",
+            "enum": [
+              "PORTRAIT",
+              "LANDSCAPE"
+            ]
+          },
+          "marginMm": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReportParameterOption": {
+        "type": "object",
+        "title": "ReportParameterOption",
+        "required": [
+          "value",
+          "label"
+        ],
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportParameter": {
+        "type": "object",
+        "title": "ReportParameter",
+        "required": [
+          "key",
+          "label",
+          "type"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "DATE",
+              "DATETIME",
+              "ENUM"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "defaultValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportParameterOption"
+            }
+          }
+        }
+      },
+      "JsonElement": {
+        "title": "JsonElement",
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "array"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true
+          }
+        ]
+      },
+      "ReportParameterBinding": {
+        "type": "object",
+        "title": "ReportParameterBinding",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PARAMETER",
+              "LITERAL"
+            ]
+          },
+          "parameterKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "literal": {
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "ReportDatasetField": {
+        "type": "object",
+        "title": "ReportDatasetField",
+        "required": [
+          "key",
+          "label",
+          "pointer"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "pointer": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportDatasetSpec": {
+        "type": "object",
+        "title": "ReportDatasetSpec",
+        "required": [
+          "key",
+          "name",
+          "source"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "MODEL",
+              "OPENAPI"
+            ]
+          },
+          "modelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operationId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parameterBindings": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReportParameterBinding"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportDatasetField"
+            }
+          }
+        }
+      },
+      "ReportChartBlock": {
+        "type": "object",
+        "title": "ReportChartBlock",
+        "required": [
+          "key",
+          "datasetKey",
+          "chartKind",
+          "categoryPointer",
+          "valuePointer",
+          "kind"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "datasetKey": {
+            "type": "string"
+          },
+          "chartKind": {
+            "type": "string",
+            "enum": [
+              "BAR",
+              "LINE",
+              "PIE"
+            ]
+          },
+          "categoryPointer": {
+            "type": "string"
+          },
+          "valuePointer": {
+            "type": "string"
+          },
+          "columnSpan": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CHART"
+            ]
+          }
+        }
+      },
+      "ReportImageBlock": {
+        "type": "object",
+        "title": "ReportImageBlock",
+        "required": [
+          "key",
+          "datasetKey",
+          "sourcePointer",
+          "alt",
+          "kind"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "datasetKey": {
+            "type": "string"
+          },
+          "sourcePointer": {
+            "type": "string"
+          },
+          "alt": {
+            "type": "string"
+          },
+          "columnSpan": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "IMAGE"
+            ]
+          }
+        }
+      },
+      "ReportMetricBlock": {
+        "type": "object",
+        "title": "ReportMetricBlock",
+        "required": [
+          "key",
+          "datasetKey",
+          "label",
+          "valuePointer",
+          "kind"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "datasetKey": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "valuePointer": {
+            "type": "string"
+          },
+          "aggregate": {
+            "type": "string",
+            "enum": [
+              "FIRST",
+              "COUNT",
+              "SUM",
+              "AVG",
+              "MIN",
+              "MAX"
+            ]
+          },
+          "columnSpan": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "METRIC"
+            ]
+          }
+        }
+      },
+      "ReportTableColumn": {
+        "type": "object",
+        "title": "ReportTableColumn",
+        "required": [
+          "key",
+          "label",
+          "valuePointer"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "valuePointer": {
+            "type": "string"
+          }
+        }
+      },
+      "ReportTableBlock": {
+        "type": "object",
+        "title": "ReportTableBlock",
+        "required": [
+          "key",
+          "datasetKey",
+          "kind"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "datasetKey": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportTableColumn"
+            }
+          },
+          "rowLimit": {
+            "type": "integer"
+          },
+          "columnSpan": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TABLE"
+            ]
+          }
+        }
+      },
+      "ReportTextBlock": {
+        "type": "object",
+        "title": "ReportTextBlock",
+        "required": [
+          "key",
+          "text",
+          "kind"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "columnSpan": {
+            "type": "integer"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "TEXT"
+            ]
+          }
+        }
+      },
+      "ReportBlockSpec": {
+        "type": "object",
+        "title": "ReportBlockSpec",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ReportChartBlock"
+          },
+          {
+            "$ref": "#/components/schemas/ReportImageBlock"
+          },
+          {
+            "$ref": "#/components/schemas/ReportMetricBlock"
+          },
+          {
+            "$ref": "#/components/schemas/ReportTableBlock"
+          },
+          {
+            "$ref": "#/components/schemas/ReportTextBlock"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "CHART": "#/components/schemas/ReportChartBlock",
+            "IMAGE": "#/components/schemas/ReportImageBlock",
+            "METRIC": "#/components/schemas/ReportMetricBlock",
+            "TABLE": "#/components/schemas/ReportTableBlock",
+            "TEXT": "#/components/schemas/ReportTextBlock"
+          }
+        }
+      },
+      "ReportRowSpec": {
+        "type": "object",
+        "title": "ReportRowSpec",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportBlockSpec"
+            }
+          }
+        }
+      },
+      "ReportDocument": {
+        "type": "object",
+        "title": "ReportDocument",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "page": {
+            "$ref": "#/components/schemas/ReportPageSpec"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportParameter"
+            }
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportDatasetSpec"
+            }
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportRowSpec"
+            }
+          }
+        }
+      },
+      "ReportCreateCommand": {
+        "type": "object",
+        "title": "ReportCreateCommand",
+        "required": [
+          "reportKey",
+          "document"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "document": {
+            "$ref": "#/components/schemas/ReportDocument"
+          }
+        }
+      },
+      "ReportView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ReportView",
+        "required": [
+          "reportKey",
+          "revision",
+          "document"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/ReportDocument"
+          },
+          "publishedRevision": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "ReportUpdateCommand": {
+        "type": "object",
+        "title": "ReportUpdateCommand",
+        "required": [
+          "expectedRevision",
+          "document"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/ReportDocument"
+          }
+        }
+      },
+      "ReportPublishCommand": {
+        "type": "object",
+        "title": "ReportPublishCommand",
+        "required": [
+          "expectedRevision"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer"
+          }
+        }
+      },
+      "ReportPublicationView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ReportPublicationView",
+        "required": [
+          "reportKey",
+          "publishedRevision",
+          "document"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "publishedRevision": {
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/ReportDocument"
+          }
+        }
+      },
+      "PublishedReportListItemView": {
+        "type": "object",
+        "title": "PublishedReportListItemView",
+        "required": [
+          "reportKey",
+          "publishedRevision",
+          "name"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "publishedRevision": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PublishedReportListPage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "PublishedReportListPage",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublishedReportListItemView"
+            }
+          },
+          "totalRowCount": {
+            "type": "integer"
+          },
+          "totalPageCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "PublishedReportView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "PublishedReportView",
+        "required": [
+          "reportKey",
+          "publishedRevision",
+          "document"
+        ],
+        "properties": {
+          "reportKey": {
+            "type": "string"
+          },
+          "publishedRevision": {
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/ReportDocument"
+          }
+        }
+      },
+      "SpreadsheetTemplateListItemView": {
+        "type": "object",
+        "title": "SpreadsheetTemplateListItemView",
+        "required": [
+          "templateKey",
+          "revision",
+          "name",
+          "fileName",
+          "macroEnabled"
+        ],
+        "properties": {
+          "templateKey": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "macroEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpreadsheetTemplateListPage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "SpreadsheetTemplateListPage",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetTemplateListItemView"
+            }
+          },
+          "totalRowCount": {
+            "type": "integer"
+          },
+          "totalPageCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "SpreadsheetSourceSpec": {
+        "type": "object",
+        "title": "SpreadsheetSourceSpec",
+        "required": [
+          "fileName",
+          "mediaType",
+          "sha256"
+        ],
+        "properties": {
+          "fileName": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "macroEnabled": {
+            "type": "boolean"
+          },
+          "containsExternalLinks": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpreadsheetStyleSpec": {
+        "type": "object",
+        "title": "SpreadsheetStyleSpec",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "integer"
+          },
+          "fontFamily": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fontSizePt": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "bold": {
+            "type": "boolean"
+          },
+          "italic": {
+            "type": "boolean"
+          },
+          "textColor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fillColor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "horizontalAlignment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verticalAlignment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "wrapText": {
+            "type": "boolean"
+          },
+          "borderTop": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borderRight": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borderBottom": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "borderLeft": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "numberFormat": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SpreadsheetCellSpec": {
+        "type": "object",
+        "title": "SpreadsheetCellSpec",
+        "required": [
+          "row",
+          "column",
+          "type",
+          "styleKey"
+        ],
+        "properties": {
+          "row": {
+            "type": "integer"
+          },
+          "column": {
+            "type": "integer"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "EMPTY",
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "DATE",
+              "ERROR",
+              "FORMULA"
+            ]
+          },
+          "displayValue": {
+            "type": "string"
+          },
+          "formula": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "styleKey": {
+            "type": "integer"
+          }
+        }
+      },
+      "SpreadsheetRangeSpec": {
+        "type": "object",
+        "title": "SpreadsheetRangeSpec",
+        "required": [
+          "fromRow",
+          "fromColumn"
+        ],
+        "properties": {
+          "fromRow": {
+            "type": "integer"
+          },
+          "fromColumn": {
+            "type": "integer"
+          },
+          "toRow": {
+            "type": "integer"
+          },
+          "toColumn": {
+            "type": "integer"
+          }
+        }
+      },
+      "SpreadsheetImageSpec": {
+        "type": "object",
+        "title": "SpreadsheetImageSpec",
+        "required": [
+          "key",
+          "mediaType",
+          "dataBase64",
+          "range"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "dataBase64": {
+            "type": "string"
+          },
+          "range": {
+            "$ref": "#/components/schemas/SpreadsheetRangeSpec"
+          }
+        }
+      },
+      "SpreadsheetPrintSpec": {
+        "type": "object",
+        "title": "SpreadsheetPrintSpec",
+        "properties": {
+          "area": {
+            "$ref": "#/components/schemas/SpreadsheetRangeSpec"
+          },
+          "landscape": {
+            "type": "boolean"
+          },
+          "paperSize": {
+            "type": "integer"
+          },
+          "fitWidth": {
+            "type": "integer"
+          },
+          "fitHeight": {
+            "type": "integer"
+          },
+          "marginLeft": {
+            "type": "number"
+          },
+          "marginRight": {
+            "type": "number"
+          },
+          "marginTop": {
+            "type": "number"
+          },
+          "marginBottom": {
+            "type": "number"
+          }
+        }
+      },
+      "SpreadsheetSheetSpec": {
+        "type": "object",
+        "title": "SpreadsheetSheetSpec",
+        "required": [
+          "key",
+          "name",
+          "rowCount",
+          "columnCount"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rowCount": {
+            "type": "integer"
+          },
+          "columnCount": {
+            "type": "integer"
+          },
+          "columnWidthsPx": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "rowHeightsPx": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "hiddenColumns": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetCellSpec"
+            }
+          },
+          "mergedRanges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetRangeSpec"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetImageSpec"
+            }
+          },
+          "print": {
+            "$ref": "#/components/schemas/SpreadsheetPrintSpec"
+          }
+        }
+      },
+      "SpreadsheetVariableSpec": {
+        "type": "object",
+        "title": "SpreadsheetVariableSpec",
+        "required": [
+          "key",
+          "label"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "DATE",
+              "DATETIME",
+              "IMAGE"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "defaultValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SpreadsheetBindingSpec": {
+        "type": "object",
+        "title": "SpreadsheetBindingSpec",
+        "required": [
+          "key",
+          "variableKey",
+          "sheetKey",
+          "target",
+          "range"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "variableKey": {
+            "type": "string"
+          },
+          "sheetKey": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "CELL",
+              "MERGED_RANGE",
+              "IMAGE_ANCHOR"
+            ]
+          },
+          "range": {
+            "$ref": "#/components/schemas/SpreadsheetRangeSpec"
+          }
+        }
+      },
+      "SpreadsheetLedgerFieldSpec": {
+        "type": "object",
+        "title": "SpreadsheetLedgerFieldSpec",
+        "required": [
+          "key",
+          "label",
+          "column"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "TEXT",
+              "NUMBER",
+              "BOOLEAN",
+              "DATE",
+              "DATETIME",
+              "IMAGE"
+            ]
+          },
+          "column": {
+            "type": "integer"
+          },
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpreadsheetLedgerSpec": {
+        "type": "object",
+        "title": "SpreadsheetLedgerSpec",
+        "required": [
+          "key",
+          "name",
+          "sheetKey",
+          "firstRow"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sheetKey": {
+            "type": "string"
+          },
+          "firstRow": {
+            "type": "integer"
+          },
+          "maxRows": {
+            "type": "integer"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetLedgerFieldSpec"
+            }
+          }
+        }
+      },
+      "SpreadsheetCellEditSpec": {
+        "type": "object",
+        "title": "SpreadsheetCellEditSpec",
+        "required": [
+          "sheetKey",
+          "row",
+          "column",
+          "value"
+        ],
+        "properties": {
+          "sheetKey": {
+            "type": "string"
+          },
+          "row": {
+            "type": "integer"
+          },
+          "column": {
+            "type": "integer"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      },
+      "SpreadsheetTemplateDocument": {
+        "type": "object",
+        "title": "SpreadsheetTemplateDocument",
+        "required": [
+          "name",
+          "source",
+          "sheets"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/SpreadsheetSourceSpec"
+          },
+          "styles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetStyleSpec"
+            }
+          },
+          "sheets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetSheetSpec"
+            }
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetVariableSpec"
+            }
+          },
+          "bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetBindingSpec"
+            }
+          },
+          "ledgers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetLedgerSpec"
+            }
+          },
+          "edits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetCellEditSpec"
+            }
+          }
+        }
+      },
+      "SpreadsheetTemplateView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "SpreadsheetTemplateView",
+        "required": [
+          "templateKey",
+          "revision",
+          "document"
+        ],
+        "properties": {
+          "templateKey": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "document": {
+            "$ref": "#/components/schemas/SpreadsheetTemplateDocument"
+          }
+        }
+      },
+      "SpreadsheetTemplateDraftSpec": {
+        "type": "object",
+        "title": "SpreadsheetTemplateDraftSpec",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetVariableSpec"
+            }
+          },
+          "bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetBindingSpec"
+            }
+          },
+          "ledgers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetLedgerSpec"
+            }
+          },
+          "edits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpreadsheetCellEditSpec"
+            }
+          }
+        }
+      },
+      "SpreadsheetTemplateUpdateCommand": {
+        "type": "object",
+        "title": "SpreadsheetTemplateUpdateCommand",
+        "required": [
+          "expectedRevision",
+          "draft"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/SpreadsheetTemplateDraftSpec"
+          }
+        }
+      },
+      "SpreadsheetTemplateFillCommand": {
+        "type": "object",
+        "title": "SpreadsheetTemplateFillCommand",
+        "required": [
+          "expectedRevision"
+        ],
+        "properties": {
+          "expectedRevision": {
+            "type": "integer"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "ledgers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

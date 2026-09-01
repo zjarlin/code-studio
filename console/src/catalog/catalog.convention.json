@@ -22,17 +22,5 @@
     "order": 20,
     "permissions": [],
     "enabled": true
-  },
-  {
-    "routeKey": "reports",
-    "path": "/console/reports/library",
-    "parentKey": null,
-    "kind": "SCENE",
-    "name": "报表",
-    "description": "查看已发布报表",
-    "icon": "chart-no-axes-combined",
-    "order": 30,
-    "permissions": [],
-    "enabled": true
   }
 ]

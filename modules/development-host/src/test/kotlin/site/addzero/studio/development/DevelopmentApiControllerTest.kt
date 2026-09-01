@@ -29,10 +29,10 @@ class DevelopmentApiControllerTest {
 
         val openApiResponse = client.get("/v3/api-docs")
         val openApi = objectMapper.readTree(openApiResponse.body<String>())
-        val documentedPath = openApi["paths"].propertyNames().asSequence().single()
+        val documentedPath = "/hello"
         val operation = openApi["paths"][documentedPath]["get"]
         val responseSchema = operation["responses"]["200"]["content"]["application/json"]["schema"]
-        val messageSchema = openApi["components"]["schemas"]["HelloResponse"]["properties"]["message"]
+        val messageSchema = openApi["components"]["schemas"]["ExampleHelloResponse"]["properties"]["message"]
         val helloResponse = client.get(documentedPath)
         val hello = objectMapper.readTree(helloResponse.body<String>())
 
@@ -44,10 +44,42 @@ class DevelopmentApiControllerTest {
         assertEquals("Example", hello["category"].asString())
         assertEquals(1, hello["value"].asInt())
         assertEquals("/studio/favicon.svg", hello["imagePath"].asString())
-        assertEquals("3.1.0", openApi["openapi"].asString())
+        assertEquals("3.1.1", openApi["openapi"].asString())
         assertEquals("getHello", operation["operationId"].asString())
-        assertEquals("#/components/schemas/HelloResponse", responseSchema["\$ref"].asString())
-        assertEquals(hello["message"].asString(), messageSchema["example"].asString())
+        assertEquals("#/components/schemas/ExampleHelloResponse", responseSchema["\$ref"].asString())
+        assertEquals("string", messageSchema["type"].asString())
+    }
+
+    @Test
+    fun `OpenAPI 包含 Studio Library 客户端契约`() = testApplication {
+        application {
+            routing {
+                DevelopmentApiController.install(this)
+            }
+        }
+
+        val openApiResponse = client.get("/v3/api-docs")
+        val openApi = objectMapper.readTree(openApiResponse.body<String>())
+        val paths = openApi["paths"]
+        val listOperation = paths["/studio/api/lowcode/library/page"]["get"]
+        val validateOperation = paths["/studio/api/lowcode/library/validate"]["post"]
+        val addOperation = paths["/studio/api/lowcode/library/add"]["post"]
+        val configOperation = paths["/studio/config"]["get"]
+
+        assertEquals(HttpStatusCode.OK, openApiResponse.status)
+        assertEquals("listLibraries", listOperation["operationId"].asString())
+        assertEquals("validateLibrary", validateOperation["operationId"].asString())
+        assertEquals("addLibrary", addOperation["operationId"].asString())
+        assertEquals("getStudioConfig", configOperation["operationId"].asString())
+        assertEquals(
+            "#/components/schemas/LibraryCommand",
+            addOperation["requestBody"]["content"]["application/json"]["schema"]["\$ref"].asString(),
+        )
+        assertEquals(
+            "#/components/schemas/LibraryPage",
+            listOperation["responses"]["200"]["content"]["application/json"]["schema"]
+                ["properties"]["data"]["\$ref"].asString(),
+        )
     }
 
     @Test

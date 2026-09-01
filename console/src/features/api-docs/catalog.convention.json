@@ -5,10 +5,10 @@
     "parentKey": "studio",
     "kind": "ROUTE",
     "name": "API 文档",
-    "description": "浏览宿主 OpenAPI 契约",
+    "description": "浏览并调试宿主 OpenAPI 契约",
     "icon": "book-open",
     "order": 20,
-    "permissions": [],
+    "permissions": ["GET:/console/api/config"],
     "enabled": true
   },
   {
@@ -21,7 +21,59 @@
     "description": "重新读取 OpenAPI 文档",
     "icon": "refresh-cw",
     "order": 10,
-    "permissions": [],
+    "permissions": ["GET:/console/api/config"],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.api-docs",
+    "elementKey": "studio.api-docs.auth",
+    "path": null,
+    "parentKey": "studio.api-docs",
+    "kind": "ELEMENT",
+    "name": "鉴权",
+    "description": "设置本次页面会话使用的临时 Bearer Token",
+    "icon": "key-round",
+    "order": 20,
+    "permissions": ["GET:/console/api/config"],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.api-docs",
+    "elementKey": "studio.api-docs.send",
+    "path": null,
+    "parentKey": "studio.api-docs",
+    "kind": "ELEMENT",
+    "name": "发送",
+    "description": "发送当前 API 请求",
+    "icon": "send",
+    "order": 30,
+    "permissions": ["GET:/console/api/config"],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.api-docs",
+    "elementKey": "studio.api-docs.reset",
+    "path": null,
+    "parentKey": "studio.api-docs",
+    "kind": "ELEMENT",
+    "name": "重置",
+    "description": "重置当前请求参数和请求体",
+    "icon": "rotate-ccw",
+    "order": 40,
+    "permissions": ["GET:/console/api/config"],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.api-docs",
+    "elementKey": "studio.api-docs.copy-curl",
+    "path": null,
+    "parentKey": "studio.api-docs",
+    "kind": "ELEMENT",
+    "name": "复制 cURL",
+    "description": "复制当前显示的 cURL 命令",
+    "icon": "copy",
+    "order": 50,
+    "permissions": ["GET:/console/api/config"],
     "enabled": true
   }
 ]

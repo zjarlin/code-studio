@@ -1,0 +1,538 @@
+.spreadsheet-designer-page {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #eceff2;
+}
+
+.spreadsheet-commandbar {
+  display: flex;
+  min-height: 52px;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.spreadsheet-template-picker,
+.spreadsheet-import-fields,
+.spreadsheet-command-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.spreadsheet-template-picker {
+  flex: 1 1 280px;
+}
+
+.spreadsheet-template-picker > span,
+.spreadsheet-template-picker > small {
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.spreadsheet-import-fields {
+  flex: 1 1 360px;
+}
+
+.spreadsheet-command-actions {
+  flex: none;
+}
+
+.spreadsheet-commandbar select,
+.spreadsheet-commandbar input,
+.spreadsheet-tools select,
+.spreadsheet-tools input,
+.spreadsheet-inspector select,
+.spreadsheet-inspector input,
+.spreadsheet-inspector textarea,
+.spreadsheet-fill-dialog select,
+.spreadsheet-fill-dialog input {
+  min-height: 32px;
+  min-width: 0;
+  padding: 5px 8px;
+  color: var(--foreground);
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+
+.spreadsheet-template-picker select {
+  width: min(220px, 30vw);
+}
+
+.spreadsheet-import-fields input {
+  width: 130px;
+}
+
+.spreadsheet-workbench {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  grid-template-columns: 250px minmax(0, 1fr) 300px;
+  overflow: hidden;
+}
+
+.spreadsheet-tools,
+.spreadsheet-inspector {
+  z-index: 4;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  background: var(--surface);
+}
+
+.spreadsheet-tools {
+  border-right: 1px solid var(--border);
+}
+
+.spreadsheet-inspector {
+  background: #fafbfc;
+  border-left: 1px solid var(--border);
+}
+
+.spreadsheet-tools section,
+.spreadsheet-inspector section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spreadsheet-tools section + section,
+.spreadsheet-inspector section + section {
+  padding-top: 14px;
+}
+
+.spreadsheet-tools h2,
+.spreadsheet-inspector h2,
+.spreadsheet-fill-dialog h2,
+.spreadsheet-fill-dialog h3 {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.spreadsheet-compact-form,
+.spreadsheet-ledger-editor,
+.spreadsheet-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spreadsheet-list-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.spreadsheet-list-row > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spreadsheet-list-row strong,
+.spreadsheet-list-row small {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spreadsheet-list-row small,
+.spreadsheet-source-facts,
+.spreadsheet-stage-meta {
+  color: var(--muted);
+}
+
+.spreadsheet-stage {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  background: #e6e9ed;
+}
+
+.spreadsheet-stage-meta {
+  display: flex;
+  min-height: 38px;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 10px;
+  background: #f8f9fa;
+  border-bottom: 1px solid var(--border);
+}
+
+.spreadsheet-stage-meta strong {
+  color: var(--foreground);
+  font-size: 11px;
+}
+
+.spreadsheet-stage-meta span {
+  padding: 2px 5px;
+  background: #e8ecef;
+  border-radius: 3px;
+}
+
+.spreadsheet-viewport {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  padding: 20px;
+}
+
+.spreadsheet-grid {
+  display: grid;
+  position: relative;
+  width: max-content;
+  min-width: 100%;
+  color: #1c2430;
+  background: #ffffff;
+  box-shadow: 0 4px 18px rgb(25 35 55 / 10%);
+}
+
+.spreadsheet-corner,
+.spreadsheet-column-header,
+.spreadsheet-row-header {
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #626b78;
+  font-size: 10px;
+  background: #f4f5f7;
+  border-right: 1px solid #d5d9df;
+  border-bottom: 1px solid #d5d9df;
+}
+
+.spreadsheet-corner {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.spreadsheet-cell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px 4px;
+  overflow: hidden;
+  color: inherit;
+  text-align: left;
+  letter-spacing: 0;
+  background: transparent;
+  border: 1px solid #e0e3e7;
+  border-radius: 0;
+}
+
+.spreadsheet-cell > span {
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.spreadsheet-cell > small {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  max-width: calc(100% - 4px);
+  overflow: hidden;
+  color: #116149;
+  font-size: 8px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spreadsheet-cell.is-selected {
+  z-index: 3;
+  outline: 2px solid #1877c9;
+  outline-offset: -2px;
+}
+
+.spreadsheet-cell.has-binding {
+  background-image: linear-gradient(135deg, transparent 0 84%, #35a06f 84% 100%);
+}
+
+.spreadsheet-cell.is-outside-print {
+  opacity: 0.62;
+}
+
+.spreadsheet-image {
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.spreadsheet-inspector label,
+.spreadsheet-fill-dialog label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  color: #596273;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.spreadsheet-inspector textarea {
+  min-height: 68px;
+  resize: vertical;
+}
+
+.spreadsheet-inspector code {
+  padding: 6px;
+  overflow-wrap: anywhere;
+  color: #604f18;
+  font-size: 10px;
+  background: #fff9df;
+}
+
+.spreadsheet-checkbox {
+  flex-direction: row !important;
+  align-items: center;
+}
+
+.spreadsheet-checkbox input {
+  min-height: 14px;
+}
+
+.spreadsheet-span-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.spreadsheet-source-facts {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  font-size: 10px;
+}
+
+.spreadsheet-source-facts div {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.spreadsheet-source-facts dt,
+.spreadsheet-source-facts dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.spreadsheet-empty-state {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--muted);
+  background: #eceff2;
+}
+
+.spreadsheet-empty-state strong {
+  color: var(--foreground);
+  font-size: 15px;
+}
+
+.spreadsheet-empty-state span {
+  font-size: 10px;
+}
+
+.spreadsheet-dialog-backdrop {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(18 24 33 / 42%);
+}
+
+.spreadsheet-fill-dialog {
+  display: flex;
+  width: min(900px, 100%);
+  max-height: min(760px, calc(100vh - 40px));
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  box-shadow: 0 18px 60px rgb(14 22 34 / 25%);
+}
+
+.spreadsheet-fill-dialog > header,
+.spreadsheet-fill-dialog > footer,
+.spreadsheet-dialog-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.spreadsheet-fill-dialog > header,
+.spreadsheet-fill-dialog > footer {
+  flex: none;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.spreadsheet-fill-dialog > header small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.spreadsheet-fill-dialog > footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+}
+
+.spreadsheet-fill-content {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 18px;
+  padding: 14px;
+  overflow: auto;
+}
+
+.spreadsheet-fill-content section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.spreadsheet-fill-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.spreadsheet-ledger-fill-table,
+.spreadsheet-ledger-fill-row {
+  display: grid;
+  gap: 8px;
+}
+
+.spreadsheet-ledger-fill-row {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) 34px;
+  align-items: end;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 1180px) {
+  .spreadsheet-commandbar {
+    flex-wrap: wrap;
+  }
+
+  .spreadsheet-workbench {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .spreadsheet-tools,
+  .spreadsheet-inspector {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: min(310px, calc(100vw - 34px));
+    transition: transform 160ms ease;
+  }
+
+  .spreadsheet-tools {
+    left: 0;
+    transform: translateX(-100%);
+  }
+
+  .spreadsheet-inspector {
+    right: 0;
+    transform: translateX(100%);
+  }
+
+  .spreadsheet-workbench.is-left-open .spreadsheet-tools,
+  .spreadsheet-workbench.is-right-open .spreadsheet-inspector {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 620px) {
+  .spreadsheet-designer-page {
+    min-height: calc(100vh - 102px);
+  }
+
+  .spreadsheet-commandbar {
+    align-items: stretch;
+    padding: 6px;
+  }
+
+  .spreadsheet-template-picker,
+  .spreadsheet-import-fields {
+    flex: 1 1 100%;
+  }
+
+  .spreadsheet-template-picker > span,
+  .spreadsheet-template-picker > small {
+    display: none;
+  }
+
+  .spreadsheet-template-picker select,
+  .spreadsheet-import-fields input {
+    width: 100%;
+  }
+
+  .spreadsheet-command-actions {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .spreadsheet-viewport {
+    padding: 10px;
+  }
+
+  .spreadsheet-fill-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .spreadsheet-dialog-backdrop {
+    padding: 0;
+  }
+
+  .spreadsheet-fill-dialog {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}

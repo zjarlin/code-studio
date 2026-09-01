@@ -1,76 +1,147 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useDeferredValue, useMemo, useState } from 'react'
 
-import { CatalogAction } from '@/components/catalog-action'
-import { DataTable, type DataColumn } from '@/components/data-table'
-import { PageHeader } from '@/components/page-header'
-import { QueryState } from '@/components/query-state'
+import { isBusinessOperation } from '@platform/openapi-workbench'
+import type { ApiHistoryEntry, ApiOperation } from '@platform/openapi-workbench'
+
+import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
+import { PageHeader } from '@/components/composed/page-header/page-header'
+import { QueryState } from '@/components/composed/query-state/query-state'
 import type { CatalogPageProps } from '@/features/page-registry'
 
-import { fetchApiCatalog, type ApiOperationRow } from './api'
-
-const columns: DataColumn<ApiOperationRow>[] = [
-  { key: 'method', header: '方法', width: '80px', cell: (value) => <span className={`method method-${String(value).toLowerCase()}`}>{String(value)}</span> },
-  { key: 'path', header: '路径', cell: (value) => <code>{String(value)}</code> },
-  { key: 'summary', header: '摘要' },
-  { key: 'group', header: '分组', width: '120px' },
-]
+import { fetchApiCatalog, type ApiCatalog } from './catalog'
+import { AuthDialog } from './auth-dialog'
+import { DocumentationPanel } from './documentation-panel'
+import { OperationTree } from './operation-tree'
+import { RequestPanel } from './request-panel'
+import { ResponsePanel } from './response-panel'
+import { useApiWorkbenchSession } from './session'
 
 export default function ApiDocsPage({ route }: CatalogPageProps) {
-  const catalog = useQuery({ queryKey: ['openapi-catalog'], queryFn: fetchApiCatalog })
+  const query = useQuery({ queryKey: ['openapi-catalog'], queryFn: fetchApiCatalog })
+  return (
+    <QueryState error={query.error} pending={query.isPending}>
+      {query.data && <ApiWorkbench catalog={query.data} refresh={() => query.refetch()} route={route} />}
+    </QueryState>
+  )
+}
+
+export function ApiWorkbench({ catalog, refresh, route }: Readonly<{
+  catalog: ApiCatalog
+  refresh: () => void
+  route: CatalogPageProps['route']
+}>) {
+  const session = useApiWorkbenchSession(catalog)
   const [query, setQuery] = useState('')
-  const [selectedId, setSelectedId] = useState<string>()
-  const operations = useMemo(() => {
-    const keyword = query.trim().toLocaleLowerCase()
-    if (!keyword) return catalog.data?.operations ?? []
-    return (catalog.data?.operations ?? []).filter((operation) =>
-      `${operation.method} ${operation.path} ${operation.summary} ${operation.group}`.toLocaleLowerCase().includes(keyword),
-    )
-  }, [catalog.data?.operations, query])
-  const selected = operations.find((operation) => operation.id === selectedId) ?? operations[0]
+  const deferredQuery = useDeferredValue(query.trim().toLocaleLowerCase())
+  const [showAll, setShowAll] = useState(false)
+  const [requestView, setRequestView] = useState<'debug' | 'docs'>('debug')
+  const [authOpen, setAuthOpen] = useState(false)
+  const [mobilePane, setMobilePane] = useState<'tree' | 'request' | 'response'>('request')
+  const businessOperations = useMemo(
+    () => catalog.operations.filter((operation) => isBusinessOperation({
+      baseUrl: catalog.baseUrl,
+      document: catalog.document,
+      operation,
+    })),
+    [catalog],
+  )
+  const scopedOperations = showAll ? catalog.operations : businessOperations
+  const visibleOperations = useMemo(() => scopedOperations.filter((operation) => {
+    if (!deferredQuery) return true
+    return `${operation.method} ${operation.path} ${operation.summary} ${operation.tags.join(' ')}`
+      .toLocaleLowerCase()
+      .includes(deferredQuery)
+  }), [deferredQuery, scopedOperations])
+
+  function changeScope(value: boolean): void {
+    setShowAll(value)
+    if (!value && session.selected && !businessOperations.some((operation) => operation.id === session.selected?.id)) {
+      const first = businessOperations[0]
+      if (first) session.select(first)
+    }
+  }
+
+  function selectOperation(operation: ApiOperation): void {
+    session.select(operation)
+    setMobilePane('request')
+  }
+
+  function selectHistory(entry: ApiHistoryEntry): void {
+    const operation = catalog.operations.find((candidate) => candidate.id === entry.id)
+    if (!operation) return
+    session.select(operation, entry.path)
+    setMobilePane('response')
+  }
 
   return (
-    <div className="page-frame">
+    <div className="page-frame api-page">
       <PageHeader
-        actions={<CatalogAction elementKey="studio.api-docs.refresh" onClick={() => catalog.refetch()} />}
+        actions={(
+          <>
+            {session.manualToken && <span className="api-auth-active">临时鉴权已启用</span>}
+            <CatalogAction elementKey="studio.api-docs.auth" onClick={() => setAuthOpen(true)} />
+            <CatalogAction elementKey="studio.api-docs.refresh" onClick={refresh} />
+          </>
+        )}
         route={route}
       />
-      <div className="toolbar">
-        <input aria-label="搜索 API" onChange={(event) => setQuery(event.target.value)} placeholder="搜索方法、路径或摘要" type="search" value={query} />
-        <span>{operations.length} 个端点</span>
-      </div>
-      <div className="workspace-grid">
-        <section className="workspace-main" aria-label="API 端点">
-          <QueryState error={catalog.error} pending={catalog.isPending}>
-            <DataTable
-              columns={columns}
-              data={operations}
-              emptyText="没有匹配的 API"
-              getRowId={(operation) => operation.id}
-              onRowClick={(operation) => setSelectedId(operation.id)}
-              selectedRowId={selected?.id}
-            />
-          </QueryState>
+
+      <nav className="api-mobile-tabs" aria-label="移动端工作区">
+        <button aria-pressed={mobilePane === 'tree'} onClick={() => setMobilePane('tree')} type="button">接口</button>
+        <button aria-pressed={mobilePane === 'request'} onClick={() => setMobilePane('request')} type="button">请求</button>
+        <button aria-pressed={mobilePane === 'response'} onClick={() => setMobilePane('response')} type="button">响应</button>
+      </nav>
+
+      <main className="api-workbench">
+        <div className={`api-pane api-pane-tree ${mobilePane === 'tree' ? 'is-mobile-active' : ''}`}>
+          <OperationTree
+            document={catalog.document}
+            history={session.history}
+            onHistorySelect={selectHistory}
+            onSelect={selectOperation}
+            onShowAllChange={changeScope}
+            operations={visibleOperations}
+            query={query}
+            selected={session.selected}
+            setQuery={setQuery}
+            showAll={showAll}
+            totalCount={catalog.operations.length}
+          />
+        </div>
+
+        <section className={`api-pane api-request-panel ${mobilePane === 'request' ? 'is-mobile-active' : ''}`} aria-label="请求工作区">
+          <nav className="api-panel-tabs" aria-label="请求视图">
+            <button aria-pressed={requestView === 'debug'} onClick={() => setRequestView('debug')} type="button">调试</button>
+            <button aria-pressed={requestView === 'docs'} onClick={() => setRequestView('docs')} type="button">文档</button>
+          </nav>
+          {session.selected ? (
+            requestView === 'debug' ? (
+              <RequestPanel
+                document={catalog.document}
+                draft={session.draft}
+                error={session.error}
+                onChange={session.setDraft}
+                onReset={session.reset}
+                onSend={session.send}
+                operation={session.selected}
+                pending={session.pending}
+              />
+            ) : <DocumentationPanel document={catalog.document} operation={session.selected} />
+          ) : <div className="api-empty">选择接口后查看请求和文档</div>}
         </section>
-        <aside className="inspector" aria-label="API 摘要">
-          {selected ? (
-            <>
-              <div className="inspector-heading">
-                <span className="eyebrow">{selected.group}</span>
-                <h2>{selected.summary}</h2>
-                <p>{selected.description || '未填写说明'}</p>
-              </div>
-              <dl className="definition-list">
-                <div><dt>方法</dt><dd>{selected.method}</dd></div>
-                <div><dt>路径</dt><dd><code>{selected.path}</code></dd></div>
-                <div><dt>权限</dt><dd>{selected.permission || '无额外声明'}</dd></div>
-                <div><dt>契约</dt><dd>OpenAPI {catalog.data?.openapi}</dd></div>
-                <div><dt>版本</dt><dd>{catalog.data?.version || '-'}</dd></div>
-              </dl>
-            </>
-          ) : <div className="empty-state">选择 API 查看摘要</div>}
-        </aside>
-      </div>
+
+        <div className={`api-pane api-pane-response ${mobilePane === 'response' ? 'is-mobile-active' : ''}`}>
+          <ResponsePanel error={session.error} pending={session.pending} response={session.response} />
+        </div>
+      </main>
+
+      <AuthDialog
+        onChange={session.setManualToken}
+        onClose={() => setAuthOpen(false)}
+        open={authOpen}
+        token={session.manualToken}
+      />
     </div>
   )
 }

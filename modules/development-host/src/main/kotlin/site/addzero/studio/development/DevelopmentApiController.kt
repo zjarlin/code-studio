@@ -5,12 +5,13 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondResource
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import site.addzero.studio.contract.ExampleHelloResponse
 
 /** 安装开发宿主自带的可调用示例接口及其 OpenAPI 文档。 */
 internal object DevelopmentApiController {
     fun install(parent: Route) {
         parent.get("/hello") {
-            val response = HelloResponse(
+            val response = ExampleHelloResponse(
                 message = "Hello, world!",
                 category = "Example",
                 value = 1,

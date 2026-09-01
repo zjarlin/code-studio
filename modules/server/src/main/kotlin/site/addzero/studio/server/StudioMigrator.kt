@@ -13,6 +13,10 @@ internal const val STUDIO_METADATA_HISTORY: String = "code_studio_metadata_histo
 internal const val STUDIO_CORE_MIGRATION_LOCATION: String = "classpath:db/studio/core"
 private val POSTGRESQL_SCHEMA_NAME = Regex("[a-z_][a-z0-9_]{0,62}")
 
+fun interface StudioSchemaMigration {
+    fun migrate()
+}
+
 /** 在宿主数据源中协调 Studio 核心与模块元数据迁移。 */
 class StudioMigrator(
     private val dataSource: DataSource,

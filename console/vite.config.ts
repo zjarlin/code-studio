@@ -24,10 +24,11 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
+      '@generated': path.resolve(import.meta.dirname, './dist/generated'),
     },
   },
   build: {
-    emptyOutDir: true,
+    emptyOutDir: false,
     outDir: process.env.CODE_STUDIO_CONSOLE_OUT_DIR ?? 'dist',
   },
   server: {
@@ -35,7 +36,6 @@ export default defineConfig({
     proxy: {
       '/console/api': apiBase,
       '/studio/api': apiBase,
-      '/studio/config': apiBase,
     },
   },
 })

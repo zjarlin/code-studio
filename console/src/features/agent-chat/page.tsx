@@ -1,21 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-
-import { CatalogAction } from '@/components/catalog-action'
-import { DataTable, type DataColumn } from '@/components/data-table'
-import { PageHeader } from '@/components/page-header'
-import { QueryState } from '@/components/query-state'
-import type { CatalogPageProps } from '@/features/page-registry'
-
 import {
-  createConversation,
-  fetchAgentModels,
-  fetchConversations,
-  type AgentConversation,
-  type AgentModel,
-} from './api'
+  createAgentConversation,
+  listAgentConversations,
+  listAgentModels,
+} from '@generated/openapi/client'
+import type { AgentConversationView, AgentProviderModel } from '@generated/openapi/models'
 
-const columns: DataColumn<AgentConversation>[] = [
+import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
+import { DataTable, type DataColumn } from '@/components/composed/data-table/data-table'
+import { PageHeader } from '@/components/composed/page-header/page-header'
+import { QueryState } from '@/components/composed/query-state/query-state'
+import type { CatalogPageProps } from '@/features/page-registry'
+import { applicationRequestOptions } from '@/lib/application-client'
+
+const columns: DataColumn<AgentConversationView>[] = [
   { key: 'title', header: '对话' },
   { key: 'modelId', header: '模型', width: '180px', cell: (value) => String(value || '-') },
   { key: 'updateTime', header: '最近更新', width: '180px', cell: (value) => formatDate(String(value)) },
@@ -23,12 +22,19 @@ const columns: DataColumn<AgentConversation>[] = [
 
 export default function AgentChatPage({ route }: CatalogPageProps) {
   const queryClient = useQueryClient()
-  const conversations = useQuery({ queryKey: ['agent-conversations'], queryFn: fetchConversations })
-  const models = useQuery({ queryKey: ['agent-models'], queryFn: fetchAgentModels })
+  const conversations = useQuery({
+    queryKey: ['agent-conversations'],
+    queryFn: async () => listAgentConversations(await applicationRequestOptions()),
+  })
+  const models = useQuery({
+    queryKey: ['agent-models'],
+    queryFn: async () => listAgentModels(await applicationRequestOptions()),
+  })
   const [selectedId, setSelectedId] = useState<string>()
   const [creating, setCreating] = useState(false)
   const create = useMutation({
-    mutationFn: ({ modelId, title }: { modelId: string; title: string }) => createConversation(title, modelId),
+    mutationFn: async ({ modelId, title }: { modelId: string; title: string }) =>
+      createAgentConversation({ title: title.trim() || null, modelId }, await applicationRequestOptions()),
     onSuccess: () => {
       setCreating(false)
       return queryClient.invalidateQueries({ queryKey: ['agent-conversations'] })
@@ -98,7 +104,7 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
 
 function CreateConversationDialog({ error, models, onClose, onSubmit, pending }: Readonly<{
   error: Error | null
-  models: AgentModel[]
+  models: AgentProviderModel[]
   onClose: () => void
   onSubmit: (title: string, modelId: string) => void
   pending: boolean
@@ -138,7 +144,8 @@ function CreateConversationDialog({ error, models, onClose, onSubmit, pending }:
   )
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string | null | undefined): string {
+  if (!value) return '-'
   const date = new Date(value)
   return Number.isNaN(date.valueOf()) ? value : new Intl.DateTimeFormat('zh-CN', {
     dateStyle: 'medium', timeStyle: 'short',

@@ -1,6 +1,8 @@
 import type { CatalogEntry, CatalogIndex, CatalogKind, CommonResult } from './types'
 
-import { authenticatedFetch } from '@/lib/access-context'
+import { getConsoleCatalog, getGetConsoleCatalogUrl } from '@generated/openapi/client'
+
+import { requireApiData } from '@/lib/http'
 
 const CATALOG_KINDS = new Set<CatalogKind>(['SCENE', 'ROUTE', 'ELEMENT'])
 const conventionModules = import.meta.glob<unknown>('../**/catalog.convention.json', {
@@ -11,20 +13,14 @@ const defaultEntries = Object.entries(conventionModules)
   .sort(([left], [right]) => left.localeCompare(right))
   .flatMap(([, entries]) => parseCatalogEntries(entries))
 
-export const CATALOG_ENDPOINT = '/console/api/catalog'
+export const CATALOG_ENDPOINT = getGetConsoleCatalogUrl()
 
 export async function loadCatalog(
-  fetcher: typeof fetch = authenticatedFetch,
   fallback: unknown = import.meta.env.DEV ? defaultEntries : undefined,
 ): Promise<CatalogIndex> {
   try {
-    const response = await fetcher(CATALOG_ENDPOINT, {
-      headers: { Accept: 'application/json' },
-    })
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
-    return createCatalogIndex(parseCatalogPayload(await response.json()))
+    const result = await getConsoleCatalog()
+    return createCatalogIndex(parseCatalogEntries(requireApiData(result, '目录响应缺少 data')))
   } catch (cause) {
     if (fallback !== undefined) {
       return createCatalogIndex(parseCatalogEntries(fallback))

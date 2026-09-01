@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes } from 'react'
 import { useCatalog } from '@/catalog/context'
 
 import { Button } from './button'
-import { CatalogIcon } from './catalog-icon'
+import { CatalogIcon } from './composed/catalog-icon/catalog-icon'
 
 interface CatalogIconActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label' | 'children' | 'title'> {
   elementKey: string

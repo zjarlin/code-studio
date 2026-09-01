@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
+import type { LibraryView } from '@generated/openapi/models'
 
-import { CatalogAction } from '@/components/catalog-action'
-import { DataTable, type DataColumn } from '@/components/data-table'
-import { PageHeader } from '@/components/page-header'
-import { QueryState } from '@/components/query-state'
+import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
+import { DataTable, type DataColumn } from '@/components/composed/data-table/data-table'
+import { PageHeader } from '@/components/composed/page-header/page-header'
+import { QueryState } from '@/components/composed/query-state/query-state'
 import type { CatalogPageProps } from '@/features/page-registry'
 
 import {
@@ -12,10 +13,9 @@ import {
   fetchLibraries,
   fetchStudioConfig,
   type CreateLibraryInput,
-  type LibraryDefinition,
-} from './api'
+} from './commands'
 
-const columns: DataColumn<LibraryDefinition>[] = [
+const columns: DataColumn<LibraryView>[] = [
   { key: 'displayName', header: 'Library' },
   { key: 'code', header: '代码' },
   { key: 'version', header: '版本', width: '72px' },
@@ -92,7 +92,7 @@ export default function LibraryPage({ route }: CatalogPageProps) {
   )
 }
 
-function LibraryInspector({ library }: Readonly<{ library: LibraryDefinition }>) {
+function LibraryInspector({ library }: Readonly<{ library: LibraryView }>) {
   return (
     <>
       <div className="inspector-heading">

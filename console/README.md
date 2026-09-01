@@ -9,3 +9,5 @@ pnpm dev
 pnpm test
 pnpm build
 ```
+
+`pnpm generate:api` 先从后端共享传输模型刷新 OpenAPI，再生成 TanStack Query + Fetch 客户端。所有生成物位于 `dist/generated`，源码目录不保留手写接口路径。

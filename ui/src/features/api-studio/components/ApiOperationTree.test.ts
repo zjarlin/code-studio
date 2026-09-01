@@ -2,7 +2,7 @@ import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 
 import ApiOperationTree from './ApiOperationTree.vue'
-import type { ApiOperation } from '../types'
+import type { ApiOperation } from '@platform/openapi-workbench'
 
 const operation: ApiOperation = {
   id: 'get:/users/simple-list',
@@ -19,6 +19,7 @@ const operation: ApiOperation = {
   lowcodeContract: false,
   transport: 'HTTP',
   metadataIssues: [],
+  security: [],
 }
 
 describe('ApiOperationTree', () => {

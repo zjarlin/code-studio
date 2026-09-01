@@ -96,6 +96,7 @@ class StudioMigratorPostgresTest {
                 assertTrue("catalog_route_override" in tables)
                 assertTrue("catalog_element_override" in tables)
                 assertTrue("report_definition" in tables)
+                assertTrue("spreadsheet_template" !in tables)
                 assertTrue(JdbcCatalogOverrideReader(dataSource, schema).read().routes.isEmpty())
                 assertEquals(6, appliedMigrationCount(dataSource, schema, STUDIO_CORE_HISTORY))
                 assertEquals(2, appliedMigrationCount(dataSource, schema, STUDIO_METADATA_HISTORY))

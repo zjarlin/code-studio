@@ -6,7 +6,7 @@ import {
 import type { ReactNode } from 'react'
 
 import { CatalogProvider } from '@/catalog/context'
-import { AppShell } from '@/components/app-shell'
+import { AppShell } from '@/components/composed/app-shell/app-shell'
 import type { RouterContext } from '@/router'
 
 import '../styles.css'

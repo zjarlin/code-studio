@@ -1,17 +1,12 @@
 <script setup lang="ts">
 import { FileUp, LoaderCircle, Send } from '@lucide/vue'
-import { computed } from 'vue'
-
-import { Button } from '@/components/generated/shadcn/button'
-import { Textarea } from '@/components/generated/shadcn/textarea'
-
 import {
   fileReferenceFields,
   multipartFields,
   requestBodySchema,
   requestContentType,
   schemaRows,
-} from '../openapi'
+} from '@platform/openapi-workbench'
 import type {
   ApiDocument,
   ApiFileReferenceUploadState,
@@ -20,7 +15,11 @@ import type {
   ApiOperation,
   ApiParameter,
   ApiParameterLocation,
-} from '../types'
+} from '@platform/openapi-workbench'
+import { computed } from 'vue'
+
+import { Button } from '@/components/generated/shadcn/button'
+import { Textarea } from '@/components/generated/shadcn/textarea'
 
 const props = defineProps<{
   operation?: ApiOperation

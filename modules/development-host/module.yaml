@@ -7,6 +7,7 @@ apply:
 
 dependencies:
   - ../metadata-service
+  - ../report
   - ../server
   - $libs.hikari
   - $libs.ktor.serialization.jackson3
@@ -14,8 +15,22 @@ dependencies:
   - $libs.ktor.server.content.negotiation
   - $libs.ktor.server.netty
   - $libs.logback.classic
+  - $libs.koin.ktor
   - $libs.postgresql: runtime-only
 
 test-dependencies:
   - $libs.jackson.module.kotlin
   - $libs.ktor.server.test.host
+
+settings:
+  kotlin:
+    compilerPlugins:
+      - id: io.insert-koin.compiler.plugin
+        dependency: $libs.koin.compiler.plugin
+        options:
+          compileSafety: "true"
+          unsafeDslChecks: "true"
+          skipDefaultValues: "true"
+          moduleId: ":studio:modules:development-host"
+          logSeverity: info
+          versionCheckSeverity: info

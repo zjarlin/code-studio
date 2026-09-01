@@ -1,23 +1,31 @@
 import { computed, ref } from 'vue'
 
-import { loadStudioConfig } from '@/studio-config'
-import type { StudioConfig } from '@/studio-config'
-import type { CommonResult } from '@/types'
-
-import { loadStudioOpenApi, resolveStudioApiBaseUrl } from './studio-openapi'
-import { buildRequestUrl, downloadApiResponseFile, executeApiRequest } from './api-client'
-import { collectApiOperations, fileReferenceFields, groupApiOperations, requestBodySample, schemaSample } from './openapi'
+import {
+  collectApiOperations,
+  downloadApiResponseFile,
+  executeApiRequest,
+  fileReferenceFields,
+  groupApiOperations,
+  loadStudioOpenApi,
+  requestBodySample,
+  resolveStudioApiBaseUrl,
+  schemaSample,
+} from '@platform/openapi-workbench'
 import type {
   ApiDocument,
+  ApiFileReferenceUploadState,
   ApiGroup,
   ApiHistoryEntry,
-  ApiFileReferenceUploadState,
   ApiMultipartValue,
   ApiOperation,
   ApiParameterLocation,
   ApiResponseState,
   FileUploadOutput,
-} from './types'
+} from '@platform/openapi-workbench'
+
+import { loadStudioConfig } from '@/studio-config'
+import type { StudioConfig } from '@/studio-config'
+import type { CommonResult } from '@/types'
 
 const HISTORY_STORAGE_KEY = 'api-studio.history'
 
@@ -39,7 +47,11 @@ export function useApiStudio(accessToken: (contributorId?: string) => string) {
   const loading = ref(false)
   const error = ref('')
 
-  const baseUrl = computed(() => resolveStudioApiBaseUrl(config.value?.apiBaseUrl))
+  const baseUrl = computed(() => resolveStudioApiBaseUrl(
+    config.value?.apiBaseUrl,
+    window.location.origin,
+    __DEFAULT_API_BASE__,
+  ))
   const groups = computed<ApiGroup[]>(() => groupApiOperations(document.value ?? {}, filteredOperations.value))
   const incompleteCount = computed(() => operations.value.filter((operation) => operation.metadataIssues.length > 0).length)
   const filteredOperations = computed(() => {
@@ -233,6 +245,7 @@ export function useApiStudio(accessToken: (contributorId?: string) => string) {
   async function loadStudioDocument(studioConfig: StudioConfig): Promise<void> {
     clearDocument()
     const loaded = await loadStudioOpenApi(studioConfig, {
+      defaultApiBase: __DEFAULT_API_BASE__,
       onRetry: (message) => {
         error.value = message
       },

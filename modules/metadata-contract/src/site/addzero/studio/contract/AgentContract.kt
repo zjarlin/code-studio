@@ -65,7 +65,7 @@ data class AgentConversationView(
     val title: String,
     val modelId: String? = null,
     val createTime: String,
-    val updateTime: String,
+    val updateTime: String? = null,
 )
 
 @Serializable

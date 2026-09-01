@@ -69,3 +69,9 @@ data class LibraryView(
     val spec: LibrarySpec,
     val features: List<LibraryFeatureView> = emptyList(),
 )
+
+@Serializable
+data class LibraryPage(
+    val list: List<LibraryView> = emptyList(),
+    val total: Long = 0,
+)

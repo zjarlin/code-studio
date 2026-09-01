@@ -4,7 +4,7 @@ import { resolveCatalogRoute } from '@/catalog/catalog'
 import { useCatalog } from '@/catalog/context'
 import type { CatalogEntry } from '@/catalog/types'
 
-import { CatalogIcon } from './catalog-icon'
+import { CatalogIcon } from './composed/catalog-icon/catalog-icon'
 
 export function AppShell() {
   const catalog = useCatalog()

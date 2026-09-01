@@ -1,0 +1,91 @@
+.button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 580;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.button svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.9;
+}
+
+.button-icon {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+}
+
+.button:hover:not(:disabled) {
+  background: #f7f8fa;
+  border-color: #bcc2ce;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.button-primary {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.button-ghost {
+  background: transparent;
+  border-color: transparent;
+}
+
+.toolbar {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 8px 6px 10px;
+  color: var(--muted);
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.toolbar input,
+.dialog input,
+.dialog select,
+.settings-pane input {
+  width: min(320px, 100%);
+  min-height: 30px;
+  padding: 5px 9px;
+  color: var(--foreground);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+
+.toolbar-error,
+.form-error {
+  color: var(--danger);
+}
+
+.form-success {
+  color: var(--success);
+}

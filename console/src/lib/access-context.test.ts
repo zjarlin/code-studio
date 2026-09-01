@@ -25,6 +25,27 @@ describe('authenticatedFetch', () => {
     expect(headers.get('visit-tenant-id')).toBe('18')
   })
 
+  it('keeps explicit request headers ahead of the host access context', async () => {
+    window.adminHostBridge = {
+      getAccessContext: () => ({ accessToken: 'host-token', tenantId: 12, visitTenantId: '18' }),
+    }
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{}'))
+    vi.stubGlobal('fetch', fetcher)
+
+    await authenticatedFetch('/application/api/users', {
+      headers: {
+        Authorization: 'Bearer request-token',
+        'tenant-id': '99',
+        'visit-tenant-id': '100',
+      },
+    })
+
+    const headers = new Headers(fetcher.mock.calls[0]?.[1]?.headers)
+    expect(headers.get('Authorization')).toBe('Bearer request-token')
+    expect(headers.get('tenant-id')).toBe('99')
+    expect(headers.get('visit-tenant-id')).toBe('100')
+  })
+
   it('rejects cross-origin access before sending credentials', async () => {
     const fetcher = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetcher)

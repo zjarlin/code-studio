@@ -1,0 +1,16 @@
+product: jvm/app
+
+description: 从共享传输模型生成 Console 客户端 OpenAPI 契约。
+
+apply:
+  - ../../build-config/common-jvm.module-template.yaml
+
+dependencies:
+  - ../../modules/metadata-contract
+  - $libs.ktor.openapi.schema.reflect
+  - $libs.ktor.server.routing.openapi
+  - $libs.kotlinx.serialization.json
+
+settings:
+  jvm:
+    mainClass: site.addzero.studio.clientcontract.ClientContractApplicationKt
