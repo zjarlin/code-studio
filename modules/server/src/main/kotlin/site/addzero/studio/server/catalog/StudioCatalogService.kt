@@ -60,11 +60,11 @@ internal data class CatalogEntryOverride(
 
 internal class JdbcCatalogOverrideReader(
     private val dataSource: DataSource,
-    private val schema: String,
+    private val schemaName: String,
 ) : CatalogOverrideReader {
     init {
-        require(STUDIO_SCHEMA_NAME.matches(schema)) {
-            "Studio schema 不是安全的 PostgreSQL 标识符: $schema"
+        require(STUDIO_SCHEMA_NAME.matches(schemaName)) {
+            "Studio schema 不是安全的 PostgreSQL 标识符: $schemaName"
         }
     }
 
@@ -78,7 +78,7 @@ internal class JdbcCatalogOverrideReader(
     private fun Connection.readOverrides(table: String, keyColumn: String): Map<String, CatalogEntryOverride> {
         val sql = """
             SELECT $keyColumn, name, description, icon, order_no, permissions, enabled
-            FROM $schema.$table
+            FROM $schemaName.$table
             ORDER BY $keyColumn
         """.trimIndent()
         return prepareStatement(sql).use { statement ->

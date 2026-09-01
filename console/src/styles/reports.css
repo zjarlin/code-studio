@@ -213,6 +213,7 @@
     margin: 0;
   }
 
+  :root,
   html,
   body {
     min-width: 0;
@@ -230,6 +231,7 @@
   .admin-shell,
   .page,
   .page-frame,
+  .report-viewer-page,
   .designer-preview,
   .report-sheet {
     display: block;

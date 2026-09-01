@@ -1,4 +1,4 @@
-# Vue版studio(次)
+# Vue版studio (次)
 
 ## Requirements
 
@@ -14,8 +14,8 @@ npm install -g pnpm
 pnpm --version
 ```
 
-`corepack enable` is not required. If Node.js is installed in a protected directory,
-Corepack may fail with `EPERM` while trying to create its command shims.
+`corepack enable` is not required. If Node.js is installed in a protected directory, Corepack may fail with `EPERM`
+while trying to create its command shims.
 
 Run Studio by itself:
 
@@ -31,8 +31,8 @@ Normally the platform server manages Studio automatically:
 .\kotlin.bat run -m server
 ```
 
-The server starts pnpm through `cmd.exe` on Windows, waits up to 30 seconds for Vite,
-and terminates the complete child process tree when the server stops.
+The server starts pnpm through `cmd.exe` on Windows, waits up to 30 seconds for Vite, and terminates the complete child
+process tree when the server stops.
 
 ## Other platforms
 

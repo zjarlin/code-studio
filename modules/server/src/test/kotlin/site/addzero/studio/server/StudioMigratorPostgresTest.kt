@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import site.addzero.studio.server.catalog.JdbcCatalogOverrideReader
 import site.addzero.studio.runtime.METADATA_CONTRIBUTOR_FORMAT_VERSION
 import site.addzero.studio.runtime.MetadataContributor
 import java.io.PrintWriter
@@ -95,6 +96,7 @@ class StudioMigratorPostgresTest {
                 assertTrue("catalog_route_override" in tables)
                 assertTrue("catalog_element_override" in tables)
                 assertTrue("report_definition" in tables)
+                assertTrue(JdbcCatalogOverrideReader(dataSource, schema).read().routes.isEmpty())
                 assertEquals(6, appliedMigrationCount(dataSource, schema, STUDIO_CORE_HISTORY))
                 assertEquals(2, appliedMigrationCount(dataSource, schema, STUDIO_METADATA_HISTORY))
                 assertEquals(

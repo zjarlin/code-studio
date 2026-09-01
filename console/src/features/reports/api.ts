@@ -51,6 +51,7 @@ export async function saveAndPublishReport(input: Readonly<{
   revision: number
   document: ReportDocument
   saveRequired: boolean
+  publishedRevision: number | null
 }>): Promise<ReportView> {
   const saved = input.saveRequired
     ? input.revision > 0
@@ -60,13 +61,29 @@ export async function saveAndPublishReport(input: Readonly<{
         reportKey: input.reportKey,
         revision: input.revision,
         document: input.document,
-        publishedRevision: null,
+        publishedRevision: input.publishedRevision,
       }
-  const publication = await publishReport(saved.reportKey, saved.revision)
+  let publication: ReportPublicationView
+  try {
+    publication = await publishReport(saved.reportKey, saved.revision)
+  } catch (cause) {
+    throw new ReportPublicationError(saved, cause, input.saveRequired)
+  }
   return {
     ...saved,
     document: publication.document,
     publishedRevision: publication.publishedRevision,
+  }
+}
+
+export class ReportPublicationError extends Error {
+  readonly savedReport: ReportView
+
+  constructor(savedReport: ReportView, cause: unknown, draftSaved: boolean) {
+    const detail = cause instanceof Error ? cause.message : '未知错误'
+    super(draftSaved ? `草稿已保存，但发布失败：${detail}` : `发布失败：${detail}`)
+    this.name = 'ReportPublicationError'
+    this.savedReport = savedReport
   }
 }
 

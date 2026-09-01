@@ -344,6 +344,13 @@
   font-size: 10px;
 }
 
+.designer-empty-row-action {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+}
+
 .designer-block {
   position: relative;
   display: flex;
@@ -560,6 +567,16 @@
   .designer-title,
   .designer-command-actions {
     overflow-x: auto;
+  }
+
+  .designer-command-actions {
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+
+  .designer-command-actions > * {
+    flex: none;
+    white-space: nowrap;
   }
 
   .designer-title select {

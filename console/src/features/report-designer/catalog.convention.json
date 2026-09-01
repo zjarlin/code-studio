@@ -182,6 +182,19 @@
   },
   {
     "routeKey": "studio.report-designer",
+    "elementKey": "studio.report-designer.row.delete",
+    "path": null,
+    "parentKey": "studio.report-designer",
+    "kind": "ELEMENT",
+    "name": "删除空行",
+    "description": "删除当前空白网格行",
+    "icon": "trash-2",
+    "order": 71,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.report-designer",
     "elementKey": "studio.report-designer.source.add-model",
     "path": null,
     "parentKey": "studio.report-designer",

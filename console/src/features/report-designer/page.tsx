@@ -12,6 +12,7 @@ import {
   deleteReport,
   fetchReport,
   fetchReports,
+  ReportPublicationError,
   saveAndPublishReport,
   unpublishReport,
   updateReport,
@@ -48,7 +49,7 @@ export default function ReportDesignerPage({ route }: CatalogPageProps) {
   )
 }
 
-function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
+export function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
   initial: ReportView
   mode: 'edit' | 'preview'
   reportOptions: ReportListItemView[]
@@ -64,8 +65,18 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
   const [draftSelection, setDraftSelection] = useState(initial.reportKey || 'new')
   const [issue, setIssue] = useState<string>()
   const baseline = useRef<ReportDocument>(initial.document)
-  const dirty = history.present !== baseline.current
-  const editable = catalog.elementsByKey.has(reportKey ? 'studio.report-designer.save' : 'studio.report-designer.create')
+  const dirty = history.present !== baseline.current || (revision === 0 && reportKey.trim() !== initial.reportKey)
+  const editable = catalog.elementsByKey.has(revision > 0 ? 'studio.report-designer.save' : 'studio.report-designer.create')
+
+  const acceptSaved = (saved: ReportView, document: ReportDocument) => {
+    baseline.current = document
+    setRevision(saved.revision)
+    setPublishedRevision(saved.publishedRevision)
+    setReportKey(saved.reportKey)
+    setDraftSelection(saved.reportKey)
+    queryClient.setQueryData(['report', saved.reportKey], saved)
+    queryClient.invalidateQueries({ queryKey: ['reports'] })
+  }
 
   useBlocker({
     shouldBlockFn: () => dirty && !window.confirm('当前修改尚未保存，确定离开吗？'),
@@ -83,19 +94,20 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
         : createReport(input.reportKey, input.document)
     },
     onSuccess: (saved, input) => {
-      baseline.current = input.document
-      setRevision(saved.revision)
-      setPublishedRevision(saved.publishedRevision)
-      setReportKey(saved.reportKey)
+      acceptSaved(saved, input.document)
       setIssue(undefined)
-      queryClient.setQueryData(['report', saved.reportKey], saved)
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
       navigate({ search: { reportKey: saved.reportKey, mode: 'edit' }, replace: true, ignoreBlocker: true })
     },
     onError: (error) => setIssue(error.message),
   })
   const publish = useMutation({
-    mutationFn: async (input: { document: ReportDocument; reportKey: string; revision: number; saveRequired: boolean }) => {
+    mutationFn: async (input: {
+      document: ReportDocument
+      reportKey: string
+      revision: number
+      saveRequired: boolean
+      publishedRevision: number | null
+    }) => {
       const keyError = validateReportKey(input.reportKey)
       if (keyError) throw new Error(keyError)
       const errors = validateReportForPublish(input.document)
@@ -103,17 +115,17 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
       return saveAndPublishReport(input)
     },
     onSuccess: (saved, input) => {
-      baseline.current = input.document
-      setRevision(saved.revision)
-      setPublishedRevision(saved.publishedRevision)
-      setReportKey(saved.reportKey)
+      acceptSaved(saved, input.document)
       setIssue(undefined)
-      queryClient.setQueryData(['report', saved.reportKey], saved)
-      queryClient.invalidateQueries({ queryKey: ['reports'] })
       queryClient.invalidateQueries({ queryKey: ['published-reports'] })
       navigate({ search: { reportKey: saved.reportKey, mode: 'edit' }, replace: true, ignoreBlocker: true })
     },
-    onError: (error) => setIssue(error.message),
+    onError: (error, input) => {
+      if (error instanceof ReportPublicationError) {
+        acceptSaved(error.savedReport, input.document)
+      }
+      setIssue(error.message)
+    },
   })
   const unpublish = useMutation({
     mutationFn: () => unpublishReport(reportKey),
@@ -164,7 +176,7 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
           <CatalogAction elementKey="studio.report-designer.preview" onClick={() => navigate({ search: { reportKey: reportKey || 'new', mode: 'preview' }, ignoreBlocker: true })} />
           <CatalogAction
             disabled={!canEdit}
-            elementKey={reportKey ? 'studio.report-designer.save' : 'studio.report-designer.create'}
+            elementKey={revision > 0 ? 'studio.report-designer.save' : 'studio.report-designer.create'}
             onClick={() => saveDraft.mutate({ document: history.present, reportKey: reportKey.trim(), revision })}
             variant="primary"
           />
@@ -176,6 +188,7 @@ function DesignerSession({ initial, mode, reportOptions, routeName }: Readonly<{
               reportKey: reportKey.trim(),
               revision,
               saveRequired: dirty || revision === 0,
+              publishedRevision,
             })}
           />
           {publishedRevision ? <CatalogAction disabled={unpublish.isPending} elementKey="studio.report-designer.unpublish" onClick={() => unpublish.mutate()} variant="ghost" /> : null}

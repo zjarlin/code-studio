@@ -59,8 +59,13 @@ interface ResolvedGet {
   parameters: OpenApiParameter[]
 }
 
+interface OpenApiContext {
+  document: OpenApiDocument
+  baseUrl: URL
+}
+
 export async function fetchReportSourceCatalog(): Promise<ReportSourceCatalog> {
-  const document = await fetchOpenApiDocument()
+  const { document } = await fetchOpenApiDocument()
   const schemas = document.components?.schemas ?? {}
   const models = Object.entries(schemas)
     .filter(([name]) => name.endsWith('_entity'))
@@ -76,19 +81,19 @@ export async function fetchReportSourceCatalog(): Promise<ReportSourceCatalog> {
       }
     })
     .sort((left, right) => left.name.localeCompare(right.name, 'zh-CN'))
-  const operationIds = Object.values(document.paths)
-    .map((pathItem) => pathItem.get?.operationId)
+  const operationIds = Object.entries(document.paths)
+    .map(([path, pathItem]) => resolveOpenApiGet(document, path, pathItem)?.operation.operationId)
     .filter((value): value is string => Boolean(value))
   const duplicateIds = new Set(operationIds.filter((value, index) => operationIds.indexOf(value) !== index))
   const operations = Object.entries(document.paths).flatMap(([path, pathItem]) => {
-    const operation = pathItem.get
-    if (!operation?.operationId || duplicateIds.has(operation.operationId) || operation.requestBody) return []
-    const parameters = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])]
-    if (!parameters.every(isPathOrQueryParameter)) return []
+    const resolved = resolveOpenApiGet(document, path, pathItem)
+    if (!resolved || duplicateIds.has(resolved.operation.operationId!)) return []
+    const { operation, parameters } = resolved
+    const operationId = operation.operationId!
     return [{
-      key: operation.operationId,
-      operationId: operation.operationId,
-      name: operation.summary ?? operation.operationId,
+      key: operationId,
+      operationId,
+      name: operation.summary ?? operationId,
       path,
       fields: fieldsFromSchema(document, responseSchema(operation)),
       parameters: sourceParameters(parameters),
@@ -106,11 +111,11 @@ export async function runReportDatasets(
     .map(({ label }) => label)
   if (missingParameters.length) throw new Error(`缺少必填参数：${missingParameters.join('、')}`)
   if (!document.datasets.length) return { values: {}, errors: {} }
-  const openApi = await fetchOpenApiDocument()
+  const { document: openApi, baseUrl } = await fetchOpenApiDocument()
   const entries = await Promise.all(document.datasets.map(async (dataset) => {
     try {
       const resolved = resolveDataset(openApi, dataset)
-      const value = await runGet(resolved, dataset, parameterValues)
+      const value = await runGet(resolved, dataset, parameterValues, baseUrl)
       validateDatasetShape(document, dataset, value)
       return [dataset.key, value, undefined] as const
     } catch (cause) {
@@ -146,7 +151,7 @@ export function isJsonPointer(value: string): boolean {
   return /^(?:\/(?:[^~/]|~[01])*)*$/.test(value)
 }
 
-async function fetchOpenApiDocument(): Promise<OpenApiDocument> {
+async function fetchOpenApiDocument(): Promise<OpenApiContext> {
   const config = await requestData<StudioConfig>('/studio/config')
   const base = config.apiBaseUrl.trim()
     ? new URL(`${config.apiBaseUrl.replace(/\/+$/, '')}/`, window.location.origin)
@@ -157,18 +162,16 @@ async function fetchOpenApiDocument(): Promise<OpenApiDocument> {
   if (!response.ok) throw new Error(`读取 OpenAPI 失败：HTTP ${response.status}`)
   const document = await parseJson(response, 'OpenAPI 文档') as OpenApiDocument
   if (!document.openapi || !isObject(document.paths)) throw new Error('OpenAPI 文档格式无效')
-  return document
+  return { document, baseUrl: base }
 }
 
 function resolveDataset(document: OpenApiDocument, dataset: ReportDatasetSpec): ResolvedGet {
   if (dataset.source === 'OPENAPI') {
-    const matches = Object.entries(document.paths).flatMap(([path, pathItem]) =>
-      pathItem.get?.operationId === dataset.operationId
-        ? [{ path, operation: pathItem.get, parameters: [...(pathItem.parameters ?? []), ...(pathItem.get.parameters ?? [])] }]
-        : [],
-    )
+    const matches = Object.entries(document.paths).flatMap(([path, pathItem]) => {
+      const resolved = resolveOpenApiGet(document, path, pathItem)
+      return resolved?.operation.operationId === dataset.operationId ? [resolved] : []
+    })
     if (matches.length !== 1) throw new Error(`未找到唯一 GET 操作：${dataset.operationId}`)
-    if (!matches[0]!.parameters.every(isPathOrQueryParameter)) throw new Error(`GET 操作包含非 path/query 参数：${dataset.operationId}`)
     return matches[0]!
   }
   const resolved = resolveModelGet(document, dataset.modelCode ?? '')
@@ -181,18 +184,30 @@ function resolveModelGet(document: OpenApiDocument, modelCode: string): Resolved
   const schemaReference = alias?.$ref
   if (!schemaReference) return undefined
   return Object.entries(document.paths).flatMap(([path, pathItem]) => {
-    const operation = pathItem.get
-    if (!operation || !JSON.stringify(operation.responses ?? {}).includes(schemaReference)) return []
-    const parameters = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])]
-    if (!parameters.every(isPathOrQueryParameter)) return []
-    return [{ path, operation, parameters }]
+    const resolved = resolveSafeGet(document, path, pathItem)
+    if (!resolved || !JSON.stringify(resolved.operation.responses ?? {}).includes(schemaReference)) return []
+    return [resolved]
   }).sort((left, right) => scoreModelPath(left.path) - scoreModelPath(right.path))[0]
+}
+
+function resolveOpenApiGet(document: OpenApiDocument, path: string, pathItem: OpenApiPathItem): ResolvedGet | undefined {
+  const resolved = resolveSafeGet(document, path, pathItem)
+  const operationId = resolved?.operation.operationId
+  return operationId && OPERATION_ID.test(operationId) ? resolved : undefined
+}
+
+function resolveSafeGet(document: OpenApiDocument, path: string, pathItem: OpenApiPathItem): ResolvedGet | undefined {
+  const operation = pathItem.get
+  if (!operation || operation.requestBody || !hasRecognizableJsonResponse(document, operation)) return undefined
+  const parameters = [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])]
+  return parameters.every(isPathOrQueryParameter) ? { path, operation, parameters } : undefined
 }
 
 async function runGet(
   resolved: ResolvedGet,
   dataset: ReportDatasetSpec,
   parameterValues: Record<string, string>,
+  baseUrl: URL,
 ): Promise<unknown> {
   let resolvedPath = resolved.path
   const query = new URLSearchParams()
@@ -221,7 +236,7 @@ async function runGet(
     query.set('pageSize', String(Number.isFinite(requested) ? Math.min(MAX_REPORT_ROW_COUNT, Math.max(1, requested)) : MAX_REPORT_ROW_COUNT))
   }
 
-  const url = new URL(resolvedPath, window.location.origin)
+  const url = resolveDataUrl(baseUrl, resolvedPath)
   if (url.origin !== window.location.origin) throw new Error('报表数据源必须与管理后台同源')
   query.forEach((value, key) => url.searchParams.set(key, value))
   const response = await authenticatedFetch(url, { headers: { Accept: 'application/json' } })
@@ -230,6 +245,19 @@ async function runGet(
   if (!isObject(payload) || typeof payload.code !== 'number') return payload
   if (payload.code !== 0) throw new Error(typeof payload.msg === 'string' ? payload.msg : `请求失败：${payload.code}`)
   return payload.data
+}
+
+function resolveDataUrl(baseUrl: URL, path: string): URL {
+  const trimmedPath = path.trim()
+  if (!trimmedPath || trimmedPath.startsWith('//') || /^[A-Za-z][A-Za-z\d+.-]*:/.test(trimmedPath)) {
+    throw new Error('报表数据源路径必须是同源相对路径')
+  }
+  const basePath = baseUrl.pathname.replace(/\/+$/, '')
+  const normalizedPath = trimmedPath.replace(/^\/+/, '')
+  const pathWithBase = basePath && (trimmedPath === basePath || trimmedPath.startsWith(`${basePath}/`))
+    ? trimmedPath
+    : `${basePath}/${normalizedPath}`
+  return new URL(pathWithBase || '/', baseUrl.origin)
 }
 
 function validateDatasetShape(document: ReportDocument, dataset: ReportDatasetSpec, value: unknown): void {
@@ -290,8 +318,28 @@ function mergeSchemas(schemas: OpenApiSchema[]): OpenApiSchema {
 }
 
 function responseSchema(operation: OpenApiOperation): OpenApiSchema | undefined {
-  const response = operation.responses?.['200'] ?? operation.responses?.['2XX'] ?? Object.values(operation.responses ?? {})[0]
-  return response?.content?.['application/json']?.schema
+  const responses = operation.responses ?? {}
+  const response = responses['200'] ?? responses['2XX'] ?? Object.entries(responses)
+    .find(([status]) => /^2\d\d$/.test(status))?.[1]
+  const content = response?.content ?? {}
+  return content['application/json']?.schema ?? Object.entries(content)
+    .find(([contentType]) => contentType.endsWith('+json'))?.[1].schema
+}
+
+function hasRecognizableJsonResponse(document: OpenApiDocument, operation: OpenApiOperation): boolean {
+  return isRecognizableSchema(document, responseSchema(operation), 0)
+}
+
+function isRecognizableSchema(document: OpenApiDocument, schema: OpenApiSchema | undefined, depth: number): boolean {
+  if (!schema || depth > 8) return false
+  if (schema.$ref) return isRecognizableSchema(document, resolveSchemaReference(document, schema.$ref), depth + 1)
+  if (schema.allOf?.length) return isRecognizableSchema(document, mergeSchemas(schema.allOf), depth + 1)
+  if (schema.type === 'array' || schema.items) return isRecognizableSchema(document, schema.items, depth + 1)
+  for (const key of ['data', 'rows', 'list', 'items']) {
+    const nested = schema.properties?.[key]
+    if (nested) return isRecognizableSchema(document, nested, depth + 1)
+  }
+  return schema.type === 'object' || Boolean(schema.properties)
 }
 
 function sourceParameters(parameters: OpenApiParameter[]): Array<{ name: string; required: boolean }> {
@@ -338,3 +386,5 @@ function scoreModelPath(path: string): number {
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
+
+const OPERATION_ID = /^[A-Za-z_][A-Za-z0-9_.-]*$/

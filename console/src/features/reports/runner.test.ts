@@ -49,4 +49,93 @@ describe('report data normalization', () => {
     const openApiRequest = fetcher.mock.calls[1]?.[0]
     expect(new URL(String(openApiRequest)).pathname).toBe('/admin-api/v3/api-docs')
   })
+
+  it('runs data requests under the configured host API prefix', async () => {
+    const document = emptyReportDocument()
+    document.datasets = [{
+      key: 'source',
+      name: '数据源',
+      source: 'OPENAPI',
+      modelCode: null,
+      operationId: 'getSource',
+      parameterBindings: {},
+      fields: [],
+    }]
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({
+        code: 0,
+        msg: '',
+        data: { apiBaseUrl: '/admin-api', openApiPath: '/v3/api-docs' },
+      }))
+      .mockResolvedValueOnce(Response.json({
+        openapi: '3.1.0',
+        paths: {
+          '/source': {
+            get: {
+              operationId: 'getSource',
+              responses: { 200: { content: { 'application/json': { schema: { type: 'object' } } } } },
+            },
+          },
+        },
+      }))
+      .mockResolvedValueOnce(Response.json({ code: 0, msg: '', data: { value: 7 } }))
+    vi.stubGlobal('fetch', fetcher)
+
+    await runReportDatasets(document, {})
+
+    expect(new URL(String(fetcher.mock.calls[2]?.[0])).pathname).toBe('/admin-api/source')
+  })
+
+  it('catalogs only stable GET operations with safe inputs and recognizable JSON responses', async () => {
+    const objectResponse = { responses: { 200: { content: { 'application/json': { schema: { type: 'object', properties: { value: { type: 'number' } } } } } } } }
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ code: 0, msg: '', data: { apiBaseUrl: '/', openApiPath: '/v3/api-docs' } }))
+      .mockResolvedValueOnce(Response.json({
+        openapi: '3.1.0',
+        paths: {
+          '/valid': { get: { operationId: 'getValid', ...objectResponse } },
+          '/unstable': { get: { operationId: 'bad id', ...objectResponse } },
+          '/body': { get: { operationId: 'getWithBody', requestBody: {}, ...objectResponse } },
+          '/scalar': { get: { operationId: 'getScalar', responses: { 200: { content: { 'application/json': { schema: { type: 'string' } } } } } } },
+          '/header': { get: { operationId: 'getHeader', parameters: [{ name: 'key', in: 'header' }], ...objectResponse } },
+        },
+      }))
+    vi.stubGlobal('fetch', fetcher)
+
+    const catalog = await fetchReportSourceCatalog()
+
+    expect(catalog.operations.map(({ operationId }) => operationId)).toEqual(['getValid'])
+  })
+
+  it('rejects an OpenAPI operation after it drifts to a GET request body', async () => {
+    const document = emptyReportDocument()
+    document.datasets = [{
+      key: 'source',
+      name: '数据源',
+      source: 'OPENAPI',
+      modelCode: null,
+      operationId: 'getSource',
+      parameterBindings: {},
+      fields: [],
+    }]
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ code: 0, msg: '', data: { apiBaseUrl: '/', openApiPath: '/v3/api-docs' } }))
+      .mockResolvedValueOnce(Response.json({
+        openapi: '3.1.0',
+        paths: {
+          '/source': {
+            get: {
+              operationId: 'getSource',
+              requestBody: {},
+              responses: { 200: { content: { 'application/json': { schema: { type: 'object' } } } } },
+            },
+          },
+        },
+      }))
+    vi.stubGlobal('fetch', fetcher)
+
+    const result = await runReportDatasets(document, {})
+
+    expect(result.errors.source).toContain('未找到唯一 GET 操作')
+  })
 })

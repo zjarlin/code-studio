@@ -70,6 +70,9 @@ data class ReportParameter(
         require(defaultValue == null || options.isEmpty() || options.any { option -> option.value == defaultValue }) {
             "枚举参数默认值不在 options 中: $key"
         }
+        require(defaultValue == null || type.acceptsDefaultValue(defaultValue)) {
+            "报表参数默认值不符合 $type 类型: $key"
+        }
     }
 }
 
@@ -156,3 +159,39 @@ internal fun requireJsonPointer(value: String, role: String) {
 private val REPORT_MARGIN_PRESETS = setOf(8, 12, 20)
 private val REPORT_KEY = Regex("[a-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+)*")
 private val JSON_POINTER = Regex("(?:/(?:[^~/]|~[01])*)*")
+private val DATE_VALUE = Regex("(\\d{4})-(\\d{2})-(\\d{2})")
+private val DATETIME_VALUE = Regex(
+    "(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2})(?::(\\d{2})(?:\\.\\d{1,9})?)?(?:Z|[+-](\\d{2}):(\\d{2}))?",
+)
+
+private fun ReportParameterType.acceptsDefaultValue(value: String): Boolean = when (this) {
+    ReportParameterType.TEXT,
+    ReportParameterType.ENUM -> true
+
+    ReportParameterType.NUMBER -> value.toDoubleOrNull()?.isFinite() == true
+    ReportParameterType.BOOLEAN -> value == "true" || value == "false"
+    ReportParameterType.DATE -> DATE_VALUE.matchEntire(value)?.isValidDate() == true
+    ReportParameterType.DATETIME -> DATETIME_VALUE.matchEntire(value)?.let { match ->
+        match.isValidDate() &&
+            match.groupValues[4].toInt() in 0..23 &&
+            match.groupValues[5].toInt() in 0..59 &&
+            (match.groupValues[6].isEmpty() || match.groupValues[6].toInt() in 0..59) &&
+            (match.groupValues[7].isEmpty() || match.groupValues[7].toInt() in 0..23) &&
+            (match.groupValues[8].isEmpty() || match.groupValues[8].toInt() in 0..59)
+    } == true
+}
+
+private fun MatchResult.isValidDate(): Boolean {
+    val year = groupValues[1].toInt()
+    val month = groupValues[2].toInt()
+    val day = groupValues[3].toInt()
+    if (year == 0 || month !in 1..12) {
+        return false
+    }
+    val daysInMonth = when (month) {
+        2 -> if (year % 400 == 0 || year % 4 == 0 && year % 100 != 0) 29 else 28
+        4, 6, 9, 11 -> 30
+        else -> 31
+    }
+    return day in 1..daysInMonth
+}

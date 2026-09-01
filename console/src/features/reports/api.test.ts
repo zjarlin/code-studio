@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { fetchPublishedReports, fetchReports, saveAndPublishReport } from './api'
+import { fetchPublishedReports, fetchReports, ReportPublicationError, saveAndPublishReport } from './api'
 import { emptyReportDocument } from './models'
 
 afterEach(() => {
@@ -42,6 +42,7 @@ describe('report API paths', () => {
       revision: 0,
       document,
       saveRequired: true,
+      publishedRevision: null,
     })
 
     expect(fetcher.mock.calls.map(([path, init]) => [String(path), init?.method])).toEqual([
@@ -49,5 +50,29 @@ describe('report API paths', () => {
       ['/console/api/reports/sales/publication', 'POST'],
     ])
     expect(saved.publishedRevision).toBe(1)
+  })
+
+  it('exposes a saved draft when publication fails so the caller can retry its revision', async () => {
+    const document = emptyReportDocument('销售报表')
+    const fetcher = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({
+        code: 0,
+        msg: '',
+        data: { reportKey: 'sales', revision: 1, document, publishedRevision: null },
+      }))
+      .mockResolvedValueOnce(Response.json({ code: 503, msg: '发布暂不可用', data: null }, { status: 503 }))
+    vi.stubGlobal('fetch', fetcher)
+
+    const failure = await saveAndPublishReport({
+      reportKey: 'sales',
+      revision: 0,
+      document,
+      saveRequired: true,
+      publishedRevision: null,
+    }).catch((error: unknown) => error)
+
+    expect(failure).toBeInstanceOf(ReportPublicationError)
+    expect((failure as ReportPublicationError).savedReport.revision).toBe(1)
+    expect((failure as Error).message).toContain('草稿已保存')
   })
 })

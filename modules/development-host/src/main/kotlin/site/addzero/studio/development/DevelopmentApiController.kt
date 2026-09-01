@@ -10,7 +10,12 @@ import io.ktor.server.routing.get
 internal object DevelopmentApiController {
     fun install(parent: Route) {
         parent.get("/hello") {
-            val response = HelloResponse(message = "Hello, world!")
+            val response = HelloResponse(
+                message = "Hello, world!",
+                category = "Example",
+                value = 1,
+                imagePath = "/studio/favicon.svg",
+            )
             call.respond(response)
         }
         parent.get("/v3/api-docs") {

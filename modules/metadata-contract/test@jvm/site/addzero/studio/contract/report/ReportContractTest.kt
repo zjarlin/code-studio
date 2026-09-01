@@ -150,6 +150,25 @@ class ReportContractTest {
     }
 
     @Test
+    fun `参数默认值必须符合声明类型`() {
+        ReportParameter("amount", "金额", ReportParameterType.NUMBER, defaultValue = "12.5")
+        ReportParameter("enabled", "启用", ReportParameterType.BOOLEAN, defaultValue = "false")
+        ReportParameter("date", "日期", ReportParameterType.DATE, defaultValue = "2024-02-29")
+        ReportParameter("time", "时间", ReportParameterType.DATETIME, defaultValue = "2024-02-29T23:59:59+08:00")
+
+        listOf(
+            Triple("amount", ReportParameterType.NUMBER, "abc"),
+            Triple("enabled", ReportParameterType.BOOLEAN, "yes"),
+            Triple("date", ReportParameterType.DATE, "2025-02-29"),
+            Triple("time", ReportParameterType.DATETIME, "2024-01-01T25:00"),
+        ).forEach { (key, type, defaultValue) ->
+            assertFailsWith<IllegalArgumentException> {
+                ReportParameter(key, key, type, defaultValue = defaultValue)
+            }
+        }
+    }
+
+    @Test
     fun `草稿和发布资源只使用键与修订号`() {
         val publication = ReportPublicationView(
             reportKey = "sales-summary",

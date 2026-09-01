@@ -93,7 +93,19 @@ function DesignerRow({ dispatch, editable, onSelect, row, selectedBlockKey }: Re
           selected={block.key === selectedBlockKey}
         />
       ))}
-      {!row.blocks.length ? <div className="designer-empty-row">空行</div> : null}
+      {!row.blocks.length ? (
+        <>
+          <div className="designer-empty-row">空行</div>
+          {editable ? (
+            <span className="designer-empty-row-action">
+              <CatalogIconAction
+                elementKey="studio.report-designer.row.delete"
+                onClick={() => dispatch({ type: 'deleteRow', rowKey: row.key })}
+              />
+            </span>
+          ) : null}
+        </>
+      ) : null}
     </div>
   )
 }

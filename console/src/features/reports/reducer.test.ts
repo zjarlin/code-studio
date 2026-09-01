@@ -65,4 +65,14 @@ describe('report reducer', () => {
     expect(state.present.rows[0]!.blocks[0]!.columnSpan).toBe(12)
     expect(state.present.datasets[0]!.parameterBindings).toEqual({})
   })
+
+  it('removes an accidental empty row through the same undo history', () => {
+    const initial = createReportHistory(emptyReportDocument())
+    const added = reportReducer(initial, { type: 'addRow' })
+    const extraRowKey = added.present.rows[1]!.key
+    const removed = reportReducer(added, { type: 'deleteRow', rowKey: extraRowKey })
+
+    expect(removed.present.rows).toHaveLength(1)
+    expect(reportReducer(removed, { type: 'undo' }).present.rows).toHaveLength(2)
+  })
 })

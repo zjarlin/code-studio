@@ -40,13 +40,32 @@
       "HelloResponse": {
         "type": "object",
         "required": [
-          "message"
+          "message",
+          "category",
+          "value",
+          "imagePath"
         ],
         "properties": {
           "message": {
             "type": "string",
             "description": "Greeting message.",
             "example": "Hello, world!"
+          },
+          "category": {
+            "type": "string",
+            "description": "Example chart category.",
+            "example": "Example"
+          },
+          "value": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Example metric value.",
+            "example": 1
+          },
+          "imagePath": {
+            "type": "string",
+            "description": "Same-origin image path used by the report example.",
+            "example": "/studio/favicon.svg"
           }
         }
       }

@@ -1,3 +1,4 @@
+import { authenticatedFetch } from '@/lib/access-context'
 import { requestData } from '@/lib/http'
 
 interface StudioConfig {
@@ -68,8 +69,9 @@ async function fetchOpenApi(config: StudioConfig): Promise<OpenApiDocument> {
   const base = config.apiBaseUrl.trim()
     ? new URL(config.apiBaseUrl.replace(/\/+$/, '') + '/', browserOrigin)
     : new URL('/', browserOrigin)
+  if (base.origin !== browserOrigin) throw new Error('OpenAPI 文档必须与管理后台同源')
   const url = new URL((config.openApiPath.trim() || '/v3/api-docs').replace(/^\/+/, ''), base)
-  const response = await fetch(url)
+  const response = await authenticatedFetch(url, { headers: { Accept: 'application/json' } })
   if (!response.ok) throw new Error(`读取 OpenAPI 失败：HTTP ${response.status}`)
   const document = await response.json() as OpenApiDocument
   if (!document.openapi || !document.paths) throw new Error('OpenAPI 文档格式无效')

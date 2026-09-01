@@ -28,6 +28,7 @@ export type ReportAction =
   | { type: 'updateDocument'; name: string; description: string | null }
   | { type: 'updatePage'; page: ReportPageSpec }
   | { type: 'addRow' }
+  | { type: 'deleteRow'; rowKey: string }
   | { type: 'addBlock'; rowKey: string; blockKind: ReportBlockKind }
   | { type: 'moveBlock'; blockKey: string; targetRowKey: string }
   | { type: 'resizeBlock'; blockKey: string; columnSpan: number }
@@ -77,6 +78,9 @@ function reduceDocument(document: ReportDocument, action: Exclude<ReportAction, 
         : { ...document, page: action.page }
     case 'addRow':
       return { ...document, rows: [...document.rows, { key: createReportKey('row'), blocks: [] }] }
+    case 'deleteRow':
+      if (!document.rows.some(({ key }) => key === action.rowKey)) return document
+      return { ...document, rows: document.rows.filter(({ key }) => key !== action.rowKey) }
     case 'addBlock':
       return addBlock(document, action.rowKey, action.blockKind)
     case 'moveBlock':
