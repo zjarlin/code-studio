@@ -17,6 +17,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import kotlinx.coroutines.CancellationException
+import site.addzero.platform.web.Controller
 import site.addzero.studio.contract.ConstantCommand
 import site.addzero.studio.contract.ConstantListCommand
 import site.addzero.studio.contract.ConventionFileCommand
@@ -25,7 +26,6 @@ import site.addzero.studio.contract.LibraryCommand
 import site.addzero.studio.contract.LibraryFeatureCommand
 import site.addzero.studio.contract.ModelCommand
 import site.addzero.studio.contract.ModelPageCommand
-import site.addzero.studio.server.StudioApiController
 import site.addzero.studio.runtime.GenerationTargetProfile
 import tools.jackson.databind.JsonNode
 import javax.sql.DataSource
@@ -36,7 +36,9 @@ class StudioMetadataController(
     schema: String,
     editableContributorId: String,
     targetProfile: GenerationTargetProfile,
-) : StudioApiController {
+) : Controller {
+    override val routeKey = "/lowcode"
+
     private val store = MetadataJdbcStore(dataSource, schema, editableContributorId)
     private val previews = MetadataPreviewService(store, targetProfile)
 

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/generated/shadcn/alert'
-import { Skeleton } from '@/components/generated/shadcn/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@platform/ui/components/generated/shadcn/alert'
+import { Skeleton } from '@platform/ui/components/generated/shadcn/skeleton'
 
 export function QueryState({ children, error, pending }: Readonly<{
   children: ReactNode

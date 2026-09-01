@@ -17,7 +17,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/generated/shadcn/table'
+} from '@platform/ui/components/generated/shadcn/table'
 
 interface DocumentationPanelProps {
   document: ApiDocument

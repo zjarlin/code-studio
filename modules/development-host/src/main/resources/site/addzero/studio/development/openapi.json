@@ -126,72 +126,18 @@
         }
       }
     },
-    "/studio/api/lowcode/library/page": {
-      "get": {
-        "operationId": "listLibraries",
+    "/agent/settings": {
+      "put": {
+        "operationId": "updateAgentSettings",
         "tags": [
-          "Library"
-        ],
-        "summary": "",
-        "parameters": [
-          {
-            "name": "pageNo",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "pageSize",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "code",
-                    "msg"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "integer"
-                    },
-                    "msg": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "$ref": "#/components/schemas/LibraryPage"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/studio/api/lowcode/library/validate": {
-      "post": {
-        "operationId": "validateLibrary",
-        "tags": [
-          "Library"
+          "Agent"
         ],
         "summary": "",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LibraryCommand"
+                "$ref": "#/components/schemas/AgentProviderSettingsCommand"
               }
             }
           },
@@ -216,28 +162,107 @@
                       "type": "string"
                     },
                     "data": {
-                      "$ref": "#/components/schemas/MetadataValidationResult"
+                      "$ref": "#/components/schemas/AgentProviderSettingsView"
                     }
                   }
                 }
               }
             }
           }
-        }
+        },
+        "x-client-base": "application"
+      },
+      "get": {
+        "operationId": "getAgentSettings",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/AgentProviderSettingsView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
       }
     },
-    "/studio/api/lowcode/library/add": {
-      "post": {
-        "operationId": "addLibrary",
+    "/agent/models": {
+      "get": {
+        "operationId": "listAgentModels",
         "tags": [
-          "Library"
+          "Agent"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/AgentProviderModel"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/conversations": {
+      "post": {
+        "operationId": "createAgentConversation",
+        "tags": [
+          "Agent"
         ],
         "summary": "",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/LibraryCommand"
+                "$ref": "#/components/schemas/AgentConversationCommand"
               }
             }
           },
@@ -272,89 +297,11 @@
               }
             }
           }
-        }
-      }
-    },
-    "/agent/settings": {
-      "put": {
-        "operationId": "updateAgentSettings",
-        "tags": [
-          "Agent"
-        ],
-        "summary": "",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AgentProviderSettingsCommand"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentProviderSettingsView"
-                }
-              }
-            }
-          }
         },
         "x-client-base": "application"
       },
-      "get": {
-        "operationId": "getAgentSettings",
-        "tags": [
-          "Agent"
-        ],
-        "summary": "",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AgentProviderSettingsView"
-                }
-              }
-            }
-          }
-        },
-        "x-client-base": "application"
-      }
-    },
-    "/agent/models": {
-      "get": {
-        "operationId": "listAgentModels",
-        "tags": [
-          "Agent"
-        ],
-        "summary": "",
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AgentProviderModel"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "x-client-base": "application"
-      }
-    },
-    "/agent/conversations": {
-      "post": {
-        "operationId": "createAgentConversation",
+      "delete": {
+        "operationId": "deleteAgentConversations",
         "tags": [
           "Agent"
         ],
@@ -363,7 +310,10 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AgentConversationCommand"
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
               }
             }
           },
@@ -375,7 +325,25 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "integer"
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
                 }
               }
             }
@@ -395,9 +363,131 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AgentConversationView"
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/AgentConversationView"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/conversations/model": {
+      "put": {
+        "operationId": "updateAgentConversationModel",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentConversationModelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/messages": {
+      "get": {
+        "operationId": "listAgentMessages",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/AgentMessageView"
+                      }
+                    }
                   }
                 }
               }
@@ -1159,6 +1249,2005 @@
           }
         }
       }
+    },
+    "/studio/api/lowcode/library/page": {
+      "get": {
+        "operationId": "listLibraries",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryPage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/detail": {
+      "get": {
+        "operationId": "getLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/validate": {
+      "post": {
+        "operationId": "validateLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/add": {
+      "post": {
+        "operationId": "addLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/update": {
+      "put": {
+        "operationId": "updateLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/delete": {
+      "delete": {
+        "operationId": "deleteLibraries",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library/preview": {
+      "get": {
+        "operationId": "previewLibrary",
+        "tags": [
+          "Library"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "featureId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryPreview"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/page": {
+      "get": {
+        "operationId": "listLibraryFeatures",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "pageNo",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "libraryId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryFeaturePage"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/detail": {
+      "get": {
+        "operationId": "getLibraryFeature",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryFeatureView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/validate": {
+      "post": {
+        "operationId": "validateLibraryFeature",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryFeatureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/create": {
+      "post": {
+        "operationId": "createLibraryFeature",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryFeatureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryFeatureView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/update": {
+      "put": {
+        "operationId": "updateLibraryFeature",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibraryFeatureCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryFeatureView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/library-feature/delete": {
+      "delete": {
+        "operationId": "deleteLibraryFeature",
+        "tags": [
+          "Library Feature"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/page": {
+      "post": {
+        "operationId": "listModels",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelPageCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/PageResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/detail": {
+      "get": {
+        "operationId": "getModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ModelCommand"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/validate": {
+      "post": {
+        "operationId": "validateModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/add": {
+      "post": {
+        "operationId": "addModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/update": {
+      "put": {
+        "operationId": "updateModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ModelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model": {
+      "delete": {
+        "operationId": "deleteModels",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/preview": {
+      "get": {
+        "operationId": "previewModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ModelPreview"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/model/download": {
+      "get": {
+        "operationId": "downloadModel",
+        "tags": [
+          "Model"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated spreadsheet",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/list": {
+      "post": {
+        "operationId": "listDtos",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/DtoCommand"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/detail": {
+      "get": {
+        "operationId": "getDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DtoCommand"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/validate": {
+      "post": {
+        "operationId": "validateDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DtoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/add": {
+      "post": {
+        "operationId": "addDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DtoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/update": {
+      "put": {
+        "operationId": "updateDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DtoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto": {
+      "delete": {
+        "operationId": "deleteDtos",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/validation-rules": {
+      "get": {
+        "operationId": "listDtoValidationRules",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/LsiValidationRuleMetadata"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/reuse-analysis": {
+      "post": {
+        "operationId": "analyzeDtoReuse",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DtoCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/JsonElement"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/preview": {
+      "get": {
+        "operationId": "previewDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/DtoPreview"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/dto/download": {
+      "get": {
+        "operationId": "downloadDto",
+        "tags": [
+          "DTO"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Generated spreadsheet",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file/list": {
+      "post": {
+        "operationId": "listConventionFiles",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/ConventionFileView"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file/detail": {
+      "get": {
+        "operationId": "getConventionFile",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ConventionFileView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file/validate": {
+      "post": {
+        "operationId": "validateConventionFile",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConventionFileCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file/add": {
+      "post": {
+        "operationId": "addConventionFile",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConventionFileCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file/update": {
+      "put": {
+        "operationId": "updateConventionFile",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConventionFileCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/convention-file": {
+      "delete": {
+        "operationId": "deleteConventionFiles",
+        "tags": [
+          "Convention File"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/constant/list": {
+      "post": {
+        "operationId": "listConstants",
+        "tags": [
+          "Constant"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstantListCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/components/schemas/ConstantView"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/constant/detail": {
+      "get": {
+        "operationId": "getConstant",
+        "tags": [
+          "Constant"
+        ],
+        "summary": "",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ConstantView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/constant/validate": {
+      "post": {
+        "operationId": "validateConstant",
+        "tags": [
+          "Constant"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstantCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/MetadataValidationResult"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/constant/save": {
+      "post": {
+        "operationId": "saveConstant",
+        "tags": [
+          "Constant"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConstantCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/ConstantView"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/studio/api/lowcode/constant": {
+      "delete": {
+        "operationId": "deleteConstants",
+        "tags": [
+          "Constant"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "msg"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "integer"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1292,232 +3381,11 @@
           }
         }
       },
-      "LibraryDataScopeDescriptor": {
-        "type": "object",
-        "title": "LibraryDataScopeDescriptor",
-        "properties": {
-          "tenantScoped": {
-            "type": "boolean"
-          },
-          "userScoped": {
-            "type": "boolean"
-          },
-          "departmentScoped": {
-            "type": "boolean"
-          }
-        }
-      },
-      "LibrarySpec": {
-        "type": "object",
-        "title": "LibrarySpec",
-        "required": [
-          "contributorId",
-          "packagePrefix",
-          "scanPackage"
-        ],
-        "properties": {
-          "schemaVersion": {
-            "type": "integer"
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "contributorId": {
-            "type": "string"
-          },
-          "packagePrefix": {
-            "type": "string"
-          },
-          "scanPackage": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "BUSINESS",
-              "BUILT_IN"
-            ]
-          },
-          "runtimeDependencies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "supportedIdentityModes": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "EXTERNAL_JWT",
-                "LOCAL"
-              ]
-            }
-          },
-          "applicationSelectable": {
-            "type": "boolean"
-          },
-          "dataScope": {
-            "$ref": "#/components/schemas/LibraryDataScopeDescriptor"
-          }
-        }
-      },
-      "LibraryFeatureView": {
-        "type": "object",
-        "title": "LibraryFeatureView",
-        "required": [
-          "id",
-          "libraryId",
-          "featureCode",
-          "name"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "libraryId": {
-            "type": "integer"
-          },
-          "parentId": {
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "featureCode": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        }
-      },
-      "LibraryView": {
-        "type": "object",
-        "title": "LibraryView",
-        "required": [
-          "id",
-          "code",
-          "displayName",
-          "version",
-          "status",
-          "spec"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "integer"
-          },
-          "spec": {
-            "$ref": "#/components/schemas/LibrarySpec"
-          },
-          "features": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LibraryFeatureView"
-            }
-          }
-        }
-      },
-      "LibraryPage": {
-        "type": [
-          "object",
-          "null"
-        ],
-        "title": "LibraryPage",
-        "properties": {
-          "list": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LibraryView"
-            }
-          },
-          "total": {
-            "type": "integer"
-          }
-        }
-      },
-      "LibraryCommand": {
-        "type": "object",
-        "title": "LibraryCommand",
-        "required": [
-          "code",
-          "displayName",
-          "spec"
-        ],
-        "properties": {
-          "id": {
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "code": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "version": {
-            "type": "integer"
-          },
-          "status": {
-            "type": "integer"
-          },
-          "spec": {
-            "$ref": "#/components/schemas/LibrarySpec"
-          }
-        }
-      },
-      "MetadataValidationResult": {
-        "type": [
-          "object",
-          "null"
-        ],
-        "title": "MetadataValidationResult",
-        "required": [
-          "valid"
-        ],
-        "properties": {
-          "valid": {
-            "type": "boolean"
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "warnings": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "AgentProviderSettingsView": {
-        "type": "object",
+        "type": [
+          "object",
+          "null"
+        ],
         "title": "AgentProviderSettingsView",
         "required": [
           "baseUrl",
@@ -1627,6 +3495,71 @@
           },
           "modelId": {
             "type": "string"
+          }
+        }
+      },
+      "AgentConversationModelCommand": {
+        "type": "object",
+        "title": "AgentConversationModelCommand",
+        "required": [
+          "conversationId",
+          "modelId"
+        ],
+        "properties": {
+          "conversationId": {
+            "type": "integer"
+          },
+          "modelId": {
+            "type": "string"
+          }
+        }
+      },
+      "JsonElement": {
+        "title": "JsonElement",
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "array"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true
+          }
+        ]
+      },
+      "AgentMessageView": {
+        "type": "object",
+        "title": "AgentMessageView",
+        "required": [
+          "id",
+          "role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
           }
         }
       },
@@ -1757,30 +3690,6 @@
             }
           }
         }
-      },
-      "JsonElement": {
-        "title": "JsonElement",
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "array"
-          },
-          {
-            "type": "object",
-            "additionalProperties": true
-          }
-        ]
       },
       "ReportParameterBinding": {
         "type": "object",
@@ -3010,6 +4919,2331 @@
                   "type": "string"
                 }
               }
+            }
+          }
+        }
+      },
+      "LibraryDataScopeDescriptor": {
+        "type": "object",
+        "title": "LibraryDataScopeDescriptor",
+        "properties": {
+          "tenantScoped": {
+            "type": "boolean"
+          },
+          "userScoped": {
+            "type": "boolean"
+          },
+          "departmentScoped": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LibrarySpec": {
+        "type": "object",
+        "title": "LibrarySpec",
+        "required": [
+          "contributorId",
+          "packagePrefix",
+          "scanPackage"
+        ],
+        "properties": {
+          "schemaVersion": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contributorId": {
+            "type": "string"
+          },
+          "packagePrefix": {
+            "type": "string"
+          },
+          "scanPackage": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "BUSINESS",
+              "BUILT_IN"
+            ]
+          },
+          "runtimeDependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supportedIdentityModes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "EXTERNAL_JWT",
+                "LOCAL"
+              ]
+            }
+          },
+          "applicationSelectable": {
+            "type": "boolean"
+          },
+          "dataScope": {
+            "$ref": "#/components/schemas/LibraryDataScopeDescriptor"
+          }
+        }
+      },
+      "LibraryFeatureView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryFeatureView",
+        "required": [
+          "id",
+          "libraryId",
+          "featureCode",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "libraryId": {
+            "type": "integer"
+          },
+          "parentId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LibraryView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryView",
+        "required": [
+          "id",
+          "code",
+          "displayName",
+          "version",
+          "status",
+          "spec"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/LibrarySpec"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryFeatureView"
+            }
+          }
+        }
+      },
+      "LibraryPage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryPage",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryView"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "LibraryCommand": {
+        "type": "object",
+        "title": "LibraryCommand",
+        "required": [
+          "code",
+          "displayName",
+          "spec"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/LibrarySpec"
+          }
+        }
+      },
+      "MetadataValidationResult": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "MetadataValidationResult",
+        "required": [
+          "valid"
+        ],
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PreviewFile": {
+        "type": "object",
+        "title": "PreviewFile",
+        "required": [
+          "filePath",
+          "content"
+        ],
+        "properties": {
+          "filePath": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "LibraryPreview": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryPreview",
+        "required": [
+          "libraryId",
+          "files"
+        ],
+        "properties": {
+          "libraryId": {
+            "type": "integer"
+          },
+          "featureId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewFile"
+            }
+          }
+        }
+      },
+      "LibraryFeaturePage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LibraryFeaturePage",
+        "properties": {
+          "list": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryFeatureView"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "LibraryFeatureCommand": {
+        "type": "object",
+        "title": "LibraryFeatureCommand",
+        "required": [
+          "libraryId",
+          "featureCode",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "libraryId": {
+            "type": "integer"
+          },
+          "parentId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ModelPageCondition": {
+        "type": "object",
+        "title": "ModelPageCondition",
+        "properties": {
+          "featureId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "contributorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "keyword": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ModelPageCommand": {
+        "type": "object",
+        "title": "ModelPageCommand",
+        "properties": {
+          "pageNumber": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/ModelPageCondition"
+          }
+        }
+      },
+      "InheritedPropertyCommand": {
+        "type": "object",
+        "title": "InheritedPropertyCommand",
+        "required": [
+          "name",
+          "kotlinType",
+          "dbColumn"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kotlinType": {
+            "type": "string"
+          },
+          "dbColumn": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "defaultValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "FormulaPropertyCommand": {
+        "type": "object",
+        "title": "FormulaPropertyCommand",
+        "required": [
+          "propertyCode",
+          "label",
+          "kotlinType",
+          "kind",
+          "expression"
+        ],
+        "properties": {
+          "propertyCode": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kotlinType": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "KOTLIN",
+              "SQL"
+            ]
+          },
+          "expression": {
+            "type": "string"
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TransientPropertyCommand": {
+        "type": "object",
+        "title": "TransientPropertyCommand",
+        "required": [
+          "propertyCode",
+          "label",
+          "kotlinType"
+        ],
+        "properties": {
+          "propertyCode": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kotlinType": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "RESOLVER"
+            ]
+          },
+          "resolverValueType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dictionaryCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "InheritanceRootCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "InheritanceRootCommand",
+        "required": [
+          "strategy",
+          "discriminatorField",
+          "instantiability"
+        ],
+        "properties": {
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "SINGLE_TABLE",
+              "JOINED"
+            ]
+          },
+          "discriminatorField": {
+            "type": "string"
+          },
+          "instantiability": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "ABSTRACT",
+              "INSTANTIABLE"
+            ]
+          },
+          "discriminatorValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinedTableDissociateAction": {
+            "type": "string",
+            "enum": [
+              "DELETE",
+              "LAX"
+            ]
+          }
+        }
+      },
+      "InheritanceSubtypeCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "InheritanceSubtypeCommand",
+        "required": [
+          "parentModelCode"
+        ],
+        "properties": {
+          "parentModelCode": {
+            "type": "string"
+          },
+          "discriminatorValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "instantiability": {
+            "type": "string",
+            "enum": [
+              "AUTO",
+              "ABSTRACT",
+              "INSTANTIABLE"
+            ]
+          }
+        }
+      },
+      "EntityConfigCommand": {
+        "type": "object",
+        "title": "EntityConfigCommand",
+        "properties": {
+          "sourceMode": {
+            "type": "string",
+            "enum": [
+              "GENERATED",
+              "EXISTING"
+            ]
+          },
+          "sourceQualifiedName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "baseMode": {
+            "type": "string",
+            "enum": [
+              "DEFAULT",
+              "INHERITED"
+            ]
+          },
+          "baseModels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "superTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "relationOrderings": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "inheritedProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InheritedPropertyCommand"
+            }
+          },
+          "inheritedRelationCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "formulaProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaPropertyCommand"
+            }
+          },
+          "transientProperties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TransientPropertyCommand"
+            }
+          },
+          "microServiceName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "inheritanceRoot": {
+            "$ref": "#/components/schemas/InheritanceRootCommand"
+          },
+          "inheritanceSubtype": {
+            "$ref": "#/components/schemas/InheritanceSubtypeCommand"
+          }
+        }
+      },
+      "RouteTreeCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "RouteTreeCommand",
+        "required": [
+          "parentIdProperty",
+          "childrenProperty",
+          "keywordProperty"
+        ],
+        "properties": {
+          "parentIdProperty": {
+            "type": "string"
+          },
+          "childrenProperty": {
+            "type": "string"
+          },
+          "keywordProperty": {
+            "type": "string"
+          },
+          "sortProperty": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RoutePropertyCommand": {
+        "type": "object",
+        "title": "RoutePropertyCommand",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "identifier": {
+            "type": "boolean"
+          },
+          "createWritable": {
+            "type": "boolean"
+          },
+          "updateWritable": {
+            "type": "boolean"
+          },
+          "arrayItemType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dictionaryCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RouteExcelCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "RouteExcelCommand",
+        "required": [
+          "fileName",
+          "templateFileName",
+          "sheetName"
+        ],
+        "properties": {
+          "importEnabled": {
+            "type": "boolean"
+          },
+          "exportEnabled": {
+            "type": "boolean"
+          },
+          "customImport": {
+            "type": "boolean"
+          },
+          "customExport": {
+            "type": "boolean"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "templateFileName": {
+            "type": "string"
+          },
+          "sheetName": {
+            "type": "string"
+          },
+          "templateSheetName": {
+            "type": "string"
+          },
+          "importColumns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePropertyCommand"
+            }
+          },
+          "exportColumns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePropertyCommand"
+            }
+          }
+        }
+      },
+      "RouteQueryFieldCommand": {
+        "type": "object",
+        "title": "RouteQueryFieldCommand",
+        "required": [
+          "propertyName",
+          "parameterName",
+          "operator",
+          "type"
+        ],
+        "properties": {
+          "propertyName": {
+            "type": "string"
+          },
+          "parameterName": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "endParameterName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "stateCases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "RouteOrderCommand": {
+        "type": "object",
+        "title": "RouteOrderCommand",
+        "required": [
+          "propertyName"
+        ],
+        "properties": {
+          "propertyName": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ]
+          }
+        }
+      },
+      "DtoReference": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "DtoReference",
+        "required": [
+          "dtoCode"
+        ],
+        "properties": {
+          "modelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dtoCode": {
+            "type": "string"
+          }
+        }
+      },
+      "ApiSchema": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ApiSchema",
+        "properties": {
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "typeRef": {
+            "$ref": "#/components/schemas/DtoReference"
+          },
+          "format": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ApiSchema"
+            }
+          },
+          "required": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ApiSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enumValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "oneOf": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiSchema"
+            }
+          }
+        }
+      },
+      "ApiParameterCommand": {
+        "type": "object",
+        "title": "ApiParameterCommand",
+        "required": [
+          "name",
+          "location",
+          "schema"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string",
+            "enum": [
+              "PATH",
+              "QUERY",
+              "HEADER",
+              "COOKIE"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schema": {
+            "$ref": "#/components/schemas/ApiSchema"
+          }
+        }
+      },
+      "ApiBodyCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ApiBodyCommand",
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "schema": {
+            "$ref": "#/components/schemas/ApiSchema"
+          }
+        }
+      },
+      "CustomOperationCommand": {
+        "type": "object",
+        "title": "CustomOperationCommand",
+        "required": [
+          "operationCode",
+          "name",
+          "path",
+          "method"
+        ],
+        "properties": {
+          "operationCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE"
+            ]
+          },
+          "transport": {
+            "type": "string",
+            "enum": [
+              "HTTP",
+              "SSE",
+              "WEBSOCKET"
+            ]
+          },
+          "implementation": {
+            "type": "string",
+            "enum": [
+              "GENERATED",
+              "EXISTING_REST"
+            ]
+          },
+          "authenticated": {
+            "type": "boolean"
+          },
+          "permission": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "callContext": {
+            "type": "boolean"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiParameterCommand"
+            }
+          },
+          "requestBody": {
+            "$ref": "#/components/schemas/ApiBodyCommand"
+          },
+          "responseBody": {
+            "$ref": "#/components/schemas/ApiBodyCommand"
+          },
+          "responseEnvelope": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NamedDtoSchemaCommand": {
+        "type": "object",
+        "title": "NamedDtoSchemaCommand",
+        "required": [
+          "ref",
+          "className"
+        ],
+        "properties": {
+          "ref": {
+            "$ref": "#/components/schemas/DtoReference"
+          },
+          "className": {
+            "type": "string"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ApiSchema"
+            }
+          },
+          "required": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "AgentExposureCommand": {
+        "type": "object",
+        "title": "AgentExposureCommand",
+        "properties": {
+          "operations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "AUTO",
+                "REQUIRED"
+              ]
+            }
+          }
+        }
+      },
+      "RouteCommand": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "RouteCommand",
+        "required": [
+          "path"
+        ],
+        "properties": {
+          "packageName": {
+            "type": "string"
+          },
+          "qualifiedName": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "modelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "aliasPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fetchPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "excludePaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "enabledOperations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tree": {
+            "$ref": "#/components/schemas/RouteTreeCommand"
+          },
+          "excel": {
+            "$ref": "#/components/schemas/RouteExcelCommand"
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoutePropertyCommand"
+            }
+          },
+          "queryFields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteQueryFieldCommand"
+            }
+          },
+          "defaultOrders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteOrderCommand"
+            }
+          },
+          "customOperations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomOperationCommand"
+            }
+          },
+          "dtoSchemas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NamedDtoSchemaCommand"
+            }
+          },
+          "agentExposure": {
+            "$ref": "#/components/schemas/AgentExposureCommand"
+          }
+        }
+      },
+      "FieldCommand": {
+        "type": "object",
+        "title": "FieldCommand",
+        "required": [
+          "orderNo",
+          "fieldCode",
+          "label",
+          "kotlinType",
+          "dbColumn"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orderNo": {
+            "type": "integer"
+          },
+          "fieldCode": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kotlinType": {
+            "type": "string"
+          },
+          "dbColumn": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "createWritable": {
+            "type": "boolean"
+          },
+          "updateWritable": {
+            "type": "boolean"
+          },
+          "listVisible": {
+            "type": "boolean"
+          },
+          "formVisible": {
+            "type": "boolean"
+          },
+          "formControl": {
+            "type": "string"
+          },
+          "dictCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "enumStorage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "NAME",
+              "ORDINAL"
+            ]
+          },
+          "defaultValue": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "remark": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "serialized": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "boolean"
+          },
+          "maxLength": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "QueryConditionCommand": {
+        "type": "object",
+        "title": "QueryConditionCommand",
+        "required": [
+          "orderNo",
+          "fieldCode",
+          "operator",
+          "valueType"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orderNo": {
+            "type": "integer"
+          },
+          "fieldCode": {
+            "type": "string"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "EQ",
+              "NE",
+              "LIKE",
+              "STARTS_WITH",
+              "ENDS_WITH",
+              "GT",
+              "GE",
+              "LT",
+              "LE",
+              "IN",
+              "NOT_IN",
+              "BETWEEN",
+              "TIME_RANGE",
+              "NULL_STATE",
+              "ZERO_STATE"
+            ]
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "SINGLE",
+              "RANGE",
+              "DATE_RANGE",
+              "DATETIME_RANGE",
+              "MULTIPLE"
+            ]
+          },
+          "paramName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "QueryCommand": {
+        "type": "object",
+        "title": "QueryCommand",
+        "required": [
+          "orderNo",
+          "queryCode",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orderNo": {
+            "type": "integer"
+          },
+          "queryCode": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "logic": {
+            "type": "string",
+            "enum": [
+              "AND",
+              "OR"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryConditionCommand"
+            }
+          }
+        }
+      },
+      "RelationCommand": {
+        "type": "object",
+        "title": "RelationCommand",
+        "required": [
+          "orderNo",
+          "relationCode",
+          "label",
+          "relationType"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "orderNo": {
+            "type": "integer"
+          },
+          "relationCode": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "relationType": {
+            "type": "string",
+            "enum": [
+              "MANY_TO_ONE",
+              "ONE_TO_MANY",
+              "ONE_TO_ONE",
+              "MANY_TO_MANY"
+            ]
+          },
+          "targetModelId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "targetModelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinColumn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mappedBy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinTable": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinTableJoinColumn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinTableInverseColumn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinTableFilterColumn": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "joinTableFilterValues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dissociateAction": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "LAX",
+              "CHECK",
+              "SET_NULL",
+              "DELETE"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "createWritable": {
+            "type": "boolean"
+          },
+          "updateWritable": {
+            "type": "boolean"
+          },
+          "listVisible": {
+            "type": "boolean"
+          },
+          "formVisible": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ModelCommand": {
+        "type": "object",
+        "title": "ModelCommand",
+        "required": [
+          "featureId",
+          "modelCode",
+          "name",
+          "className",
+          "tableName"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "modelCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "packageName": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "tableName": {
+            "type": "string"
+          },
+          "modelType": {
+            "type": "string",
+            "enum": [
+              "ENTITY",
+              "MAPPED_SUPERCLASS",
+              "EMBEDDABLE"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "contributorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entityConfig": {
+            "$ref": "#/components/schemas/EntityConfigCommand"
+          },
+          "routeConfig": {
+            "$ref": "#/components/schemas/RouteCommand"
+          },
+          "remark": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FieldCommand"
+            }
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QueryCommand"
+            }
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelationCommand"
+            }
+          }
+        }
+      },
+      "PageResult": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "PageResult",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModelCommand"
+            }
+          },
+          "totalRowCount": {
+            "type": "integer"
+          },
+          "totalPageCount": {
+            "type": "integer"
+          }
+        }
+      },
+      "ModelPreview": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ModelPreview",
+        "required": [
+          "modelId",
+          "modelCode",
+          "files"
+        ],
+        "properties": {
+          "modelId": {
+            "type": "integer"
+          },
+          "modelCode": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewFile"
+            }
+          }
+        }
+      },
+      "LsiDtoType": {
+        "type": "object",
+        "title": "LsiDtoType",
+        "required": [
+          "qualifiedName"
+        ],
+        "properties": {
+          "qualifiedName": {
+            "type": "string"
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiDtoType"
+            }
+          },
+          "nullable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LsiValidationRule": {
+        "type": "object",
+        "title": "LsiValidationRule",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LsiDtoAnnotationArgument": {
+        "type": "object",
+        "title": "LsiDtoAnnotationArgument",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "STRING",
+              "INTEGER",
+              "BOOLEAN",
+              "CLASS",
+              "ENUM"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LsiDtoAnnotation": {
+        "type": "object",
+        "title": "LsiDtoAnnotation",
+        "required": [
+          "qualifiedName"
+        ],
+        "properties": {
+          "qualifiedName": {
+            "type": "string"
+          },
+          "useSiteTarget": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "GET",
+              "PARAM",
+              "FIELD",
+              "PROPERTY"
+            ]
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiDtoAnnotationArgument"
+            }
+          }
+        }
+      },
+      "LsiDtoDefaultValue": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "LsiDtoDefaultValue",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "NULL",
+              "DECLARED",
+              "BOOLEAN",
+              "INTEGER",
+              "STRING",
+              "ENUM",
+              "EMPTY_INSTANCE",
+              "EMPTY_LIST",
+              "EMPTY_MAP",
+              "EMPTY_SET"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "DtoFieldCommand": {
+        "type": "object",
+        "title": "DtoFieldCommand",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "sourcePath": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nullability": {
+            "type": "string",
+            "enum": [
+              "INHERIT",
+              "NULLABLE",
+              "NON_NULL"
+            ]
+          },
+          "schema": {
+            "$ref": "#/components/schemas/ApiSchema"
+          },
+          "kotlinType": {
+            "$ref": "#/components/schemas/LsiDtoType"
+          },
+          "validations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiValidationRule"
+            }
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiDtoAnnotation"
+            }
+          },
+          "defaultValue": {
+            "$ref": "#/components/schemas/LsiDtoDefaultValue"
+          }
+        }
+      },
+      "DtoCommand": {
+        "type": "object",
+        "title": "DtoCommand",
+        "required": [
+          "featureId",
+          "dtoCode",
+          "name",
+          "className",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "dtoCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "packageName": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "INPUT",
+              "OUTPUT",
+              "STRUCTURE",
+              "VIEW"
+            ]
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "PUBLIC",
+              "INTERNAL"
+            ]
+          },
+          "sourceModelCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selectionMode": {
+            "type": "string",
+            "enum": [
+              "EXPLICIT",
+              "ALL_SCALAR_FIELDS",
+              "ALL_TABLE_FIELDS",
+              "ALL_DEEP_FIELDS"
+            ]
+          },
+          "excludedPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DtoFieldCommand"
+            }
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiDtoAnnotation"
+            }
+          },
+          "superTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiDtoType"
+            }
+          },
+          "contributorId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "LsiValidationParameterMetadata": {
+        "type": "object",
+        "title": "LsiValidationParameterMetadata",
+        "required": [
+          "code",
+          "name",
+          "description",
+          "kind"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "INTEGER"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "minimum": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "maximum": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "LsiValidationRuleMetadata": {
+        "type": "object",
+        "title": "LsiValidationRuleMetadata",
+        "required": [
+          "code",
+          "name",
+          "description",
+          "predicate",
+          "supportedValueKinds",
+          "defaultMessage"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "predicate": {
+            "type": "string",
+            "enum": [
+              "BLANK",
+              "EMPTY",
+              "BLANK_ELEMENTS",
+              "MAX_LENGTH"
+            ]
+          },
+          "supportedValueKinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "TEXT",
+                "COLLECTION",
+                "TEXT_COLLECTION"
+              ]
+            }
+          },
+          "defaultMessage": {
+            "type": "string"
+          },
+          "parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LsiValidationParameterMetadata"
+            }
+          }
+        }
+      },
+      "DtoPreview": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "DtoPreview",
+        "required": [
+          "dtoId",
+          "dtoCode",
+          "files"
+        ],
+        "properties": {
+          "dtoId": {
+            "type": "integer"
+          },
+          "dtoCode": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PreviewFile"
+            }
+          }
+        }
+      },
+      "ConventionFileView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ConventionFileView",
+        "required": [
+          "id",
+          "featureId",
+          "fileCode",
+          "name",
+          "className",
+          "kind",
+          "status",
+          "packageName",
+          "contributorId"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "fileCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "SCHEDULED_JOB"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "packageName": {
+            "type": "string"
+          },
+          "contributorId": {
+            "type": "string"
+          }
+        }
+      },
+      "ConventionFileCommand": {
+        "type": "object",
+        "title": "ConventionFileCommand",
+        "required": [
+          "featureId",
+          "fileCode",
+          "name",
+          "className",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "fileCode": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "className": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SERVICE",
+              "SCHEDULED_JOB"
+            ]
+          },
+          "status": {
+            "type": "integer"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ConstantListCommand": {
+        "type": "object",
+        "title": "ConstantListCommand",
+        "properties": {
+          "featureId": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        }
+      },
+      "ConstantItemCommand": {
+        "type": "object",
+        "title": "ConstantItemCommand",
+        "required": [
+          "name",
+          "type",
+          "value",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "ConstantView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "ConstantView",
+        "required": [
+          "id",
+          "featureId",
+          "groupCode",
+          "featurePackageName",
+          "contributorId",
+          "objectName",
+          "description"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "groupCode": {
+            "type": "string"
+          },
+          "featurePackageName": {
+            "type": "string"
+          },
+          "contributorId": {
+            "type": "string"
+          },
+          "objectName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "constants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConstantItemCommand"
+            }
+          }
+        }
+      },
+      "ConstantCommand": {
+        "type": "object",
+        "title": "ConstantCommand",
+        "required": [
+          "featureId",
+          "groupCode",
+          "objectName",
+          "description",
+          "constants"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "featureId": {
+            "type": "integer"
+          },
+          "groupCode": {
+            "type": "string"
+          },
+          "objectName": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "constants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConstantItemCommand"
             }
           }
         }

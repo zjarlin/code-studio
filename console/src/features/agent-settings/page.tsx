@@ -8,12 +8,16 @@ import { PageHeader } from '@/components/composed/page-header/page-header'
 import { QueryState } from '@/components/composed/query-state/query-state'
 import type { CatalogPageProps } from '@/features/page-registry'
 import { applicationRequestOptions } from '@/lib/application-client'
+import { requireApiData } from '@/lib/http'
 
 export default function AgentSettingsPage({ route }: CatalogPageProps) {
   const queryClient = useQueryClient()
   const settings = useQuery({
     queryKey: ['agent-settings'],
-    queryFn: async () => getAgentSettings(await applicationRequestOptions()),
+    queryFn: async () => requireApiData(
+      await getAgentSettings(await applicationRequestOptions()),
+      'Agent 设置响应缺少 data',
+    ),
   })
   const [baseUrl, setBaseUrl] = useState('')
   const [apiKey, setApiKey] = useState('')
@@ -21,8 +25,10 @@ export default function AgentSettingsPage({ route }: CatalogPageProps) {
     if (settings.data) setBaseUrl(settings.data.baseUrl)
   }, [settings.data])
   const save = useMutation({
-    mutationFn: async (command: AgentProviderSettingsCommand) =>
-      updateAgentSettings(command, await applicationRequestOptions()),
+    mutationFn: async (command: AgentProviderSettingsCommand) => requireApiData(
+      await updateAgentSettings(command, await applicationRequestOptions()),
+      'Agent 设置保存响应缺少 data',
+    ),
     onSuccess: (result) => {
       queryClient.setQueryData(['agent-settings'], result)
       setApiKey('')

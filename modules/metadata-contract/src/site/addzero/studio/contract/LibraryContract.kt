@@ -60,6 +60,12 @@ data class LibraryFeatureView(
 )
 
 @Serializable
+data class LibraryFeaturePage(
+    val list: List<LibraryFeatureView> = emptyList(),
+    val total: Long = 0,
+)
+
+@Serializable
 data class LibraryView(
     val id: Long,
     val code: String,

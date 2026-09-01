@@ -19,6 +19,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.utils.io.readRemaining
 import kotlinx.io.readByteArray
+import site.addzero.platform.web.Controller
 import site.addzero.studio.contract.report.SpreadsheetTemplateListItemView
 import site.addzero.studio.contract.report.SpreadsheetTemplateView
 import site.addzero.studio.report.internal.MAX_TEMPLATE_FILE_BYTES
@@ -29,7 +30,6 @@ import site.addzero.studio.report.internal.SpreadsheetTemplateStore
 import site.addzero.studio.report.internal.SpreadsheetTemplateListRecord
 import site.addzero.studio.report.internal.reportBadRequest
 import site.addzero.studio.report.internal.reportConflict
-import site.addzero.studio.server.StudioApiController
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import javax.sql.DataSource
@@ -38,7 +38,9 @@ import javax.sql.DataSource
 class SpreadsheetTemplateController(
     dataSource: DataSource,
     schema: String,
-) : StudioApiController {
+) : Controller {
+    override val routeKey = "/spreadsheet-templates"
+
     private val store = SpreadsheetTemplateStore(dataSource, schema)
 
     override fun install(route: Route) {

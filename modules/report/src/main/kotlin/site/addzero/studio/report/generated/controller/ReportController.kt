@@ -14,6 +14,7 @@ import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
+import site.addzero.platform.web.Controller
 import site.addzero.studio.contract.CommonResult
 import site.addzero.studio.contract.PageResult
 import site.addzero.studio.contract.report.PublishedReportListItemView
@@ -28,14 +29,15 @@ import site.addzero.studio.report.internal.ReportRecord
 import site.addzero.studio.report.internal.ReportRequestException
 import site.addzero.studio.report.internal.reportBadRequest
 import site.addzero.studio.report.internal.reportConflict
-import site.addzero.studio.server.StudioApiController
 import javax.sql.DataSource
 
 /** 安装报表草稿与当前发布快照的 HTTP 传输。 */
 class ReportController(
     dataSource: DataSource,
     schema: String,
-) : StudioApiController {
+) : Controller {
+    override val routeKey = "/reports"
+
     private val store = ReportStore(dataSource, schema)
 
     override fun install(route: Route) {

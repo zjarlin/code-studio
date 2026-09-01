@@ -15,10 +15,10 @@ import type {
 } from '@platform/openapi-workbench'
 
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
-import { Button } from '@/components/generated/shadcn/button'
-import { Checkbox } from '@/components/generated/shadcn/checkbox'
-import { Field, FieldLabel } from '@/components/generated/shadcn/field'
-import { Input } from '@/components/generated/shadcn/input'
+import { Button } from '@platform/ui/components/generated/shadcn/button'
+import { Checkbox } from '@platform/ui/components/generated/shadcn/checkbox'
+import { Field, FieldLabel } from '@platform/ui/components/generated/shadcn/field'
+import { Input } from '@platform/ui/components/generated/shadcn/input'
 import {
   Select,
   SelectContent,
@@ -26,8 +26,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/generated/shadcn/select'
-import { Textarea } from '@/components/generated/shadcn/textarea'
+} from '@platform/ui/components/generated/shadcn/select'
+import { Textarea } from '@platform/ui/components/generated/shadcn/textarea'
 
 import { newCustomHeader, type ApiRequestDraft } from './session'
 

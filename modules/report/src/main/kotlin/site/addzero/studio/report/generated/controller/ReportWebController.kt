@@ -8,10 +8,12 @@ import io.ktor.server.response.respondResource
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.route
-import site.addzero.studio.server.StudioApiController
+import site.addzero.platform.web.Controller
 
 /** 提供报表 JAR 自带的前端资源和 SPA 深链接。 */
-class ReportWebController : StudioApiController {
+class ReportWebController : Controller {
+    override val routeKey = REPORT_PATH
+
     override fun install(route: Route) {
         route.route(REPORT_PATH) {
             get {

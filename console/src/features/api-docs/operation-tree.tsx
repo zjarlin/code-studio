@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { groupApiOperations } from '@platform/openapi-workbench'
 import type { ApiDocument, ApiHistoryEntry, ApiOperation } from '@platform/openapi-workbench'
 
-import { Button } from '@/components/generated/shadcn/button'
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/generated/shadcn/empty'
-import { Input } from '@/components/generated/shadcn/input'
-import { ToggleGroup, ToggleGroupItem } from '@/components/generated/shadcn/toggle-group'
+import { Button } from '@platform/ui/components/generated/shadcn/button'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@platform/ui/components/generated/shadcn/empty'
+import { Input } from '@platform/ui/components/generated/shadcn/input'
+import { ToggleGroup, ToggleGroupItem } from '@platform/ui/components/generated/shadcn/toggle-group'
 
 interface OperationTreeProps {
   document: ApiDocument

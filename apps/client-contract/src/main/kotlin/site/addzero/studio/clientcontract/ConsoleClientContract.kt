@@ -19,17 +19,20 @@ import io.ktor.server.routing.openapi.CollectSchemaReferences
 import io.ktor.server.routing.openapi.OperationMapping
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import site.addzero.studio.contract.AgentConversationCommand
+import site.addzero.studio.contract.AgentConversationModelCommand
 import site.addzero.studio.contract.AgentConversationView
+import site.addzero.studio.contract.AgentMessageView
 import site.addzero.studio.contract.AgentProviderModel
 import site.addzero.studio.contract.AgentProviderSettingsCommand
 import site.addzero.studio.contract.AgentProviderSettingsView
 import site.addzero.studio.contract.CommonResult
 import site.addzero.studio.contract.ExampleHelloResponse
-import site.addzero.studio.contract.LibraryCommand
-import site.addzero.studio.contract.LibraryPage
 import site.addzero.studio.contract.LsiCatalogEntry
-import site.addzero.studio.contract.MetadataValidationResult
 import site.addzero.studio.contract.StudioClientConfig
 import site.addzero.studio.contract.report.PublishedReportListPage
 import site.addzero.studio.contract.report.PublishedReportView
@@ -70,7 +73,8 @@ object ConsoleClientContract {
             },
             components = Components(schemas = schemas),
         )
-        return JSON.encodeToString(document) + "\n"
+        val encoded = Json.parseToJsonElement(JSON.encodeToString(document))
+        return JSON.encodeToString(encoded.normalizeComponentReferences()) + "\n"
     }
 }
 
@@ -95,45 +99,43 @@ private fun clientPaths(): Map<String, ReferenceOr<PathItem>> = linkedMapOf(
             jsonResponse<CommonResult<List<LsiCatalogEntry>>>()
         },
     ),
-    "/studio/api/lowcode/library/page" to pathItem(
-        get = operation("listLibraries", "Library") {
-            pageParameters()
-            jsonResponse<CommonResult<LibraryPage>>()
-        },
-    ),
-    "/studio/api/lowcode/library/validate" to pathItem(
-        post = operation("validateLibrary", "Library") {
-            jsonBody<LibraryCommand>()
-            jsonResponse<CommonResult<MetadataValidationResult>>()
-        },
-    ),
-    "/studio/api/lowcode/library/add" to pathItem(
-        post = operation("addLibrary", "Library") {
-            jsonBody<LibraryCommand>()
-            jsonResponse<CommonResult<Long>>()
-        },
-    ),
     "/agent/settings" to pathItem(
         get = applicationOperation("getAgentSettings", "Agent") {
-            jsonResponse<AgentProviderSettingsView>()
+            jsonResponse<CommonResult<AgentProviderSettingsView>>()
         },
         put = applicationOperation("updateAgentSettings", "Agent") {
             jsonBody<AgentProviderSettingsCommand>()
-            jsonResponse<AgentProviderSettingsView>()
+            jsonResponse<CommonResult<AgentProviderSettingsView>>()
         },
     ),
     "/agent/models" to pathItem(
         get = applicationOperation("listAgentModels", "Agent") {
-            jsonResponse<List<AgentProviderModel>>()
+            jsonResponse<CommonResult<List<AgentProviderModel>>>()
         },
     ),
     "/agent/conversations" to pathItem(
         get = applicationOperation("listAgentConversations", "Agent") {
-            jsonResponse<List<AgentConversationView>>()
+            jsonResponse<CommonResult<List<AgentConversationView>>>()
         },
         post = applicationOperation("createAgentConversation", "Agent") {
             jsonBody<AgentConversationCommand>()
-            jsonResponse<Long>()
+            jsonResponse<CommonResult<Long>>()
+        },
+        delete = applicationOperation("deleteAgentConversations", "Agent") {
+            jsonBody<List<Long>>()
+            jsonResponse<CommonResult<Boolean>>()
+        },
+    ),
+    "/agent/conversations/model" to pathItem(
+        put = applicationOperation("updateAgentConversationModel", "Agent") {
+            jsonBody<AgentConversationModelCommand>()
+            jsonResponse<CommonResult<Boolean>>()
+        },
+    ),
+    "/agent/messages" to pathItem(
+        get = applicationOperation("listAgentMessages", "Agent") {
+            longQueryParameter("id", required = true)
+            jsonResponse<CommonResult<List<AgentMessageView>>>()
         },
     ),
     "/console/api/reports" to pathItem(
@@ -216,9 +218,9 @@ private fun clientPaths(): Map<String, ReferenceOr<PathItem>> = linkedMapOf(
             binaryResponse()
         },
     ),
-)
+) + metadataClientPaths()
 
-private fun pathItem(
+internal fun pathItem(
     get: Operation? = null,
     post: Operation? = null,
     put: Operation? = null,
@@ -260,7 +262,27 @@ private fun JsonSchema.normalizeDiscriminator(schemas: MutableMap<String, JsonSc
 
 private fun String.componentName(): String = substringAfterLast('.').replace(NON_COMPONENT_CHARACTER, "")
 
-private fun operation(
+private fun JsonElement.normalizeComponentReferences(): JsonElement = when (this) {
+    is JsonArray -> JsonArray(map(JsonElement::normalizeComponentReferences))
+    is JsonObject -> JsonObject(mapValues { (key, value) ->
+        if (key == "\$ref" && value is JsonPrimitive && value.isString) {
+            JsonPrimitive(value.content.normalizeComponentReference())
+        } else {
+            value.normalizeComponentReferences()
+        }
+    })
+    else -> this
+}
+
+private fun String.normalizeComponentReference(): String {
+    if (!startsWith(COMPONENT_REFERENCE_PREFIX)) {
+        return this
+    }
+    val component = removePrefix(COMPONENT_REFERENCE_PREFIX).componentName()
+    return "$COMPONENT_REFERENCE_PREFIX$component"
+}
+
+internal fun operation(
     operationId: String,
     tag: String,
     configure: Operation.Builder.() -> Unit,
@@ -279,14 +301,14 @@ private fun applicationOperation(
     configure()
 }
 
-private inline fun <reified T : Any> Operation.Builder.jsonBody() {
+internal inline fun <reified T : Any> Operation.Builder.jsonBody() {
     requestBody {
         required = true
         schema = jsonSchema<T>()
     }
 }
 
-private inline fun <reified T : Any> Operation.Builder.jsonResponse() {
+internal inline fun <reified T : Any> Operation.Builder.jsonResponse() {
     responses {
         HttpStatusCode.OK {
             description = "Success"
@@ -295,7 +317,7 @@ private inline fun <reified T : Any> Operation.Builder.jsonResponse() {
     }
 }
 
-private fun Operation.Builder.binaryResponse() {
+internal fun Operation.Builder.binaryResponse() {
     responses {
         HttpStatusCode.OK {
             description = "Generated spreadsheet"
@@ -306,13 +328,22 @@ private fun Operation.Builder.binaryResponse() {
     }
 }
 
-private fun Operation.Builder.pageParameters() {
+internal fun Operation.Builder.pageParameters() {
     parameters {
         query("pageNo") {
             schema = INTEGER_SCHEMA
         }
         query("pageSize") {
             schema = INTEGER_SCHEMA
+        }
+    }
+}
+
+internal fun Operation.Builder.longQueryParameter(name: String, required: Boolean = false) {
+    parameters {
+        query(name) {
+            schema = LONG_SCHEMA
+            this.required = required
         }
     }
 }
@@ -355,6 +386,7 @@ private val JSON = Json {
 }
 private val STRING_SCHEMA = JsonSchema(type = JsonType.STRING)
 private val INTEGER_SCHEMA = JsonSchema(type = JsonType.INTEGER, format = "int32")
+private val LONG_SCHEMA = JsonSchema(type = JsonType.INTEGER, format = "int64")
 private val BINARY_SCHEMA = JsonSchema(type = JsonType.STRING, format = "binary")
 private val JSON_ELEMENT_SCHEMA = JsonSchema(
     title = "JsonElement",
@@ -373,3 +405,4 @@ private val JSON_ELEMENT_SCHEMA = JsonSchema(
     ),
 )
 private val NON_COMPONENT_CHARACTER = Regex("[^A-Za-z0-9_]")
+private const val COMPONENT_REFERENCE_PREFIX = "#/components/schemas/"

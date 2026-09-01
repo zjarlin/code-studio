@@ -7,8 +7,8 @@ import type { ApiHistoryEntry, ApiOperation } from '@platform/openapi-workbench'
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
 import { PageHeader } from '@/components/composed/page-header/page-header'
 import { QueryState } from '@/components/composed/query-state/query-state'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/generated/shadcn/tabs'
-import { ToggleGroup, ToggleGroupItem } from '@/components/generated/shadcn/toggle-group'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@platform/ui/components/generated/shadcn/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@platform/ui/components/generated/shadcn/toggle-group'
 import type { CatalogPageProps } from '@/features/page-registry'
 
 import { fetchApiCatalog, type ApiCatalog } from './catalog'
@@ -124,8 +124,8 @@ export function ApiWorkbench({ catalog, refresh, route }: Readonly<{
           value={requestView}
         >
           <TabsList aria-label="请求视图" className="api-panel-tabs">
-            <TabsTrigger value="debug">调试</TabsTrigger>
-            <TabsTrigger value="docs">文档</TabsTrigger>
+            <TabsTrigger onClick={() => setRequestView('debug')} value="debug">调试</TabsTrigger>
+            <TabsTrigger onClick={() => setRequestView('docs')} value="docs">文档</TabsTrigger>
           </TabsList>
           {session.selected ? <>
             <TabsContent value="debug">

@@ -10,6 +10,7 @@ plugins:
     enabled: true
 
 dependencies:
+  - //lib/platform/web: exported
   - ../metadata-contract: exported
   - ../runtime: exported
   - $libs.flyway.core

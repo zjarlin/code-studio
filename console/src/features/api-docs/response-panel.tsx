@@ -5,10 +5,10 @@ import { downloadApiResponseFile } from '@platform/openapi-workbench'
 import type { ApiResponseState } from '@platform/openapi-workbench'
 
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
-import { Button } from '@/components/generated/shadcn/button'
-import { Checkbox } from '@/components/generated/shadcn/checkbox'
-import { Field, FieldLabel } from '@/components/generated/shadcn/field'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/generated/shadcn/tabs'
+import { Button } from '@platform/ui/components/generated/shadcn/button'
+import { Checkbox } from '@platform/ui/components/generated/shadcn/checkbox'
+import { Field, FieldLabel } from '@platform/ui/components/generated/shadcn/field'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@platform/ui/components/generated/shadcn/tabs'
 
 interface ResponsePanelProps {
   error: string

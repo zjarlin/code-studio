@@ -15,6 +15,7 @@ dependencies:
   - $libs.ktor.server.content.negotiation
   - $libs.ktor.server.netty
   - $libs.logback.classic
+  - $libs.koin.annotations
   - $libs.koin.ktor
   - $libs.postgresql: runtime-only
 

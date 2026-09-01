@@ -99,4 +99,29 @@
     border-top: 1px solid var(--border);
     border-left: 0;
   }
+
+  .feature-workspace,
+  .constant-workspace {
+    padding: 13px;
+  }
+
+  .feature-layout,
+  .constant-layout,
+  .resource-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .metadata-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .workspace-section-header,
+  .constant-toolbar {
+    align-items: flex-start;
+  }
+
+  .constant-table,
+  .resource-table {
+    overflow-x: auto;
+  }
 }

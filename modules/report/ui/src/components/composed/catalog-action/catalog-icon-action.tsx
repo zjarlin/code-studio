@@ -1,13 +1,13 @@
 import type { ButtonHTMLAttributes } from 'react'
 
 import { useCatalog } from '@/catalog/context'
-import { Button } from '@/components/generated/shadcn/button'
+import { Button } from '@platform/ui/components/generated/shadcn/button'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/generated/shadcn/tooltip'
+} from '@platform/ui/components/generated/shadcn/tooltip'
 
 import { CatalogIcon } from '../catalog-icon/catalog-icon'
 

@@ -20,6 +20,18 @@ export default defineConfig({
           name: 'requestJson',
         },
         operations: {
+          downloadDto: {
+            mutator: {
+              path: './src/lib/http.ts',
+              name: 'requestBlob',
+            },
+          },
+          downloadModel: {
+            mutator: {
+              path: './src/lib/http.ts',
+              name: 'requestBlob',
+            },
+          },
           fillSpreadsheetTemplate: {
             mutator: {
               path: './src/lib/http.ts',

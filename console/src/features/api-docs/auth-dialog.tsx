@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { Button } from '@/components/generated/shadcn/button'
+import { Button } from '@platform/ui/components/generated/shadcn/button'
 import {
   Dialog,
   DialogContent,
@@ -8,9 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/generated/shadcn/dialog'
-import { Field, FieldLabel } from '@/components/generated/shadcn/field'
-import { Input } from '@/components/generated/shadcn/input'
+} from '@platform/ui/components/generated/shadcn/dialog'
+import { Field, FieldLabel } from '@platform/ui/components/generated/shadcn/field'
+import { Input } from '@platform/ui/components/generated/shadcn/input'
 
 interface AuthDialogProps {
   onChange: (value: string) => void

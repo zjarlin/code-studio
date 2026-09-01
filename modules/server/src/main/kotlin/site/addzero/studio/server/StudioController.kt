@@ -18,6 +18,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.launch
+import site.addzero.platform.web.Controller
 import site.addzero.studio.contract.CommonResult
 import site.addzero.studio.server.catalog.CatalogResources
 import site.addzero.studio.server.catalog.JdbcCatalogOverrideReader
@@ -39,9 +40,9 @@ fun Application.installStudio(
     accessPolicy: StudioAccessPolicy,
     classLoader: ClassLoader = environment.classLoader,
     metadataSchema: String = DEFAULT_STUDIO_SCHEMA,
-    apiControllers: List<StudioApiController> = emptyList(),
+    apiControllers: List<Controller> = emptyList(),
     permissionPolicy: StudioPermissionPolicy = StudioPermissionPolicy { _, _ -> false },
-    consoleApiControllers: List<StudioApiController> = emptyList(),
+    consoleApiControllers: List<Controller> = emptyList(),
     schemaMigrations: List<StudioSchemaMigration> = emptyList(),
     features: List<StudioFeature> = emptyList(),
 ) {
@@ -101,15 +102,17 @@ class StudioController(
     private val config: StudioConfig,
     private val accessPolicy: StudioAccessPolicy,
     private val contributors: List<MetadataContributor>,
-    private val apiControllers: List<StudioApiController> = emptyList(),
+    private val apiControllers: List<Controller> = emptyList(),
     private val catalogProvider: StudioCatalogProvider = StudioCatalogProvider.EMPTY,
-    private val consoleApiControllers: List<StudioApiController> = emptyList(),
-) {
-    fun install(parent: Route) {
+    private val consoleApiControllers: List<Controller> = emptyList(),
+) : Controller {
+    override val routeKey = "/studio"
+
+    override fun install(route: Route) {
         if (!config.enabled) {
             return
         }
-        parent.route("/studio") {
+        route.route("/studio") {
             install(StudioAccess) {
                 policy = accessPolicy
             }
@@ -138,7 +141,7 @@ class StudioController(
             }
             staticResources("", "studio", index = "index.html")
         }
-        parent.route("/console") {
+        route.route("/console") {
             get {
                 val resource = CONSOLE_INDEX_RESOURCE
                 call.respondResource(resource)

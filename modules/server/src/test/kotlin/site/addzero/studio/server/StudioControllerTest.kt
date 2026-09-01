@@ -11,6 +11,7 @@ import io.ktor.server.application.call
 import io.ktor.server.engine.ConnectorType
 import io.ktor.server.engine.EngineConnectorConfig
 import io.ktor.server.response.respond
+import io.ktor.server.routing.Route
 import io.ktor.server.routing.routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import site.addzero.platform.web.Controller
 import site.addzero.studio.contract.LsiCatalogEntry
 import site.addzero.studio.contract.LsiCatalogEntryKind
 import site.addzero.studio.server.catalog.StudioCatalogProvider
@@ -102,8 +104,8 @@ class StudioControllerTest {
             }
             routing {
                 val denied = StudioAccessPolicy { false }
-                val apiController = StudioApiController { route ->
-                    route.post("/write") {
+                val apiController = testController("/write") {
+                    post {
                         apiInvoked = true
                         val response = mapOf("status" to "unexpected")
                         call.respond(response)
@@ -144,8 +146,8 @@ class StudioControllerTest {
                 jackson()
             }
             routing {
-                val apiController = StudioApiController { route ->
-                    route.get("/ping") {
+                val apiController = testController("/ping") {
+                    get {
                         val response = mapOf("status" to "ok")
                         call.respond(response)
                     }
@@ -167,8 +169,8 @@ class StudioControllerTest {
                 jackson()
             }
             routing {
-                val apiController = StudioApiController { route ->
-                    route.get("/ping") {
+                val apiController = testController("/ping") {
+                    get {
                         val response = mapOf("status" to "ok")
                         call.respond(response)
                     }
@@ -270,9 +272,9 @@ class StudioControllerTest {
     private fun controller(
         enabled: Boolean,
         accessPolicy: StudioAccessPolicy = StudioAccessPolicy { true },
-        apiControllers: List<StudioApiController> = emptyList(),
+        apiControllers: List<Controller> = emptyList(),
         catalogProvider: StudioCatalogProvider = StudioCatalogProvider.EMPTY,
-        consoleApiControllers: List<StudioApiController> = emptyList(),
+        consoleApiControllers: List<Controller> = emptyList(),
     ): StudioController = StudioController(
         config = config(enabled),
         accessPolicy = accessPolicy,
@@ -284,6 +286,17 @@ class StudioControllerTest {
         catalogProvider = catalogProvider,
         consoleApiControllers = consoleApiControllers,
     )
+
+    private fun testController(
+        routeKey: String,
+        endpoints: Route.() -> Unit,
+    ): Controller = object : Controller {
+        override val routeKey = routeKey
+
+        override fun Route.installEndpoints() {
+            endpoints()
+        }
+    }
 
     private fun config(enabled: Boolean): StudioConfig = StudioConfig(
         contributorId = "example-app",

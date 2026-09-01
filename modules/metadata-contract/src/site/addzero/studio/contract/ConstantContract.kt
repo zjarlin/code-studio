@@ -26,3 +26,15 @@ data class ConstantCommand(
 data class ConstantListCommand(
     val featureId: Long? = null,
 )
+
+@Serializable
+data class ConstantView(
+    val id: Long,
+    val featureId: Long,
+    val groupCode: String,
+    val featurePackageName: String,
+    val contributorId: String,
+    val objectName: String,
+    val description: String,
+    val constants: List<ConstantItemCommand> = emptyList(),
+)

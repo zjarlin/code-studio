@@ -1,7 +1,7 @@
 import { createColumnHelper, tableFeatures, useTable, type RowData } from '@tanstack/react-table'
 import { type KeyboardEvent, type ReactNode, useMemo } from 'react'
 
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/generated/shadcn/empty'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@platform/ui/components/generated/shadcn/empty'
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/generated/shadcn/table'
+} from '@platform/ui/components/generated/shadcn/table'
 
 const features = tableFeatures({})
 
