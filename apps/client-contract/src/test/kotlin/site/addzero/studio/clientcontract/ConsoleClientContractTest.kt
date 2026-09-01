@@ -52,6 +52,8 @@ class ConsoleClientContractTest {
         assertCommonResult(paths, "/agent/conversations", "delete")
         assertCommonResult(paths, "/agent/conversations/model", "put")
         assertCommonResult(paths, "/agent/messages", "get")
+        assertNotNull(paths?.get("/v1/responses"))
+        assertNotNull(paths?.get("/agent/context-snapshots"))
     }
 
     private fun assertCommonResult(

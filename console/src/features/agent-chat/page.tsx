@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Send, Square, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { createAgentConversation, listAgentConversations, listAgentModels } from '@generated/openapi/client'
+import { createAgentContextSnapshot, createAgentConversation, getCreateAgentResponseUrl, listAgentConversations, listAgentModels } from '@generated/openapi/client'
 import type { AgentConversationView, AgentMessageView, AgentProviderModel } from '@generated/openapi/models'
 
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
@@ -35,6 +35,8 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
   const [search, setSearch] = useState('')
   const [draft, setDraft] = useState('')
   const [streamError, setStreamError] = useState<string>()
+  const [mode, setMode] = useState<'auto' | 'configuration'>('auto')
+  const [reasoningEffort, setReasoningEffort] = useState('provider')
   const [localMessages, setLocalMessages] = useState<AgentMessageView[]>([])
   const controller = useRef<AbortController | undefined>(undefined)
   const create = useMutation({
@@ -42,7 +44,7 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
       await createAgentConversation({ title: title.trim() || null, modelId }, await applicationRequestOptions()),
       'Agent 会话创建响应缺少 data',
     ),
-    onSuccess: async () => { setCreating(false); await queryClient.invalidateQueries({ queryKey: ['agent-conversations'] }) },
+    onSuccess: async (id) => { setCreating(false); setSelectedId(String(id)); await queryClient.invalidateQueries({ queryKey: ['agent-conversations'] }) },
   })
   const selected = conversations.data?.find((item) => String(item.id) === selectedId) ?? conversations.data?.[0]
   const messages = useQuery({
@@ -66,7 +68,7 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
 
   async function send(): Promise<void> {
     const text = draft.trim()
-    if (!text || !selected || controller.current) return
+    if (!text || !selected || !selected.modelId || controller.current) return
     const baseUrl = (await applicationRequestOptions()).baseUrl
     const assistantId = `local-${Date.now()}`
     setDraft('')
@@ -75,9 +77,13 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
     const active = new AbortController()
     controller.current = active
     try {
-      await openServerSentEvents<StreamEvent>('/v1/responses', {
+      const context = mode === 'configuration'
+        ? await createAgentContextSnapshot({ scene: 'agent.workspace', state: { scope: 'workspace' } }, { baseUrl })
+        : undefined
+      const contextId = context && typeof context === 'object' && context !== null && 'id' in context && typeof context.id === 'string' ? context.id : undefined
+      await openServerSentEvents<StreamEvent>(getCreateAgentResponseUrl(), {
         baseUrl,
-        body: JSON.stringify({ model: selected.modelId, input: text, conversation: selected.externalId, stream: true, store: true }),
+        body: JSON.stringify({ model: selected.modelId, input: text, conversation: selected.externalId, stream: true, store: true, reasoning: reasoningEffort === 'provider' ? undefined : { effort: reasoningEffort }, metadata: contextId ? { agent_context_snapshot_id: contextId } : undefined }),
         method: 'POST',
         signal: active.signal,
       }, {
@@ -113,7 +119,7 @@ export default function AgentChatPage({ route }: CatalogPageProps) {
             <header className="agent-chat-header"><div><span className="eyebrow">智能体对话</span><h2>{selected.title}</h2></div><div className="agent-chat-header-actions"><select aria-label="选择模型" disabled={!models.data?.length || updateModel.isPending} onChange={(event) => updateModel.mutate({ conversationId: selected.id, modelId: event.target.value })} value={selected.modelId ?? ''}>{(models.data ?? []).map((model) => <option key={model.id} value={model.id}>{model.id}</option>)}</select><button aria-label="删除对话" className="icon-button" onClick={() => { if (window.confirm(`确认删除 ${selected.title}？`)) deleteConversation.mutate(selected.id) }} title="删除对话" type="button"><Trash2 /></button></div></header>
             <QueryState error={messages.error} pending={messages.isPending}><div className="agent-message-list">{localMessages.map((message) => <article className={`agent-message agent-message-${message.role}`} key={message.id}><span className="agent-message-role">{message.role === 'user' ? '你' : 'Agent'}</span><p>{messageText(message) || (message.role === 'assistant' && controller.current ? '思考中…' : '')}</p></article>)}{!localMessages.length && <div className="empty-state">发送第一条消息开始对话</div>}</div></QueryState>
             {streamError && <p className="form-error" role="alert">{streamError}</p>}
-            <form className="agent-composer" onSubmit={(event) => { event.preventDefault(); void send() }}><textarea aria-label="消息" disabled={Boolean(controller.current)} onChange={(event) => setDraft(event.target.value)} placeholder="输入消息" rows={3} value={draft} /><div><span>{selected.modelId || '未选择模型'}</span>{controller.current ? <button aria-label="停止生成" className="icon-button" onClick={() => controller.current?.abort()} title="停止生成" type="button"><Square /></button> : <button aria-label="发送消息" className="icon-button primary" disabled={!draft.trim()} title="发送消息" type="submit"><Send /></button>}</div></form>
+            <form className="agent-composer" onSubmit={(event) => { event.preventDefault(); void send() }}><textarea aria-label="消息" disabled={Boolean(controller.current)} onChange={(event) => setDraft(event.target.value)} placeholder="输入消息" rows={3} value={draft} /><div><div className="agent-composer-options"><label>模式<select aria-label="对话模式" disabled={Boolean(controller.current)} onChange={(event) => setMode(event.target.value as 'auto' | 'configuration')} value={mode}><option value="auto">智能识别</option><option value="configuration">配置模式</option></select></label><label>推理<select aria-label="推理强度" disabled={Boolean(controller.current)} onChange={(event) => setReasoningEffort(event.target.value)} value={reasoningEffort}><option value="provider">服务商默认</option><option value="minimal">最低</option><option value="low">低</option><option value="medium">中</option><option value="high">高</option><option value="xhigh">最高</option></select></label></div><span>{selected.modelId || '未选择模型'}</span>{controller.current ? <button aria-label="停止生成" className="icon-button" onClick={() => controller.current?.abort()} title="停止生成" type="button"><Square /></button> : <button aria-label="发送消息" className="icon-button primary" disabled={!draft.trim()} title="发送消息" type="submit"><Send /></button>}</div></form>
           </> : <div className="empty-state">新建对话后开始聊天</div>}
         </main>
       </div>

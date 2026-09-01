@@ -24,6 +24,8 @@ import { Textarea } from '@platform/ui/components/generated/shadcn/textarea'
 import { fetchDtos, persistDto, removeDto } from './commands'
 import { requireApiData } from '@/lib/http'
 
+import { DtoAssistancePanel } from './dto-assistance-panel'
+
 export function DtoWorkspace({ editable, feature }: Readonly<{
   editable: boolean
   feature: { id: number; name: string; featureCode: string }
@@ -166,18 +168,20 @@ function DtoEditor({ editable, error, featureId, initial, onCancel, onDelete, on
       </FieldGroup>
       <div className="resource-section-heading"><strong>字段</strong>{editable && <CatalogAction elementKey="studio.library.dto.field.create" onClick={() => setDraft({ ...draft, fields: [...(draft.fields ?? []), createField((draft.fields ?? []).length)] })} />}</div>
       <div className="resource-table" role="table" aria-label="DTO 字段">
-        <div className="resource-row resource-row-head" role="row"><span>名称</span><span>来源路径</span><span>Kotlin 类型</span><span>说明</span><span>操作</span></div>
+        <div className="resource-row resource-row-head dto-resource-row" role="row"><span>名称</span><span>来源路径</span><span>Kotlin 类型</span><span>说明</span><span>校验 JSON</span><span>操作</span></div>
         {(draft.fields ?? []).map((field, index) => (
           <div className="resource-row dto-resource-row" key={`${field.name}-${index}`} role="row">
             <Input aria-label="DTO 字段名" disabled={!editable} onChange={(event) => updateField(index, { name: event.target.value })} required value={field.name} />
             <Input aria-label="DTO 来源路径" disabled={!editable} onChange={(event) => updateField(index, { sourcePath: event.target.value })} value={field.sourcePath ?? ''} />
             <Input aria-label="DTO Kotlin 类型" disabled={!editable} onChange={(event) => updateField(index, { kotlinType: { qualifiedName: event.target.value } })} value={field.kotlinType?.qualifiedName ?? ''} />
             <Input aria-label="DTO 字段说明" disabled={!editable} onChange={(event) => updateField(index, { description: event.target.value })} value={field.description ?? ''} />
+            <Input aria-label="DTO 字段校验" disabled={!editable} onChange={(event) => updateField(index, { validations: parseJsonValue(event.target.value) as DtoFieldCommand['validations'] })} value={formatJson(field.validations)} />
             {editable && <CatalogIconAction elementKey="studio.library.dto.field.delete" onClick={() => setDraft({ ...draft, fields: (draft.fields ?? []).filter((_, fieldIndex) => fieldIndex !== index) })} variant="destructive" />}
           </div>
         ))}
         {!(draft.fields ?? []).length && <div className="resource-table-empty">尚未配置字段</div>}
       </div>
+      <DtoAssistancePanel draft={draft} />
       <Field data-disabled={!editable}><FieldLabel htmlFor="dto-excluded">排除路径 JSON</FieldLabel><Textarea disabled={!editable} id="dto-excluded" onChange={(event) => setDraft({ ...draft, excludedPaths: parseJsonValue(event.target.value) as string[] })} value={formatJson(draft.excludedPaths)} /></Field>
       {(advancedError || error) && <FieldError>{advancedError ?? error?.message}</FieldError>}
       {editable && <footer className="metadata-form-actions">

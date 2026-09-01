@@ -138,6 +138,18 @@ private fun clientPaths(): Map<String, ReferenceOr<PathItem>> = linkedMapOf(
             jsonResponse<CommonResult<List<AgentMessageView>>>()
         },
     ),
+    "/v1/responses" to pathItem(
+        post = applicationOperation("createAgentResponse", "Agent") {
+            jsonBody<JsonElement>()
+            jsonResponse<JsonElement>()
+        },
+    ),
+    "/agent/context-snapshots" to pathItem(
+        post = applicationOperation("createAgentContextSnapshot", "Agent") {
+            jsonBody<JsonElement>()
+            jsonResponse<JsonElement>()
+        },
+    ),
     "/console/api/reports" to pathItem(
         get = operation("listReports", "Reports") {
             pageParameters()

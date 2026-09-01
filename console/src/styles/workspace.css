@@ -375,7 +375,7 @@
 }
 
 .dto-resource-row {
-  grid-template-columns: repeat(4, minmax(120px, 1fr)) 36px;
+  grid-template-columns: repeat(5, minmax(120px, 1fr)) 36px;
 }
 
 .constant-table-empty,
@@ -492,6 +492,34 @@
   grid-template-columns: repeat(4, minmax(120px, 1fr)) 36px;
 }
 
+.relation-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.relation-definition {
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+
+.relation-row {
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(145px, 1fr) minmax(180px, 1.4fr) 36px;
+}
+
+.relation-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.relation-detail-grid label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
 .query-conditions {
   margin-top: 10px;
 }
@@ -507,6 +535,37 @@
   color: var(--muted);
   font-size: 11px;
 }
+
+.dto-assistance-panel {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.inline-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.assistance-list,
+.assistance-result {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.assistance-list details,
+.assistance-result {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+}
+
+.assistance-list summary,
+.assistance-result summary { cursor: pointer; }
+.assistance-list p { margin: 6px 0 2px; }
+.assistance-result pre { max-height: 240px; margin: 8px 0 0; overflow: auto; }
 
 .agent-chat-layout {
   display: grid;

@@ -517,5 +517,57 @@
     "order": 78,
     "permissions": [],
     "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.dto.rules",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "校验规则",
+    "description": "查看 DTO 字段校验规则",
+    "icon": "rows-3",
+    "order": 79,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.dto.reuse",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "复用分析",
+    "description": "分析 DTO 的模型字段复用情况",
+    "icon": "chart-no-axes-combined",
+    "order": 80,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.model.relation.create",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "新增关联",
+    "description": "新增模型关联",
+    "icon": "link-2",
+    "order": 81,
+    "permissions": [],
+    "enabled": true
+  },
+  {
+    "routeKey": "studio.library",
+    "elementKey": "studio.library.model.relation.delete",
+    "path": null,
+    "parentKey": "studio.library",
+    "kind": "ELEMENT",
+    "name": "删除关联",
+    "description": "删除当前模型关联",
+    "icon": "trash-2",
+    "order": 82,
+    "permissions": [],
+    "enabled": true
   }
 ]

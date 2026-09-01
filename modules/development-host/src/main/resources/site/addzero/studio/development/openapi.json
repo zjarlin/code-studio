@@ -497,6 +497,70 @@
         "x-client-base": "application"
       }
     },
+    "/v1/responses": {
+      "post": {
+        "operationId": "createAgentResponse",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonElement"
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
+    "/agent/context-snapshots": {
+      "post": {
+        "operationId": "createAgentContextSnapshot",
+        "tags": [
+          "Agent"
+        ],
+        "summary": "",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonElement"
+                }
+              }
+            }
+          }
+        },
+        "x-client-base": "application"
+      }
+    },
     "/console/api/reports": {
       "post": {
         "operationId": "createReport",

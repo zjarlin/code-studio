@@ -21,6 +21,7 @@ import { fetchModels, persistModel, removeModel } from './commands'
 import { requireApiData } from '@/lib/http'
 
 import { QueryEditor } from './query-editor'
+import { RelationEditor } from './relation-editor'
 
 export function ModelWorkspace({ editable, feature }: Readonly<{
   editable: boolean
@@ -75,11 +76,12 @@ export function ModelWorkspace({ editable, feature }: Readonly<{
             {!models.data?.length && <p className="feature-index-empty">尚未创建模型</p>}
           </nav>
           {(selected || creating) ? (
-            <ModelEditor
-              editable={editable}
-              error={save.error ?? remove.error}
-              featureId={feature.id}
-              initial={selected}
+              <ModelEditor
+                editable={editable}
+                error={save.error ?? remove.error}
+                featureId={feature.id}
+                initial={selected}
+                models={models.data ?? []}
               key={selected?.id ?? (creating ? 'new' : 'empty')}
               onCancel={() => setCreating(false)}
               onDelete={selected?.id != null ? () => remove.mutate(selected.id as number) : undefined}
@@ -108,11 +110,12 @@ async function downloadGeneratedModel(id: number): Promise<void> {
   URL.revokeObjectURL(url)
 }
 
-function ModelEditor({ editable, error, featureId, initial, onCancel, onDelete, onSave, pending }: Readonly<{
+function ModelEditor({ editable, error, featureId, initial, models, onCancel, onDelete, onSave, pending }: Readonly<{
   editable: boolean
   error: Error | null
   featureId: number
   initial?: ModelCommand
+  models: ModelCommand[]
   onCancel: () => void
   onDelete?: () => void
   onSave: (command: ModelCommand) => void
@@ -177,7 +180,7 @@ function ModelEditor({ editable, error, featureId, initial, onCancel, onDelete, 
         {!(draft.fields ?? []).length && <div className="resource-table-empty">尚未配置字段</div>}
       </div>
       <QueryEditor editable={editable} fields={draft.fields ?? []} onChange={(queries) => setDraft({ ...draft, queries })} queries={parseJsonArray<QueryCommand>(draft.queries)} />
-      <Field data-disabled={!editable}><FieldLabel htmlFor="model-relations">关联定义 JSON</FieldLabel><Textarea disabled={!editable} id="model-relations" onChange={(event) => setDraft({ ...draft, relations: parseJsonValue(event.target.value) as RelationCommand[] })} value={formatJson(draft.relations)} /></Field>
+      <RelationEditor editable={editable} models={models} onChange={(relations) => setDraft({ ...draft, relations })} relations={parseJsonArray<RelationCommand>(draft.relations)} />
       {(advancedError || error) && <FieldError>{advancedError ?? error?.message}</FieldError>}
       {editable && <footer className="metadata-form-actions">
         {!initial && <CatalogAction elementKey="studio.library.model.cancel" onClick={onCancel} variant="ghost" />}
