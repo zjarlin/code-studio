@@ -4,8 +4,11 @@ import { useMemo, useState } from 'react'
 import { downloadApiResponseFile } from '@platform/openapi-workbench'
 import type { ApiResponseState } from '@platform/openapi-workbench'
 
-import { Button } from '@/components/button'
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
+import { Button } from '@/components/generated/shadcn/button'
+import { Checkbox } from '@/components/generated/shadcn/checkbox'
+import { Field, FieldLabel } from '@/components/generated/shadcn/field'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/generated/shadcn/tabs'
 
 interface ResponsePanelProps {
   error: string
@@ -59,41 +62,42 @@ export function ResponsePanel({ error, pending, response }: ResponsePanelProps) 
         </div>
       )}
 
-      <nav className="api-panel-tabs" aria-label="响应视图">
-        <button aria-pressed={view === 'body'} onClick={() => setView('body')} type="button">正文</button>
-        <button aria-pressed={view === 'headers'} onClick={() => setView('headers')} type="button">响应头</button>
-        <button aria-pressed={view === 'curl'} onClick={() => setView('curl')} type="button">cURL</button>
-      </nav>
-
-      <div className="api-response-content">
+      <Tabs onValueChange={(value) => setView(value as typeof view)} value={view}>
+        <TabsList aria-label="响应视图" className="api-panel-tabs">
+          <TabsTrigger value="body">正文</TabsTrigger>
+          <TabsTrigger value="headers">响应头</TabsTrigger>
+          <TabsTrigger value="curl">cURL</TabsTrigger>
+        </TabsList>
+        <div className="api-response-content">
         {error && !response && <div className="api-response-error" role="alert">{error}</div>}
         {!response && !error && !pending && <div className="api-empty">发送请求后在此查看响应</div>}
         {pending && !response && <div className="api-empty">正在等待服务器响应…</div>}
-        {response && view === 'body' && (
-          response.file ? (
+        {response ? <TabsContent value="body">
+          {response.file ? (
             <div className="api-download-result">
               <Download />
               <strong>{response.file.fileName}</strong>
               <span>{response.file.contentType} · {formatSize(response.file.size)}</span>
-              <Button onClick={() => downloadApiResponseFile(response.file!)} variant="primary">
-                <Download />下载文件
+              <Button onClick={() => downloadApiResponseFile(response.file!)}>
+                <Download data-icon="inline-start" />下载文件
               </Button>
             </div>
-          ) : <pre>{body || '响应正文为空'}</pre>
-        )}
-        {response && view === 'headers' && <pre>{JSON.stringify(response.headers, null, 2)}</pre>}
-        {response && view === 'curl' && (
+          ) : <pre>{body || '响应正文为空'}</pre>}
+        </TabsContent> : null}
+        {response ? <TabsContent value="headers"><pre>{JSON.stringify(response.headers, null, 2)}</pre></TabsContent> : null}
+        {response ? <TabsContent value="curl">
           <div className="api-curl-view">
-            <label>
-              <input checked={showSensitive} onChange={(event) => setShowSensitive(event.target.checked)} type="checkbox" />
-              显示敏感请求头
-            </label>
+            <Field orientation="horizontal">
+              <Checkbox checked={showSensitive} id="show-sensitive-headers" onCheckedChange={(checked) => setShowSensitive(checked === true)} />
+              <FieldLabel htmlFor="show-sensitive-headers">显示敏感请求头</FieldLabel>
+            </Field>
             <pre>{curl}</pre>
             <CatalogAction elementKey="studio.api-docs.copy-curl" onClick={copyCurl} />
             {copied && <span className="form-success" role="status">已复制</span>}
           </div>
-        )}
-      </div>
+        </TabsContent> : null}
+        </div>
+      </Tabs>
     </aside>
   )
 }

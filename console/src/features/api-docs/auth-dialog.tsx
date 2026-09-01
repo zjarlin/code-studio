@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react'
 
-import { Button } from '@/components/button'
+import { Button } from '@/components/generated/shadcn/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/generated/shadcn/dialog'
+import { Field, FieldLabel } from '@/components/generated/shadcn/field'
+import { Input } from '@/components/generated/shadcn/input'
 
 interface AuthDialogProps {
   onChange: (value: string) => void
@@ -16,40 +26,40 @@ export function AuthDialog({ onChange, onClose, open, token }: AuthDialogProps) 
     if (open) setDraft(token)
   }, [open, token])
 
-  if (!open) return null
   return (
-    <div className="dialog-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section aria-labelledby="api-auth-title" aria-modal="true" className="dialog" role="dialog">
-        <header>
-          <h2 id="api-auth-title">临时 Bearer 鉴权</h2>
-          <p>仅保存在当前页面内存中，刷新后自动清除。留空时继续使用宿主登录态。</p>
-        </header>
+    <Dialog onOpenChange={(nextOpen) => !nextOpen && onClose()} open={open}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>临时 Bearer 鉴权</DialogTitle>
+          <DialogDescription>仅保存在当前页面内存中，刷新后自动清除。留空时继续使用宿主登录态。</DialogDescription>
+        </DialogHeader>
         <form onSubmit={(event) => {
           event.preventDefault()
           onChange(draft.trim())
           onClose()
         }}>
-          <label>
-            Bearer Token
-            <input
+          <Field>
+            <FieldLabel htmlFor="api-bearer-token">Bearer Token</FieldLabel>
+            <Input
               autoComplete="off"
               autoFocus
+              id="api-bearer-token"
               onChange={(event) => setDraft(event.target.value)}
               placeholder="输入 Token，不含 Bearer 前缀"
               type="password"
               value={draft}
             />
-          </label>
-          <footer>
+          </Field>
+          <DialogFooter>
             <Button onClick={() => {
               onChange('')
               onClose()
-            }} variant="ghost">清除</Button>
-            <Button onClick={onClose}>取消</Button>
-            <Button type="submit" variant="primary">应用</Button>
-          </footer>
+            }} type="button" variant="ghost">清除</Button>
+            <Button onClick={onClose} type="button" variant="outline">取消</Button>
+            <Button type="submit">应用</Button>
+          </DialogFooter>
         </form>
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

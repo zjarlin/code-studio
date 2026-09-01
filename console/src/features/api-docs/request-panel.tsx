@@ -15,7 +15,19 @@ import type {
 } from '@platform/openapi-workbench'
 
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
-import { Button } from '@/components/button'
+import { Button } from '@/components/generated/shadcn/button'
+import { Checkbox } from '@/components/generated/shadcn/checkbox'
+import { Field, FieldLabel } from '@/components/generated/shadcn/field'
+import { Input } from '@/components/generated/shadcn/input'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/generated/shadcn/select'
+import { Textarea } from '@/components/generated/shadcn/textarea'
 
 import { newCustomHeader, type ApiRequestDraft } from './session'
 
@@ -98,8 +110,8 @@ export function RequestPanel({
           action={(
             <Button
               aria-label="添加请求头"
-              className="button-icon"
               onClick={() => onChange({ ...draft, customHeaders: [...draft.customHeaders, newCustomHeader()] })}
+              size="icon-sm"
               title="添加请求头"
               variant="ghost"
             >
@@ -111,7 +123,7 @@ export function RequestPanel({
           {!draft.customHeaders.length && <p className="api-muted">没有自定义请求头</p>}
           {draft.customHeaders.map((header) => (
             <div className="api-custom-header" key={header.id}>
-              <input
+              <Input
                 aria-label="请求头名称"
                 onChange={(event) => onChange({
                   ...draft,
@@ -122,7 +134,7 @@ export function RequestPanel({
                 placeholder="Header 名称"
                 value={header.name}
               />
-              <input
+              <Input
                 aria-label={`${header.name || '自定义'}请求头值`}
                 onChange={(event) => onChange({
                   ...draft,
@@ -135,11 +147,11 @@ export function RequestPanel({
               />
               <Button
                 aria-label="删除请求头"
-                className="button-icon"
                 onClick={() => onChange({
                   ...draft,
                   customHeaders: draft.customHeaders.filter((item) => item.id !== header.id),
                 })}
+                size="icon-sm"
                 title="删除请求头"
                 variant="ghost"
               >
@@ -152,22 +164,21 @@ export function RequestPanel({
         {operation.requestBody && (
           <RequestSection title="请求体">
             {contentTypes.length > 1 && (
-              <label className="api-field">
-                <span>Content-Type</span>
-                <select
-                  aria-label="请求内容类型"
-                  onChange={(event) => onChange({ ...draft, contentType: event.target.value })}
-                  value={contentType}
-                >
-                  {contentTypes.map((item) => <option key={item}>{item}</option>)}
-                </select>
-              </label>
+              <Field className="api-field">
+                <FieldLabel>Content-Type</FieldLabel>
+                <Select onValueChange={(value) => onChange({ ...draft, contentType: value })} value={contentType}>
+                  <SelectTrigger aria-label="请求内容类型"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectGroup>
+                    {contentTypes.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                  </SelectGroup></SelectContent>
+                </Select>
+              </Field>
             )}
             {contentType === 'application/octet-stream' ? (
-              <label className="api-file-field">
-                <span>二进制文件{operation.requestBody.required && <b>*</b>}</span>
-                <input onChange={(event) => onChange({ ...draft, bodyFile: event.target.files?.[0] })} type="file" />
-              </label>
+              <Field className="api-file-field">
+                <FieldLabel>二进制文件{operation.requestBody.required && <b>*</b>}</FieldLabel>
+                <Input onChange={(event) => onChange({ ...draft, bodyFile: event.target.files?.[0] })} type="file" />
+              </Field>
             ) : formFields.length ? (
               <div className="api-form-fields">
                 {formFields.map((field) => (
@@ -180,15 +191,15 @@ export function RequestPanel({
                 ))}
               </div>
             ) : (
-              <label className="api-field api-body-field">
-                <span>{contentType || 'Body'}{operation.requestBody.required && <b>*</b>}</span>
-                <textarea
+              <Field className="api-field api-body-field">
+                <FieldLabel>{contentType || 'Body'}{operation.requestBody.required && <b>*</b>}</FieldLabel>
+                <Textarea
                   aria-label="请求体"
                   onChange={(event) => onChange({ ...draft, bodyText: event.target.value })}
                   spellCheck={false}
                   value={draft.bodyText}
                 />
-              </label>
+              </Field>
             )}
           </RequestSection>
         )}
@@ -214,21 +225,23 @@ function ParameterField({ onChange, parameter, value }: Readonly<{
 }>) {
   const options = parameter.schema?.enum ?? []
   return (
-    <label className="api-field">
-      <span><code>{parameter.name}</code>{parameter.required && <b>*</b>}<small>{parameter.description}</small></span>
+    <Field className="api-field">
+      <FieldLabel><code>{parameter.name}</code>{parameter.required && <b>*</b>}<small>{parameter.description}</small></FieldLabel>
       {options.length ? (
-        <select onChange={(event) => onChange(event.target.value)} value={value}>
-          <option value="">请选择</option>
-          {options.map((option) => <option key={String(option)} value={String(option)}>{String(option)}</option>)}
-        </select>
+        <Select onValueChange={onChange} value={value}>
+          <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+          <SelectContent><SelectGroup>
+            {options.map((option) => <SelectItem key={String(option)} value={String(option)}>{String(option)}</SelectItem>)}
+          </SelectGroup></SelectContent>
+        </Select>
       ) : (
-        <input
+        <Input
           onChange={(event) => onChange(event.target.value)}
           type={numericSchema(parameter.schema) ? 'number' : 'text'}
           value={value}
         />
       )}
-    </label>
+    </Field>
   )
 }
 
@@ -241,9 +254,9 @@ function FormField({ field, onChange, value }: Readonly<{
   const multiple = schemaTypes(field.schema).includes('array')
   if (binary) {
     return (
-      <label className="api-file-field">
-        <span><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></span>
-        <input
+      <Field className="api-file-field">
+        <FieldLabel><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></FieldLabel>
+        <Input
           multiple={multiple}
           onChange={(event) => {
             const files = [...(event.target.files ?? [])]
@@ -251,27 +264,27 @@ function FormField({ field, onChange, value }: Readonly<{
           }}
           type="file"
         />
-      </label>
+      </Field>
     )
   }
   if (schemaTypes(field.schema).includes('boolean')) {
     return (
-      <label className="api-checkbox-field">
-        <input checked={value === true} onChange={(event) => onChange(event.target.checked)} type="checkbox" />
-        <span><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></span>
-      </label>
+      <Field className="api-checkbox-field" orientation="horizontal">
+        <Checkbox checked={value === true} onCheckedChange={(checked) => onChange(checked === true)} />
+        <FieldLabel><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></FieldLabel>
+      </Field>
     )
   }
   return (
-    <label className="api-field">
-      <span><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></span>
-      <input
+    <Field className="api-field">
+      <FieldLabel><code>{field.name}</code>{field.required && <b>*</b>}<small>{field.schema.description}</small></FieldLabel>
+      <Input
         onChange={(event) => onChange(multiple ? event.target.value.split(',').map((item) => item.trim()) : event.target.value)}
         placeholder={multiple ? '多个值以逗号分隔' : undefined}
         type={numericSchema(field.schema) ? 'number' : 'text'}
         value={Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string').join(', ') : String(value ?? '')}
       />
-    </label>
+    </Field>
   )
 }
 

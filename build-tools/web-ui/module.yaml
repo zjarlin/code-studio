@@ -1,10 +1,7 @@
-product: jvm/amper-plugin
+product: jvm/lib
 
 apply:
   - ../../build-config/kotlin-jvm.module-template.yaml
 
-pluginInfo:
-  id: studio-ui
-
 dependencies:
-  - ../web-ui
+  - ../../modules/metadata-contract

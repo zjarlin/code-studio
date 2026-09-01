@@ -1,0 +1,13 @@
+tasks:
+  buildReportUi:
+    action: !site.addzero.toolchain.report.buildReportUi
+      packageJson: ${module.rootDir}/ui/package.json
+      lockFile: ${module.rootDir}/../../pnpm-lock.yaml
+      tsConfig: ${module.rootDir}/ui/tsconfig.json
+      viteConfig: ${module.rootDir}/ui/vite.config.ts
+      sourceDirectory: ${module.rootDir}/ui/src
+      generatedResourcesDirectory: ${taskOutputDir}
+
+generated:
+  resources:
+    - directory: ${tasks.buildReportUi.action.generatedResourcesDirectory}

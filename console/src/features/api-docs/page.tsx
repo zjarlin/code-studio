@@ -7,6 +7,8 @@ import type { ApiHistoryEntry, ApiOperation } from '@platform/openapi-workbench'
 import { CatalogAction } from '@/components/composed/catalog-action/catalog-action'
 import { PageHeader } from '@/components/composed/page-header/page-header'
 import { QueryState } from '@/components/composed/query-state/query-state'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/generated/shadcn/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@/components/generated/shadcn/toggle-group'
 import type { CatalogPageProps } from '@/features/page-registry'
 
 import { fetchApiCatalog, type ApiCatalog } from './catalog'
@@ -87,11 +89,17 @@ export function ApiWorkbench({ catalog, refresh, route }: Readonly<{
         route={route}
       />
 
-      <nav className="api-mobile-tabs" aria-label="移动端工作区">
-        <button aria-pressed={mobilePane === 'tree'} onClick={() => setMobilePane('tree')} type="button">接口</button>
-        <button aria-pressed={mobilePane === 'request'} onClick={() => setMobilePane('request')} type="button">请求</button>
-        <button aria-pressed={mobilePane === 'response'} onClick={() => setMobilePane('response')} type="button">响应</button>
-      </nav>
+      <ToggleGroup
+        aria-label="移动端工作区"
+        className="api-mobile-tabs"
+        onValueChange={(value) => value && setMobilePane(value as typeof mobilePane)}
+        type="single"
+        value={mobilePane}
+      >
+        <ToggleGroupItem value="tree">接口</ToggleGroupItem>
+        <ToggleGroupItem value="request">请求</ToggleGroupItem>
+        <ToggleGroupItem value="response">响应</ToggleGroupItem>
+      </ToggleGroup>
 
       <main className="api-workbench">
         <div className={`api-pane api-pane-tree ${mobilePane === 'tree' ? 'is-mobile-active' : ''}`}>
@@ -110,13 +118,17 @@ export function ApiWorkbench({ catalog, refresh, route }: Readonly<{
           />
         </div>
 
-        <section className={`api-pane api-request-panel ${mobilePane === 'request' ? 'is-mobile-active' : ''}`} aria-label="请求工作区">
-          <nav className="api-panel-tabs" aria-label="请求视图">
-            <button aria-pressed={requestView === 'debug'} onClick={() => setRequestView('debug')} type="button">调试</button>
-            <button aria-pressed={requestView === 'docs'} onClick={() => setRequestView('docs')} type="button">文档</button>
-          </nav>
-          {session.selected ? (
-            requestView === 'debug' ? (
+        <Tabs
+          className={`api-pane api-request-panel ${mobilePane === 'request' ? 'is-mobile-active' : ''}`}
+          onValueChange={(value) => setRequestView(value as typeof requestView)}
+          value={requestView}
+        >
+          <TabsList aria-label="请求视图" className="api-panel-tabs">
+            <TabsTrigger value="debug">调试</TabsTrigger>
+            <TabsTrigger value="docs">文档</TabsTrigger>
+          </TabsList>
+          {session.selected ? <>
+            <TabsContent value="debug">
               <RequestPanel
                 document={catalog.document}
                 draft={session.draft}
@@ -127,9 +139,10 @@ export function ApiWorkbench({ catalog, refresh, route }: Readonly<{
                 operation={session.selected}
                 pending={session.pending}
               />
-            ) : <DocumentationPanel document={catalog.document} operation={session.selected} />
-          ) : <div className="api-empty">选择接口后查看请求和文档</div>}
-        </section>
+            </TabsContent>
+            <TabsContent value="docs"><DocumentationPanel document={catalog.document} operation={session.selected} /></TabsContent>
+          </> : <div className="api-empty">选择接口后查看请求和文档</div>}
+        </Tabs>
 
         <div className={`api-pane api-pane-response ${mobilePane === 'response' ? 'is-mobile-active' : ''}`}>
           <ResponsePanel error={session.error} pending={session.pending} response={session.response} />

@@ -5,6 +5,10 @@ description: 提供报表与电子表格模板的存储、编译、填充和 HTT
 apply:
   - ../../build-config/common-jvm.module-template.yaml
 
+plugins:
+  report-ui:
+    enabled: true
+
 dependencies:
   - ../metadata-contract: exported
   - ../server: exported

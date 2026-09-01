@@ -10,6 +10,15 @@ import type {
   ApiSchemaRow,
 } from '@platform/openapi-workbench'
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/generated/shadcn/table'
+
 interface DocumentationPanelProps {
   document: ApiDocument
   operation: ApiOperation
@@ -37,20 +46,20 @@ export function DocumentationPanel({ document, operation }: DocumentationPanelPr
       <section>
         <h3>参数</h3>
         {operation.parameters.length ? (
-          <table className="api-schema-table">
-            <thead><tr><th>名称</th><th>位置</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
-            <tbody>
+          <Table className="api-schema-table">
+            <TableHeader><TableRow><TableHead>名称</TableHead><TableHead>位置</TableHead><TableHead>类型</TableHead><TableHead>必填</TableHead><TableHead>说明</TableHead></TableRow></TableHeader>
+            <TableBody>
               {operation.parameters.map((parameter) => (
-                <tr key={`${parameter.in}:${parameter.name}`}>
-                  <td><code>{parameter.name}</code></td>
-                  <td>{parameter.in}</td>
-                  <td>{schemaType(parameter.schema?.type)}</td>
-                  <td>{parameter.required ? '是' : '否'}</td>
-                  <td>{parameter.description || '-'}</td>
-                </tr>
+                <TableRow key={`${parameter.in}:${parameter.name}`}>
+                  <TableCell><code>{parameter.name}</code></TableCell>
+                  <TableCell>{parameter.in}</TableCell>
+                  <TableCell>{schemaType(parameter.schema?.type)}</TableCell>
+                  <TableCell>{parameter.required ? '是' : '否'}</TableCell>
+                  <TableCell>{parameter.description || '-'}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         ) : <p className="api-muted">无参数</p>}
       </section>
 
@@ -99,19 +108,19 @@ export function DocumentationPanel({ document, operation }: DocumentationPanelPr
 function SchemaTable({ rows }: Readonly<{ rows: ApiSchemaRow[] }>) {
   if (!rows.length) return <p className="api-muted">未声明结构化 Schema</p>
   return (
-    <table className="api-schema-table">
-      <thead><tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
-      <tbody>
+    <Table className="api-schema-table">
+      <TableHeader><TableRow><TableHead>字段</TableHead><TableHead>类型</TableHead><TableHead>必填</TableHead><TableHead>说明</TableHead></TableRow></TableHeader>
+      <TableBody>
         {rows.map((row) => (
-          <tr key={`${row.path}:${row.depth}`}>
-            <td><code style={{ paddingInlineStart: row.depth * 12 }}>{row.path}</code></td>
-            <td>{row.type}</td>
-            <td>{row.required ? '是' : '否'}</td>
-            <td>{row.description || '-'}</td>
-          </tr>
+          <TableRow key={`${row.path}:${row.depth}`}>
+            <TableCell><code style={{ paddingInlineStart: row.depth * 12 }}>{row.path}</code></TableCell>
+            <TableCell>{row.type}</TableCell>
+            <TableCell>{row.required ? '是' : '否'}</TableCell>
+            <TableCell>{row.description || '-'}</TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
 

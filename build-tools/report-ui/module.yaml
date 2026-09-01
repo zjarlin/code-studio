@@ -4,7 +4,7 @@ apply:
   - ../../build-config/kotlin-jvm.module-template.yaml
 
 pluginInfo:
-  id: studio-ui
+  id: report-ui
 
 dependencies:
   - ../web-ui

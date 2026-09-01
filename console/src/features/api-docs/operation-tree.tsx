@@ -4,6 +4,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { groupApiOperations } from '@platform/openapi-workbench'
 import type { ApiDocument, ApiHistoryEntry, ApiOperation } from '@platform/openapi-workbench'
 
+import { Button } from '@/components/generated/shadcn/button'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/generated/shadcn/empty'
+import { Input } from '@/components/generated/shadcn/input'
+import { ToggleGroup, ToggleGroupItem } from '@/components/generated/shadcn/toggle-group'
+
 interface OperationTreeProps {
   document: ApiDocument
   history: ApiHistoryEntry[]
@@ -53,7 +58,7 @@ export function OperationTree({
       <div className="api-tree-toolbar">
         <label className="api-search">
           <Search aria-hidden="true" />
-          <input
+          <Input
             aria-label="搜索 API"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="方法、路径、摘要、分组"
@@ -61,10 +66,16 @@ export function OperationTree({
             value={query}
           />
         </label>
-        <div className="api-scope-control" aria-label="端点范围">
-          <button aria-pressed={!showAll} onClick={() => onShowAllChange(false)} type="button">业务接口</button>
-          <button aria-pressed={showAll} onClick={() => onShowAllChange(true)} type="button">全部端点</button>
-        </div>
+        <ToggleGroup
+          aria-label="端点范围"
+          className="api-scope-control"
+          onValueChange={(value) => value && onShowAllChange(value === 'all')}
+          type="single"
+          value={showAll ? 'all' : 'business'}
+        >
+          <ToggleGroupItem value="business">业务接口</ToggleGroupItem>
+          <ToggleGroupItem value="all">全部端点</ToggleGroupItem>
+        </ToggleGroup>
         <span className="api-count">{operations.length} / {totalCount} 个端点</span>
       </div>
 
@@ -73,43 +84,43 @@ export function OperationTree({
           const open = Boolean(query.trim()) || expanded.has(group.name)
           return (
             <section className="api-group" key={group.name}>
-              <button className="api-group-toggle" onClick={() => toggleGroup(group.name)} type="button">
+              <Button className="api-group-toggle" onClick={() => toggleGroup(group.name)} variant="ghost">
                 {open ? <ChevronDown /> : <ChevronRight />}
                 <span title={group.description}>{group.name}</span>
                 <small>{group.operations.length}</small>
-              </button>
+              </Button>
               {open && (
                 <div className="api-operation-list">
                   {group.operations.map((operation) => (
-                    <button
+                    <Button
                       aria-current={selected?.id === operation.id && selected.path === operation.path ? 'true' : undefined}
                       className="api-operation-item"
                       key={`${group.name}:${operation.id}:${operation.path}`}
                       onClick={() => onSelect(operation)}
-                      type="button"
+                      variant="ghost"
                     >
                       <span className={`method method-${operation.method}`}>{operation.method.toUpperCase()}</span>
                       <span>
                         <strong>{operation.summary}</strong>
                         <code>{operation.path}</code>
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
             </section>
           )
         })}
-        {!groups.length && <div className="api-empty">没有匹配的 API</div>}
+        {!groups.length && <Empty><EmptyHeader><EmptyTitle>没有匹配的 API</EmptyTitle><EmptyDescription>调整关键词或端点范围后重试。</EmptyDescription></EmptyHeader></Empty>}
 
         {history.length > 0 && (
           <section className="api-history" aria-label="请求历史">
             <h3><Clock3 />请求历史</h3>
             {history.map((entry, index) => (
-              <button key={`${entry.createdAt}:${index}`} onClick={() => onHistorySelect(entry)} type="button">
+              <Button key={`${entry.createdAt}:${index}`} onClick={() => onHistorySelect(entry)} variant="ghost">
                 <span className={`method method-${entry.method}`}>{entry.method.toUpperCase()}</span>
                 <span><code>{entry.path}</code><small>{entry.status ?? '-'} · {entry.durationMs ?? '-'} ms</small></span>
-              </button>
+              </Button>
             ))}
           </section>
         )}
